@@ -1,6 +1,30 @@
-import './assets/main.css'
+/**
+ * main.ts
+ *
+ * Bootstraps Vuetify and other plugins then mounts the App`
+ */
 
+// Composables
 import { createApp } from 'vue'
+
+// Plugins
+import { registerPlugins } from '@/plugins'
+
+// Components
 import App from './App.vue'
 
-createApp(App).mount('#app')
+import router from './router'
+
+// Styles
+import 'vuetify/styles'
+
+//Bootstrap
+import { createBootstrap } from 'bootstrap-vue-next'
+import 'bootstrap/dist/css/bootstrap.css'
+import 'bootstrap-vue-next/dist/bootstrap-vue-next.css'
+
+const app = createApp(App)
+registerPlugins(app)
+app.use(createBootstrap()) 
+app.use(router)
+app.mount('#app')
