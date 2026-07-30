@@ -1,0 +1,47 @@
+# Tela Início — Grêmio Athos Bulcão
+
+Componentes criados a partir do print enviado.
+
+## Estrutura
+```
+HomeView.vue                       -> tela principal (substitui seu Home.vue)
+components/
+  inicio/
+    AppSidebar.vue                 -> menu lateral (logo, badge, nav, sair)
+    SidebarNavItem.vue             -> item de navegação reutilizável
+    AppIcon.vue                    -> conjunto de ícones inline (sem dependência externa)
+    DecorativeDivider.vue          -> friso de pontinhos acima do banner
+    HeroBanner.vue                  -> banner azul com padrão de "azulejo" (referência às obras
+                                       de Athos Bulcão) + título + citação + botões
+    AboutSection.vue               -> bloco de texto "Grêmio Athos Bulcão"
+assets/theme.css                   -> variáveis de cor/tipografia usadas em todos os componentes
+```
+
+Cada tela nova que você criar pode seguir o mesmo padrão: uma subpasta própria dentro de
+`components/` (ex.: `components/horario/`, `components/noticias/`), mantendo os componentes
+de cada tela isolados dos outros.
+
+## Como instalar
+1. Copie a pasta `components/` (com a subpasta `inicio/` dentro) para dentro do seu projeto
+   (ex.: `src/views/components/`) e `HomeView.vue` para `src/views/`.
+2. Copie `assets/theme.css` para `src/assets/theme.css` e importe uma vez, no `main.js`:
+   ```js
+   import '@/assets/theme.css'
+   ```
+3. Garanta que o `vue-router` já está instalado (os componentes usam `<router-link>` e
+   `useRouter`/`useRoute`). Ajuste as rotas (`/horario`, `/noticias`, etc.) para as que
+   já existem no seu `router/index.js`.
+4. Aponte a rota `/` (ou onde quiser a Home) para `HomeView.vue`.
+
+## O que ainda depende de você
+- Ligar `handleLogout` em `HomeView.vue` à sua API real (`api.logout()`).
+- Trocar o texto de `AboutSection` e `HeroBanner` via props, se quiser vir do backend
+  em vez de fixo no componente.
+- O botão "Ver Vídeo" (`playVideo`) está com um TODO — hoje só um placeholder para você
+  plugar um modal/player.
+
+## Design
+- Paleta e tipografia centralizadas em `theme.css` (fácil trocar tom de azul/dourado).
+- O padrão do banner é um SVG `<pattern>` com uma pomba estilizada, em referência direta
+  ao trabalho de azulejos do artista Athos Bulcão — dá identidade ao invés de ser um
+  gradiente genérico.

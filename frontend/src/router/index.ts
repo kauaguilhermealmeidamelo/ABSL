@@ -8,6 +8,10 @@ import Noticias from '@/views/Noticias.vue'
 import Projetos from '@/views/Projetos.vue'
 import Gabarito from '@/views/Gabarito.vue'
 import Transparencia from '@/views/Transparencia.vue'
+import Cardapio from '@/views/Cardapio.vue'
+import Ouvintes from '@/views/Ouvintes.vue'
+import Mapa from '@/views/Mapa.vue'
+import Usuarios from '@/views/Usuarios.vue'
 
 const routes = [
   {
@@ -21,8 +25,13 @@ const routes = [
       { path: 'projetos', name: 'projetos', component: Projetos },
       { path: 'gabarito', name: 'gabarito', component: Gabarito },
       { path: 'transparencia', name: 'transparencia', component: Transparencia },
+        { path: 'cardapio', name: 'cardapio', component: Cardapio },
+        { path: 'ouvintes', name: 'ouvintes', component: Ouvintes },
+        { path: 'mapa', name: 'mapa', component: Mapa },
+        { path: 'usuarios', name: 'usuarios', component: Usuarios },
     ]
   }
+  ,
 ]
 
 const router = createRouter({
@@ -34,7 +43,7 @@ const router = createRouter({
 
 
 router.beforeEach((to: RouteLocationNormalized) => {
-    const publicPages = ['/', '/inicio', '/horario', '/noticias', '/projetos', '/gabarito', '/transparencia']
+    const publicPages = ['/', '/inicio', '/horario', '/noticias', '/projetos', '/gabarito', '/transparencia', '/cardapio', '/ouvintes', '/mapa']
     const authRequired = !publicPages.includes(to.path)
     const token = localStorage.getItem('token')
 
