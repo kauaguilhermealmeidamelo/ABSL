@@ -1,24 +1,28 @@
 <script setup>
-import { onMounted, ref } from 'vue';
-import api from '@/services/api'
-const msg = ref('servidor off')
-</script> 
+import Banner from '@/components/inicio/Banner.vue'
+import Sobre from '@/components/inicio/Sobre.vue'
+import Equipe from '@/components/inicio/Equipe.vue'
+</script>
 
 <template>
-  <div>
-    <h1>Bem-vindo ao Grêmio Athos Bulcão</h1>
-    <p>Selecione uma opção no menu lateral.</p>
+  <div class="page">
+    <Banner/>
+    <Sobre/>
+    <Equipe/>
   </div>
+
 </template>
+
 <style scoped>
-template{
-  background-color: rgb(33, 112, 180);
+.page {
+  padding: 32px 40px 64px;
+  max-width: 1180px;
+  margin: 0 auto;
 }
-div{
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100vw;
-  height: 100vh;
+
+@media (max-width: 720px) {
+  .page {
+    padding: 20px;
+  }
 }
 </style>
