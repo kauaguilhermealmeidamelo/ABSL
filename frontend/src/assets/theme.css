@@ -1,0 +1,31 @@
+/* frontend/src/assets/theme.css
+   Variáveis globais de cor e tipografia — ABSL / Grêmio Athos Bulcão */
+
+:root {
+  /* Paleta principal */
+  --color-navy: #0F2038;
+  --color-navy-soft: #16509B;
+  --color-navy-strong: #1B63BD;
+  --color-gold: #F5A623;
+  --color-gold-strong: #F17100;
+
+  /* Superfícies */
+  --color-surface: #FFFFFF;
+  --color-surface-alt: #EEF1F6;
+  --color-surface-muted: #F7F8FC;
+
+  /* Texto */
+  --color-text-primary: #1c2333;
+  --color-text-secondary: #6B7C93;
+  --color-text-muted: #8a90a8;
+
+  /* Bordas */
+  --color-border: #ececf3;
+
+  /* Tipografia */
+  --font-heading: 'Fraunces', serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+
+  /* Espaçamento padrão de seção */
+  --section-spacing: 56px;
+}
