@@ -1,17 +1,16 @@
+<template>
+  <div class="page">
+    <Banner />
+    <Sobre />
+    <Equipe />
+  </div>
+</template>
+
 <script setup>
 import Banner from '@/components/inicio/Banner.vue'
 import Sobre from '@/components/inicio/Sobre.vue'
 import Equipe from '@/components/inicio/Equipe.vue'
 </script>
-
-<template>
-  <div class="page">
-    <Banner/>
-    <Sobre/>
-    <Equipe/>
-  </div>
-
-</template>
 
 <style scoped>
 .page {

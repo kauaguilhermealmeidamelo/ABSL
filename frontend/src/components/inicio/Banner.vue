@@ -1,157 +1,226 @@
 <template>
-  <section class="hero">
-    <div class="hero-pattern" aria-hidden="true"></div>
+  <div class="hero">
+    <!-- Azulejo background -->
+    <img :src="heroBg" alt="" aria-hidden class="hero-bg" />
+    <!-- Dark overlay so text stays readable -->
+    <div class="hero-overlay" />
     <div class="hero-content">
-      <span class="eyebrow">GESTÃO 2026 · ABSL</span>
-      <h1 class="hero-title">
-        GRÊMIO<br />
-        <span class="accent">ATHOS</span><br />
-        BULCÃO <span class="sparkle">✦</span>
-      </h1>
-      <p class="hero-text">
-        Não é apenas representação estudantil. É a <strong>voz</strong> de cada aluno
-        virando decisão, projeto e mudança real dentro da escola.
-      </p>
-      <div class="hero-actions">
-        <button class="btn-primary">
-          CONHEÇA O GRÊMIO <span class="arrow">→</span>
-        </button>
-        <button class="btn-ghost">
-          <span class="play-icon">▶</span> Ver Vídeo
-        </button>
+      <p class="eyebrow">GESTÃO 2026 · ABSL</p>
+      <h1 class="title title-white">GRÊMIO</h1>
+      <h1 class="title title-gold">ATHOS</h1>
+      <h1 class="title title-white title-sm">BULCÃO ✦</h1>
+
+      <div class="hero-body">
+        <div class="hero-text-row">
+          <div class="accent-bar" />
+          <p class="hero-text">
+            Não é apenas representação estudantil. É a <strong>voz</strong> de cada aluno
+            virando decisão, projeto e mudança real dentro da escola.
+          </p>
+        </div>
+        <div class="hero-actions">
+          <button class="btn-primary">
+            CONHEÇA O GRÊMIO <span class="arrow">→</span>
+          </button>
+          <button class="btn-ghost">
+            <span class="play-icon">▶</span> Ver Vídeo
+          </button>
+        </div>
       </div>
     </div>
-  </section>
+  </div>
 </template>
 
-<script setup></script>
+<script setup>
+import heroBg from '@/components/inicio/icons/iniciobanner.png'
+</script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,600;0,700;1,600&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700;1,900&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400;1,9..40,700&display=swap');
 
 .hero {
   position: relative;
-  border-radius: 18px;
+  border-radius: 16px;
   overflow: hidden;
-  background-image: url('@/components/icons/iniciobanner.png');
-  background-size: cover;
-  background-position: center;
-  padding: 56px 48px;
-  isolation: isolate;
-  font-family: 'Inter', system-ui, sans-serif;
+  margin-bottom: 40px;
+  min-height: 360px;
+  font-family: 'DM Sans', sans-serif;
 }
 
-.hero-pattern {
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero-overlay {
   position: absolute;
   inset: 0;
   background: linear-gradient(
-    90deg,
-    rgba(20, 43, 134, 0.88) 0%,
-    rgba(16, 32, 97, 0.72) 20%,
-    rgba(18, 39, 122, 0.35) 60%,
-    rgba(22, 43, 128, 0.05) 80%
+    135deg,
+    rgba(13, 31, 60, 0.82) 0%,
+    rgba(26, 63, 143, 0.72) 60%,
+    rgba(37, 99, 235, 0.6) 100%
   );
-  z-index: 0;
 }
 
 .hero-content {
   position: relative;
-  z-index: 1;
-  max-width: 560px;
+  z-index: 10;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 360px;
 }
 
 .eyebrow {
-  display: inline-block;
+  color: #f5c518;
   font-size: 12px;
-  letter-spacing: 0.12em;
-  font-weight: 600;
-  color: #ffd479;
-  border-bottom: 2px solid #ffd479;
-  padding-bottom: 4px;
-  margin-bottom: 18px;
+  font-family: 'DM Mono', monospace;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
 }
 
-.hero-title {
-  font-family: 'Fraunces', serif;
-  font-weight: 700;
-  font-size: 52px;
-  line-height: 1.05;
+.title {
+  font-family: 'Playfair Display', serif;
+  font-weight: 900;
+  line-height: 1;
+  font-size: 60px;
+  margin: 0 0 4px;
+}
+.title-white {
   color: #ffffff;
-  margin: 0 0 20px;
 }
-
-.hero-title .accent {
+.title-gold {
+  color: #f5c518;
   font-style: italic;
-  color: #f5a623;
+}
+.title-sm {
+  font-size: 48px;
+  font-style: italic;
+  margin-bottom: 32px;
 }
 
-.sparkle {
-  font-size: 0.6em;
-  color: #ffd479;
+.hero-body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 480px;
 }
 
+.hero-text-row {
+  display: flex;
+  gap: 12px;
+}
+.accent-bar {
+  width: 4px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  background: #f5c518;
+}
 .hero-text {
-  border-left: 3px solid #f5a623;
-  padding-left: 16px;
-  color: #dbe1f5;
-  font-size: 15px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 14px;
   line-height: 1.6;
-  margin-bottom: 28px;
+  margin: 0;
+}
+.hero-text strong {
+  color: #ffffff;
 }
 
 .hero-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 22px;
+  gap: 12px;
 }
 
 .btn-primary {
-  background: #ffffff;
-  color: #1c2f63;
-  border: none;
+  padding: 10px 20px;
   border-radius: 999px;
-  padding: 13px 26px;
+  background: #ffffff;
+  color: #0d1f3c;
+  font-size: 14px;
   font-weight: 700;
-  font-size: 13px;
-  letter-spacing: 0.03em;
-  cursor: pointer;
-  transition: transform 0.15s ease;
-}
-.btn-primary:hover {
-  transform: translateY(-2px);
-}
-.arrow {
-  margin-left: 4px;
-}
-
-.btn-ghost {
-  background: transparent;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
   border: none;
-  color: #ffffff;
-  font-weight: 600;
-  font-size: 13px;
+  cursor: pointer;
   display: flex;
   align-items: center;
   gap: 8px;
+  transition: background-color 0.15s ease;
+}
+.btn-primary:hover {
+  background: #f5c518;
+}
+.arrow {
+  font-size: 14px;
+}
+
+.btn-ghost {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
   cursor: pointer;
+  transition: color 0.15s ease;
+}
+.btn-ghost:hover {
+  color: #ffffff;
 }
 .play-icon {
-  width: 26px;
-  height: 26px;
-  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  font-size: 10px;
+  font-size: 12px;
 }
 
 @media (max-width: 720px) {
-  .hero {
-    padding: 36px 24px;
+  .title {
+    font-size: 40px;
   }
-  .hero-title {
-    font-size: 36px;
+  .title-sm {
+    font-size: 32px;
+  }
+  .hero-content {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 420px) {
+  .hero {
+    min-height: unset;
+  }
+  .hero-content {
+    padding: 20px;
+    min-height: unset;
+  }
+  .title {
+    font-size: 30px;
+  }
+  .title-sm {
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+  .hero-actions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .btn-primary {
+    width: 100%;
+    justify-content: center;
   }
 }
 </style>

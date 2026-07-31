@@ -9,82 +9,84 @@
       ouvida. Qualquer estudante pode propor pauta, participar de reuniões e
       contribuir com a gestão.
     </p>
+  </section>
 
-    <div class="pillars">
-      <article class="pillar" v-for="p in pillars" :key="p.title">
-        <span class="pillar-dash">—</span>
-        <h3>{{ p.title }}</h3>
-        <p>{{ p.text }}</p>
-      </article>
+  <section class="pillars">
+    <div class="pillar" v-for="p in pillars" :key="p.title">
+      <div class="pillar-bar" />
+      <h3>{{ p.title }}</h3>
+      <p>{{ p.desc }}</p>
     </div>
   </section>
 </template>
 
 <script setup>
 const pillars = [
-  {
-    title: 'Representar',
-    text: 'Levamos as demandas dos estudantes à direção e acompanhamos as respostas até o fim.',
-  },
-  {
-    title: 'Cuidar',
-    text: 'Campanhas solidárias, acolhimento e projetos de bem-estar dentro da escola.',
-  },
-  {
-    title: 'Movimentar',
-    text: 'Eventos, torneios, feiras culturais e tudo que faz a escola ter vida.',
-  },
+  { title: 'Representar', desc: 'Levamos as demandas dos estudantes à direção e acompanhamos as respostas até o fim.' },
+  { title: 'Cuidar', desc: 'Campanhas solidárias, acolhimento e projetos de bem-estar dentro da escola.' },
+  { title: 'Movimentar', desc: 'Eventos, torneios, feiras culturais e tudo que faz a escola ter vida.' },
 ]
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,600;0,700;1,600&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700;1,900&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400;1,9..40,700&display=swap');
 
 .about {
-  margin-top: 56px;
-  font-family: 'Inter', system-ui, sans-serif;
-  color: #1c2333;
+  margin-bottom: 40px;
+  font-family: 'DM Sans', sans-serif;
 }
 .about h2 {
-  font-family: 'Fraunces', serif;
-  font-size: 26px;
+  font-family: 'Playfair Display', serif;
+  font-size: 24px;
   font-weight: 700;
-  margin-bottom: 14px;
+  color: #0d1f3c;
+  margin-bottom: 12px;
 }
 .about p {
-  color: #4c5470;
-  font-size: 14.5px;
+  color: #5a6a85;
   line-height: 1.7;
-  max-width: 780px;
-  margin-bottom: 34px;
+  max-width: 720px;
+  margin: 0;
 }
 
 .pillars {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 40px;
+  font-family: 'DM Sans', sans-serif;
 }
 .pillar {
-  background: #f7f8fc;
-  border-radius: 14px;
-  padding: 22px 20px;
+  background: #ffffff;
+  border: 1px solid rgba(13, 31, 60, 0.08);
+  border-radius: 12px;
+  padding: 24px;
+  transition: box-shadow 0.15s ease;
 }
-.pillar-dash {
-  color: #9aa2bd;
-  font-weight: 700;
+.pillar:hover {
+  box-shadow: 0 4px 10px rgba(13, 31, 60, 0.08);
+}
+.pillar-bar {
+  width: 24px;
+  height: 2px;
+  background: #f5c518;
+  border-radius: 4px;
+  margin-bottom: 12px;
 }
 .pillar h3 {
+  color: #0d1f3c;
+  font-weight: 700;
   font-size: 16px;
-  margin: 6px 0 8px;
+  margin: 0 0 8px;
 }
 .pillar p {
-  font-size: 13.5px;
-  color: #6b7290;
-  line-height: 1.55;
+  color: #5a6a85;
+  font-size: 14px;
+  line-height: 1.6;
   margin: 0;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 480px) {
   .pillars {
     grid-template-columns: 1fr;
   }

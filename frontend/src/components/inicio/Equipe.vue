@@ -2,14 +2,14 @@
   <section class="team">
     <h2>Equipe</h2>
     <div class="team-grid">
-      <article class="team-card" v-for="dept in departments" :key="dept.name">
+      <article class="team-card" v-for="dir in team" :key="dir.name">
         <header>
-          <span class="dept-icon">{{ dept.icon }}</span>
-          <h4>{{ dept.name }}</h4>
+          <span class="emoji">{{ dir.emoji }}</span>
+          <span class="dept-name">{{ dir.name }}</span>
         </header>
         <ul>
-          <li v-for="m in dept.members" :key="m.role">
-            <span class="role">{{ m.role }}:</span> {{ m.name }}
+          <li v-for="m in dir.members" :key="m.cargo">
+            <span class="cargo">{{ m.cargo }}:</span> {{ m.nome }}
           </li>
         </ul>
       </article>
@@ -18,141 +18,61 @@
 </template>
 
 <script setup>
-const departments = [
-  {
-    name: 'PRESIDÊNCIA',
-    icon: '👑',
-    members: [
-      { role: 'Presidente', name: 'Samuel' },
-      { role: 'Vice-Presidente', name: 'Bárbara' },
-      { role: '1º Vice-Presidente', name: 'Josué' },
-    ],
-  },
-  {
-    name: 'SECRETARIA',
-    icon: '📋',
-    members: [
-      { role: 'Secretário-Geral', name: 'Marcos Paulo' },
-      { role: '1ª Secretária', name: 'Giovanna' },
-      { role: '2ª Secretária', name: 'Brenda' },
-    ],
-  },
-  {
-    name: 'TESOURARIA',
-    icon: '🔥',
-    members: [
-      { role: 'Tesoureira-Geral', name: 'Andressa' },
-      { role: '1º Tesoureiro', name: 'Rafael' },
-      { role: '2º Tesoureiro', name: 'Vitor' },
-    ],
-  },
-  {
-    name: 'ESPORTE E LAZER',
-    icon: '⚽',
-    members: [
-      { role: 'Diretor-Geral', name: 'Igor' },
-      { role: '1ª Diretora', name: 'Rafaela' },
-      { role: '2º Diretor', name: 'Arthur Anaripe' },
-    ],
-  },
-  {
-    name: 'CULTURA',
-    icon: '🎭',
-    members: [
-      { role: 'Diretora-Geral', name: 'Jannyfer' },
-      { role: '1ª Diretora', name: 'Ludmila' },
-      { role: '2º Diretor', name: 'Thiago' },
-    ],
-  },
-  {
-    name: 'POLÍTICAS EDUCACIONAIS',
-    icon: '📚',
-    members: [
-      { role: 'Diretor-Geral', name: 'Enzo' },
-      { role: '1ª Diretora', name: 'Lorena' },
-      { role: '2ª Diretora', name: 'Larissa' },
-    ],
-  },
-  {
-    name: 'SAÚDE E MEIO AMBIENTE',
-    icon: '🌱',
-    members: [
-      { role: 'Diretora-Geral', name: 'Ayla' },
-      { role: '1ª Diretora', name: 'Maryane' },
-      { role: '2ª Diretora', name: 'Joana' },
-    ],
-  },
-  {
-    name: 'DIRETORIA SOCIAL',
-    icon: '🤝',
-    members: [
-      { role: 'Diretor-Geral', name: 'David' },
-      { role: '1ª Diretora', name: 'Mariana' },
-      { role: '2º Diretor', name: 'Matheus' },
-    ],
-  },
-  {
-    name: 'IMPRENSA E COMUNICAÇÃO',
-    icon: '📣',
-    members: [
-      { role: 'Diretora-Geral', name: 'Yana' },
-      { role: '1ª Diretora', name: 'Giulia' },
-      { role: '2ª Diretora', name: 'Ana Julia' },
-    ],
-  },
-  {
-    name: 'TECNOLOGIA E INOVAÇÃO',
-    icon: '💻',
-    members: [
-      { role: 'Diretor-Geral', name: 'Kauan Guilherme' },
-      { role: '1º Diretor', name: 'Pedro Lucas' },
-      { role: '2ª Diretora', name: 'Maria Eduarda' },
-    ],
-  },
+const team = [
+  { emoji: '👑', name: 'Presidência', members: [{ cargo: 'Presidente', nome: 'Samuel' }, { cargo: 'Vice-Presidente', nome: 'Bárbara' }, { cargo: '1º Vice-Presidente', nome: 'Jósue' }] },
+  { emoji: '📋', name: 'Secretaria', members: [{ cargo: 'Secretário-Geral', nome: 'Marcus Paulo' }, { cargo: '1ª Secretária', nome: 'Giovanna' }, { cargo: '2ª Secretária', nome: 'Brenda' }] },
+  { emoji: '🔥', name: 'Tesouraria', members: [{ cargo: 'Tesoureira-Geral', nome: 'Andressa' }, { cargo: '1º Tesoureiro', nome: 'Rafael' }, { cargo: '2º Tesoureiro', nome: 'Vitor' }] },
+  { emoji: '🌐', name: 'Esporte e Lazer', members: [{ cargo: 'Diretor-Geral', nome: 'Igor' }, { cargo: '1ª Diretora', nome: 'Rafaela' }, { cargo: '2º Diretor', nome: 'Artur Araripe' }] },
+  { emoji: '🎭', name: 'Cultura', members: [{ cargo: 'Diretora-Geral', nome: 'Jennyfer' }, { cargo: '1ª Diretora', nome: 'Ludmila' }, { cargo: '2º Diretor', nome: 'Thiago' }] },
+  { emoji: '📚', name: 'Políticas Educacionais', members: [{ cargo: 'Diretor-Geral', nome: 'Enzo' }, { cargo: '1ª Diretora', nome: 'Lorena' }, { cargo: '2ª Diretora', nome: 'Larissa' }] },
+  { emoji: '🌱', name: 'Saúde e Meio Ambiente', members: [{ cargo: 'Diretora-Geral', nome: 'Ayla' }, { cargo: '1ª Diretora', nome: 'Maryane' }, { cargo: '2ª Diretora', nome: 'Joana' }] },
+  { emoji: '🤝', name: 'Diretoria Social', members: [{ cargo: 'Diretor-Geral', nome: 'David' }, { cargo: '1ª Diretora', nome: 'Mariana' }, { cargo: '2º Diretor', nome: 'Matheus' }] },
+  { emoji: '📢', name: 'Imprensa e Comunicação', members: [{ cargo: 'Diretora-Geral', nome: 'Yara' }, { cargo: '1ª Diretora', nome: 'Giulia' }, { cargo: '2ª Diretora', nome: 'Ana Júlia' }] },
+  { emoji: '💻', name: 'Tecnologia e Inovação', members: [{ cargo: 'Diretor-Geral', nome: 'Kauan Guilherme' }, { cargo: '1º Diretor', nome: 'Pedro Lucas' }, { cargo: '2º Diretor', nome: 'Maria Eduarda' }] },
 ]
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,600;0,700;1,600&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700;1,900&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400;1,9..40,700&display=swap');
 
 .team {
-  margin-top: 56px;
-  font-family: 'Inter', system-ui, sans-serif;
-  color: #1c2333;
+  font-family: 'DM Sans', sans-serif;
 }
 .team h2 {
-  font-family: 'Fraunces', serif;
-  font-size: 26px;
+  font-family: 'Playfair Display', serif;
+  font-size: 24px;
   font-weight: 700;
-  margin-bottom: 14px;
+  color: #0d1f3c;
+  margin-bottom: 16px;
 }
+
 .team-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
 }
+
 .team-card {
   background: #ffffff;
-  border: 1px solid #ececf3;
-  border-radius: 14px;
-  padding: 18px 22px;
-  box-shadow: 0 1px 3px rgba(20, 25, 50, 0.04);
+  border: 1px solid rgba(13, 31, 60, 0.08);
+  border-radius: 12px;
+  padding: 20px;
 }
 .team-card header {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
-.dept-icon {
-  font-size: 16px;
+.emoji {
+  font-size: 20px;
 }
-.team-card h4 {
-  font-size: 12.5px;
-  letter-spacing: 0.04em;
+.dept-name {
+  color: #1a3f8f;
   font-weight: 700;
-  color: #1c2f63;
-  margin: 0;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 .team-card ul {
   list-style: none;
@@ -164,15 +84,11 @@ const departments = [
 }
 .team-card li {
   font-size: 13px;
-  color: #4c5470;
+  color: #5a6a85;
 }
-.role {
-  color: #8a90a8;
+.cargo {
+  color: #0d1f3c;
+  font-weight: 500;
 }
 
-@media (max-width: 720px) {
-  .team-grid {
-    grid-template-columns: 1fr;
-  }
-}
-</style>
+</style>  
