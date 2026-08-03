@@ -1,5 +1,19 @@
+# ==========================
+# Dependencies
+# ==========================
+node_modules/
+
+# ==========================
+# Build
+# ==========================
+dist/
+dist-ssr/
+coverage/
+
+# ==========================
 # Logs
-logs
+# ==========================
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -7,33 +21,71 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-.DS_Store
-dist
-dist-ssr
-coverage
+# ==========================
+# Environment
+# ==========================
+.env
+.env.*
+!.env.example
+
+# Local config
 *.local
 
-# Editor directories and files
+# ==========================
+# Cache
+# ==========================
+.eslintcache
+*.tsbuildinfo
+.vite/
+
+# ==========================
+# OS Files
+# ==========================
+.DS_Store
+Thumbs.db
+
+# ==========================
+# Editors
+# ==========================
 .vscode/*
 !.vscode/extensions.json
-.idea
+
+.idea/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+*.swp
 
-*.tsbuildinfo
-
-.eslintcache
-
+# ==========================
 # Cypress
-/cypress/videos/
-/cypress/screenshots/
+# ==========================
+cypress/videos/
+cypress/screenshots/
 
+# ==========================
 # Vitest
+# ==========================
 __screenshots__/
 
+# ==========================
 # Vite
+# ==========================
 *.timestamp-*-*.mjs
+
+# Laravel
+vendor/
+bootstrap/cache/*.php
+storage/*.key
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/testing/*
+storage/framework/views/*
+public/storage
+
+.phpunit.result.cache
+Homestead.json
+Homestead.yaml
+auth.json
