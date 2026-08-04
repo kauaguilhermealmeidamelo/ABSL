@@ -1,18 +1,14 @@
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import PageHeader from '@/components/common/PageHeader.vue'
 import AdminBanner from '@/components/common/AdminBanner.vue'
-import ProjetoCard from '@/components/projetos/ProjetoCard.vue'
+import DiretoriaSelectorGrid from '@/components/projetos/DiretoriaSelectorGrid.vue'
+import ProjetosDialog from '@/components/projetos/ProjetosDialog.vue'
+import ProjetoDetalheDialog from '@/components/projetos/ProjetoDetalheDialog.vue'
 import ProjetoFormModal from '@/components/projetos/ProjetoFormModal.vue'
 import { useAdmin } from '@/composables/useAdmin'
 
 const { isAdmin } = useAdmin()
-
-const categorias = [
-  'Presidência', 'Secretaria', 'Tesouraria', 'Esporte e Lazer', 'Cultura',
-  'Políticas Educacionais', 'Saúde e Meio Ambiente', 'Diretoria Social',
-  'Imprensa e Comunicação', 'Tecnologia e Inovação',
-]
 
 // TODO: substituir por chamada à API (endpoint de projetos ainda não existe no backend)
 const projetos = ref([
@@ -24,29 +20,44 @@ const projetos = ref([
   { id: 6, categoria: 'Tecnologia e Inovação', status: 'em_andamento', titulo: 'Portal do Estudante', descricao: 'Canal digital com horários, gabaritos e notícias do grêmio reunidos em um só lugar.' },
 ])
 
-const modalOpen = ref(false)
-const editando = ref(null)
+// Categoria selecionada no grid: null (nada aberto) | '__geral__' | nome da categoria
+const categoriaSelecionada = ref(null)
+const projetoDetalhe = ref(null)
+const modalAberto = ref(false)
+const projetoEditando = ref(null)
+
+const projetosVisiveis = computed(() => {
+  if (categoriaSelecionada.value === null) return []
+  if (categoriaSelecionada.value === '__geral__') return projetos.value
+  return projetos.value.filter((p) => p.categoria === categoriaSelecionada.value)
+})
+
+function selecionarCategoria(categoria) {
+  categoriaSelecionada.value = categoria
+}
 
 function abrirNovo() {
-  editando.value = null
-  modalOpen.value = true
+  projetoEditando.value = null
+  modalAberto.value = true
 }
 
 function abrirEdicao(projeto) {
-  editando.value = projeto
-  modalOpen.value = true
+  projetoEditando.value = projeto
+  modalAberto.value = true
+  projetoDetalhe.value = null
 }
 
 function salvar(dados) {
-  if (editando.value) {
-    projetos.value = projetos.value.map((p) => (p.id === editando.value.id ? { ...p, ...dados } : p))
+  if (projetoEditando.value) {
+    projetos.value = projetos.value.map((p) => (p.id === projetoEditando.value.id ? { ...p, ...dados } : p))
   } else {
-    projetos.value.unshift({ id: Date.now(), ...dados })
+    projetos.value = [{ id: Date.now(), ...dados }, ...projetos.value]
   }
 }
 
 function excluir(id) {
   projetos.value = projetos.value.filter((p) => p.id !== id)
+  projetoDetalhe.value = null
 }
 </script>
 
@@ -55,7 +66,7 @@ function excluir(id) {
     <PageHeader
       label="ABSL"
       title="Projetos"
-      subtitle="Ideias que saíram do papel — e as que estão em construção agora."
+      subtitle="Selecione uma diretoria para ver seus projetos."
     />
 
     <div v-if="isAdmin" class="admin-row">
@@ -66,18 +77,44 @@ function excluir(id) {
       </button>
     </div>
 
-    <div class="projetos-grid">
-      <ProjetoCard
-        v-for="projeto in projetos"
-        :key="projeto.id"
-        :projeto="projeto"
-        :is-admin="isAdmin"
-        @editar="abrirEdicao"
-        @excluir="excluir"
-      />
+    <DiretoriaSelectorGrid
+      :projetos="projetos"
+      :selecionado="categoriaSelecionada"
+      @selecionar="selecionarCategoria"
+    />
+
+    <div class="dica-vazia">
+      <v-icon size="34" color="#5A6A85" style="opacity: 0.25">mdi-folder-multiple-outline</v-icon>
+      <p>Escolha uma diretoria acima para ver os projetos.</p>
     </div>
 
-    <ProjetoFormModal v-model="modalOpen" :projeto="editando" :categorias="categorias" @salvar="salvar" />
+    <ProjetosDialog
+      v-if="categoriaSelecionada !== null"
+      :categoria="categoriaSelecionada"
+      :projetos="projetosVisiveis"
+      :is-admin="isAdmin"
+      @fechar="categoriaSelecionada = null"
+      @novo="abrirNovo"
+      @editar="abrirEdicao"
+      @excluir="excluir"
+      @abrir-detalhe="projetoDetalhe = $event"
+    />
+
+    <ProjetoDetalheDialog
+      v-if="projetoDetalhe"
+      :projeto="projetoDetalhe"
+      :is-admin="isAdmin"
+      @fechar="projetoDetalhe = null"
+      @editar="abrirEdicao"
+      @excluir="excluir"
+    />
+
+    <ProjetoFormModal
+      v-model="modalAberto"
+      :projeto="projetoEditando"
+      :categoria-padrao="categoriaSelecionada && categoriaSelecionada !== '__geral__' ? categoriaSelecionada : undefined"
+      @salvar="salvar"
+    />
   </div>
 </template>
 
@@ -121,16 +158,18 @@ function excluir(id) {
   background: #16509b;
 }
 
-.projetos-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 20px;
+.dica-vazia {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 40px 16px;
+  color: #5a6a85;
+  text-align: center;
 }
-
-@media (min-width: 720px) {
-  .projetos-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+.dica-vazia p {
+  font-size: 14px;
+  margin: 0;
 }
 
 @media (max-width: 480px) {

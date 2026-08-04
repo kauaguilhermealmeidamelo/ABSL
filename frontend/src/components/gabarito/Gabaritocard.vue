@@ -1,11 +1,3 @@
-<template>
-  <div class="gab-card">
-    <p class="gab-card-label">Turmas {{ label }}</p>
-    <GabaritoDocumento :name="`Gabarito Provão – ${label}.pdf`" type="gabarito" :is-admin="isAdmin" />
-    <GabaritoDocumento :name="`Prova Provão – ${label}.pdf`" type="prova" :is-admin="isAdmin" />
-  </div>
-</template>
-
 <script setup>
 import GabaritoDocumento from './GabaritoDocumento.vue'
 
@@ -14,6 +6,22 @@ defineProps({
   isAdmin: { type: Boolean, default: false },
 })
 </script>
+
+<template>
+  <div class="gab-card">
+    <p class="gab-card-label">Turmas {{ label }}</p>
+
+    <p class="gab-card-subtitle">📝 Provão</p>
+    <GabaritoDocumento :name="`Gabarito Provão – ${label}.pdf`" type="gabarito" :is-admin="isAdmin" />
+    <GabaritoDocumento :name="`Prova Provão – ${label}.pdf`" type="prova" :is-admin="isAdmin" />
+
+    <div class="gab-card-divisor" />
+
+    <p class="gab-card-subtitle">📋 2ª Chamada</p>
+    <GabaritoDocumento :name="`Gabarito 2ª Chamada – ${label}.pdf`" type="gabarito" :is-admin="isAdmin" />
+    <GabaritoDocumento :name="`Prova 2ª Chamada – ${label}.pdf`" type="prova" :is-admin="isAdmin" />
+  </div>
+</template>
 
 <style scoped>
 .gab-card {
@@ -36,5 +44,19 @@ defineProps({
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin: 0 0 12px;
+}
+
+.gab-card-subtitle {
+  font-size: 10px;
+  font-weight: 600;
+  color: #5a6a85;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0 0 4px;
+}
+
+.gab-card-divisor {
+  margin: 8px 0;
+  border-top: 1px dashed rgba(13, 31, 60, 0.1);
 }
 </style>

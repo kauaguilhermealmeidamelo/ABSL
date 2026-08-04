@@ -3,7 +3,7 @@
     <PageHeader
       label="ABSL"
       title="Gabarito"
-      subtitle="Gabaritos divididos por turno e por grupo de turmas."
+      subtitle="Gabaritos e provas para consulta, organizados por turno."
     />
 
     <AdminBanner v-if="isAdmin" />
@@ -20,8 +20,8 @@ import GabaritoSecao from '@/components/gabarito/Gabaritosecao.vue'
 import { useAdmin } from '@/composables/useAdmin'
 
 // Grupos de turmas conforme especificação do Figma
-const matGroups = ['2A até 2D', '2E até 2H', '3A até 3H', '3I até 3P']
-const vesGroups = ['1A até 1G', '1H até 1R']
+const matGroups = ['2A até 2D', '2E até 2H', '3A até 3H', '3I até 3O']
+const vesGroups = ['1A até 1H', '1I até 1P']
 
 const { isAdmin } = useAdmin()
 </script>

@@ -4,31 +4,39 @@ defineProps({
   isAdmin: { type: Boolean, default: false },
 })
 
-defineEmits(['editar', 'excluir'])
+defineEmits(['editar', 'excluir', 'abrir'])
 </script>
 
 <template>
-  <article class="projeto-card">
-    <div class="projeto-topo">
-      <span class="projeto-categoria">{{ projeto.categoria }}</span>
-      <span class="projeto-status" :class="projeto.status === 'concluido' ? 'status-concluido' : 'status-andamento'">
-        {{ projeto.status === 'concluido' ? 'CONCLUÍDO' : 'EM ANDAMENTO' }}
-      </span>
+  <article class="projeto-card" @click="$emit('abrir', projeto)">
+    <div v-if="projeto.imagem_url" class="projeto-imagem">
+      <img :src="projeto.imagem_url" :alt="projeto.titulo" />
     </div>
 
-    <h3 class="projeto-titulo">{{ projeto.titulo }}</h3>
-    <p class="projeto-descricao">{{ projeto.descricao }}</p>
-    <p v-if="projeto.data_conclusao" class="projeto-conclusao">Concluído em: {{ projeto.data_conclusao }}</p>
+    <div class="projeto-corpo">
+      <div class="projeto-topo">
+        <span class="projeto-categoria">{{ projeto.categoria }}</span>
+        <span class="projeto-status" :class="projeto.status === 'concluido' ? 'status-concluido' : 'status-andamento'">
+          {{ projeto.status === 'concluido' ? 'CONCLUÍDO' : 'EM ANDAMENTO' }}
+        </span>
+      </div>
 
-    <div v-if="isAdmin" class="projeto-acoes">
-      <button type="button" class="btn-editar" @click="$emit('editar', projeto)">
-        <v-icon size="13">mdi-pencil-outline</v-icon>
-        Editar
-      </button>
-      <button type="button" class="btn-excluir" @click="$emit('excluir', projeto.id)">
-        <v-icon size="13">mdi-trash-can-outline</v-icon>
-        Excluir
-      </button>
+      <h3 class="projeto-titulo">{{ projeto.titulo }}</h3>
+      <p class="projeto-descricao">{{ projeto.descricao }}</p>
+      <p v-if="projeto.data_conclusao && projeto.status === 'concluido'" class="projeto-conclusao">
+        Concluído em: {{ projeto.data_conclusao }}
+      </p>
+
+      <div v-if="isAdmin" class="projeto-acoes" @click.stop>
+        <button type="button" class="btn-editar" @click="$emit('editar', projeto)">
+          <v-icon size="13">mdi-pencil-outline</v-icon>
+          Editar
+        </button>
+        <button type="button" class="btn-excluir" @click="$emit('excluir', projeto.id)">
+          <v-icon size="13">mdi-trash-can-outline</v-icon>
+          Excluir
+        </button>
+      </div>
     </div>
   </article>
 </template>
@@ -38,15 +46,39 @@ defineEmits(['editar', 'excluir'])
   background: #ffffff;
   border: 1px solid rgba(13, 31, 60, 0.08);
   border-radius: 16px;
-  padding: 20px;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
   transition: box-shadow 0.15s ease;
 }
 
 .projeto-card:hover {
   box-shadow: 0 6px 16px rgba(13, 31, 60, 0.1);
+}
+
+.projeto-imagem {
+  height: 140px;
+  overflow: hidden;
+}
+
+.projeto-imagem img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.projeto-card:hover .projeto-imagem img {
+  transform: scale(1.05);
+}
+
+.projeto-corpo {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 .projeto-topo {
@@ -91,6 +123,11 @@ defineEmits(['editar', 'excluir'])
   font-weight: 700;
   font-size: 15px;
   margin: 0 0 6px;
+  transition: color 0.15s ease;
+}
+
+.projeto-card:hover .projeto-titulo {
+  color: #1a3f8f;
 }
 
 .projeto-descricao {
@@ -114,6 +151,8 @@ defineEmits(['editar', 'excluir'])
   display: flex;
   gap: 8px;
   margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(13, 31, 60, 0.08);
 }
 
 .btn-editar,
