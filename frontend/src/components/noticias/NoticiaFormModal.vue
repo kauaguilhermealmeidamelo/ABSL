@@ -3,21 +3,20 @@ import { ref, watch } from 'vue'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
-  projeto: { type: Object, default: null },
-  categorias: { type: Array, default: () => [] },
+  noticia: { type: Object, default: null },
 })
 
 const emit = defineEmits(['update:modelValue', 'salvar'])
 
-const form = ref({ titulo: '', categoria: '', descricao: '', status: 'em_andamento' })
+const form = ref({ titulo: '', data_publicacao: '', texto: '', imagem_url: '' })
 
 watch(
-  () => [props.modelValue, props.projeto],
+  () => [props.modelValue, props.noticia],
   () => {
     if (props.modelValue) {
-      form.value = props.projeto
-        ? { ...props.projeto }
-        : { titulo: '', categoria: props.categorias[0] || '', descricao: '', status: 'em_andamento' }
+      form.value = props.noticia
+        ? { ...props.noticia }
+        : { titulo: '', data_publicacao: '', texto: '', imagem_url: '' }
     }
   },
   { immediate: true }
@@ -36,28 +35,28 @@ function salvar() {
 
 <template>
   <v-dialog :model-value="modelValue" @update:model-value="$emit('update:modelValue', $event)" max-width="520">
-    <v-card class="projeto-modal">
+    <v-card class="noticia-modal">
       <v-card-title class="modal-title">
-        {{ projeto ? 'Editar projeto' : 'Novo projeto' }}
+        {{ noticia ? 'Editar notícia' : 'Nova notícia' }}
       </v-card-title>
 
       <v-card-text class="modal-body">
-        <label class="field-label">Título do projeto</label>
-        <input v-model="form.titulo" type="text" class="field-input" placeholder="Título do projeto" />
+        <label class="field-label">Imagem de capa</label>
+        <label class="upload-box">
+          <v-icon size="20" color="#5a6a85">mdi-image-outline</v-icon>
+          <span>Selecionar imagem</span>
+          <input type="file" accept="image/*" hidden @change="form.imagem_url = $event.target.files?.[0]?.name || ''" />
+        </label>
+        <span v-if="form.imagem_url" class="upload-file-name">{{ form.imagem_url }}</span>
 
-        <label class="field-label">Diretoria / categoria responsável</label>
-        <select v-model="form.categoria" class="field-select">
-          <option v-for="c in categorias" :key="c" :value="c">{{ c }}</option>
-        </select>
+        <label class="field-label">Título</label>
+        <input v-model="form.titulo" type="text" class="field-input" placeholder="Título da notícia" />
 
-        <label class="field-label">Descrição</label>
-        <textarea v-model="form.descricao" rows="3" class="field-textarea" placeholder="Descrição do projeto" />
+        <label class="field-label">Data de publicação</label>
+        <input v-model="form.data_publicacao" type="text" class="field-input" placeholder="Ex: 29 de julho de 2026" />
 
-        <label class="field-label">Status</label>
-        <select v-model="form.status" class="field-select">
-          <option value="em_andamento">Em andamento</option>
-          <option value="concluido">Concluído</option>
-        </select>
+        <label class="field-label">Resumo / texto</label>
+        <textarea v-model="form.texto" rows="4" class="field-textarea" placeholder="Descrição breve da notícia" />
       </v-card-text>
 
       <v-card-actions class="modal-actions">
@@ -69,7 +68,7 @@ function salvar() {
 </template>
 
 <style scoped>
-.projeto-modal {
+.noticia-modal {
   border-radius: 18px !important;
   font-family: 'DM Sans', sans-serif;
   padding: 8px;
@@ -98,8 +97,7 @@ function salvar() {
 }
 
 .field-input,
-.field-textarea,
-.field-select {
+.field-textarea {
   width: 100%;
   border: 1px solid rgba(13, 31, 60, 0.15);
   border-radius: 12px;
@@ -117,10 +115,28 @@ function salvar() {
 }
 
 .field-input:focus,
-.field-textarea:focus,
-.field-select:focus {
+.field-textarea:focus {
   outline: none;
   border-color: #1a3f8f;
+}
+
+.upload-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px dashed rgba(13, 31, 60, 0.25);
+  border-radius: 12px;
+  padding: 12px;
+  background: #eef3fb;
+  color: #5a6a85;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.upload-file-name {
+  font-size: 12px;
+  color: #1a3f8f;
+  margin-top: 4px;
 }
 
 .modal-actions {

@@ -2,7 +2,7 @@
   <div class="ouvintes-page">
     <PageHeader
       label="ABSL"
-      title="Os Ouvintes"
+      title="Ouvidoria"
       subtitle="Ouvidoria do Grêmio Athos Bulcão — envie sugestões, críticas ou opiniões. Sua voz importa."
     />
 

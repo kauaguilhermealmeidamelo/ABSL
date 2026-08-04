@@ -34,7 +34,7 @@ const menuItems = [
   { label: 'Transparência', to: '/transparencia', icon: 'mdi-shield-outline' },
   { label: 'Cardápio Semanal', to: '/cardapio', icon: 'mdi-silverware-fork-knife' },
   { label: 'Os Ouvintes', to: '/ouvintes', icon: 'mdi-forum-outline' },
-  { label: 'Mapa da Escola', to: '/mapa', icon: 'mdi-map-outline' },
+  { label: 'Conhecendo sua escola', to: '/mapa', icon: 'mdi-map-outline' },
 ]
 
 function isActive(to) {

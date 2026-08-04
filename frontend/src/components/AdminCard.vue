@@ -9,6 +9,12 @@ const open = ref(false)
 const password = ref('')
 const loading = ref(false)
 const error = ref('')
+const TEMP_ADMIN_PASSWORD = 'absl2026'
+const TEMP_ADMIN_USER = {
+  id: 1,
+  name: 'Admin Teste',
+  role: 'admin'
+}
 
 const isLoggedIn = computed(() => !!localStorage.getItem('token'))
 
@@ -35,6 +41,14 @@ async function submit() {
   loading.value = true
 
   try {
+    if (password.value === TEMP_ADMIN_PASSWORD) {
+      localStorage.setItem('token', 'frontend-admin-test-token')
+      localStorage.setItem('usuario', JSON.stringify(TEMP_ADMIN_USER))
+      password.value = ''
+      open.value = false
+      return
+    }
+
     const resp = await api.post('/login', { password: password.value })
     if (resp && resp.data) {
       localStorage.setItem('token', resp.data.token || resp.data.access_token || '')
@@ -99,6 +113,10 @@ function goUsuarios() {
               flat
               class="password-field"
             />
+
+            <div class="hint">
+              Senha temporária para testes: <span class="hint-code">absl2026</span>
+            </div>
 
             <div class="actions-row">
               <v-btn :loading="loading" class="enter-btn" block @click="submit">Entrar</v-btn>

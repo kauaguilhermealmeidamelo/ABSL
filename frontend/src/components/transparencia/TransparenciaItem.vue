@@ -1,7 +1,7 @@
 <script setup>
 defineProps({
   titulo: { type: String, required: true },
-  descricao: { type: String, default: '' },
+  descricao: { type: String, required: true },
   isAdmin: { type: Boolean, default: false },
 })
 
@@ -9,105 +9,92 @@ defineEmits(['excluir'])
 </script>
 
 <template>
-  <div class="item-row">
-    <div class="item-icon">
+  <div class="transp-item">
+    <div class="transp-icon">
       <v-icon size="18" color="#1a3f8f">mdi-file-document-outline</v-icon>
     </div>
 
-    <div class="item-info">
-      <p class="item-titulo">{{ titulo }}</p>
-      <p class="item-descricao">{{ descricao }}</p>
+    <div class="transp-info">
+      <p class="transp-titulo">{{ titulo }}</p>
+      <p class="transp-descricao">{{ descricao }}</p>
     </div>
 
-    <div class="item-actions">
-      <button type="button" class="btn-download">
+    <div class="transp-acoes">
+      <button type="button" class="btn-pdf">
         <v-icon size="13">mdi-download</v-icon>
         PDF
       </button>
-
-      <button
-        v-if="isAdmin"
-        type="button"
-        class="btn-excluir"
-        @click="$emit('excluir')"
-      >
-        <v-icon size="15">mdi-close</v-icon>
+      <button v-if="isAdmin" type="button" class="btn-excluir" @click="$emit('excluir')">
+        <v-icon size="14">mdi-close</v-icon>
       </button>
     </div>
   </div>
 </template>
 
 <style scoped>
-.item-row {
+.transp-item {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
+  padding: 16px 18px;
   background: #ffffff;
   border: 1px solid rgba(13, 31, 60, 0.08);
-  border-radius: 12px;
-  padding: 16px 20px;
-  transition: box-shadow 0.15s ease;
+  border-radius: 14px;
+  font-family: 'DM Sans', sans-serif;
 }
 
-.item-row:hover {
-  box-shadow: 0 1px 3px rgba(13, 31, 60, 0.06);
-}
-
-.item-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
+.transp-icon {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 10px;
   background: #eef3fb;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
 }
 
-.item-info {
+.transp-info {
   flex: 1;
   min-width: 0;
 }
 
-.item-titulo {
+.transp-titulo {
   color: #0d1f3c;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 14px;
+  margin: 0 0 2px;
+}
+
+.transp-descricao {
+  color: #5a6a85;
+  font-size: 12.5px;
+  line-height: 1.5;
   margin: 0;
 }
 
-.item-descricao {
-  color: #5a6a85;
-  font-size: 12px;
-  margin: 2px 0 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.item-actions {
+.transp-acoes {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
 }
 
-.btn-download {
+.btn-pdf {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
-  border-radius: 8px;
+  padding: 7px 14px;
+  border-radius: 999px;
   background: #eef3fb;
   color: #1a3f8f;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   border: none;
   cursor: pointer;
   transition: background-color 0.15s ease;
 }
-
-.btn-download:hover {
+.btn-pdf:hover {
   background: #d6e4ff;
 }
 
@@ -115,17 +102,25 @@ defineEmits(['excluir'])
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 6px;
-  border-radius: 8px;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
   border: none;
   background: transparent;
-  color: #f87171;
+  color: #dc2626;
   cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition: background-color 0.15s ease;
 }
-
 .btn-excluir:hover {
   background: #fef2f2;
-  color: #dc2626;
 }
-</style>    
+
+@media (max-width: 480px) {
+  .transp-item {
+    flex-wrap: wrap;
+  }
+  .transp-acoes {
+    margin-left: 52px;
+  }
+}
+</style>

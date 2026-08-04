@@ -14,41 +14,16 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
 import PageHeader from '@/components/common/PageHeader.vue'
 import AdminBanner from '@/components/common/AdminBanner.vue'
 import GabaritoSecao from '@/components/gabarito/Gabaritosecao.vue'
+import { useAdmin } from '@/composables/useAdmin'
 
-const matGroups = ['2A até 2D', '2E até 2H', '3A até 3H', '3I até 3O']
-const vesGroups = ['1A até 1H', '1I até 1P']
+// Grupos de turmas conforme especificação do Figma
+const matGroups = ['2A até 2D', '2E até 2H', '3A até 3H', '3I até 3P']
+const vesGroups = ['1A até 1G', '1H até 1R']
 
-// Mesmo critério usado em AdminCard.vue / menuLateral.vue para detectar admin
-const isAdmin = computed(() => {
-  const raw = localStorage.getItem('usuario')
-  if (!raw) return false
-
-  try {
-    const parsed = JSON.parse(raw)
-    if (parsed && typeof parsed === 'object') {
-      const role = String(
-        parsed.role || parsed.tipo || parsed.perfil || parsed.is_admin || parsed.administrador || ''
-      ).toLowerCase()
-      return (
-        role === 'admin' ||
-        role === 'administrator' ||
-        role === 'administrador' ||
-        role === 'super_admin' ||
-        role === 'super-admin' ||
-        parsed.is_admin === true ||
-        parsed.administrador === true
-      )
-    }
-  } catch {
-    // fallback para valores simples armazenados como texto
-  }
-
-  return String(raw).toLowerCase().includes('admin')
-})
+const { isAdmin } = useAdmin()
 </script>
 
 <style scoped>
