@@ -6,6 +6,12 @@ import AdminCard from '@/components/AdminCard.vue'
 
 const route = useRoute()
 
+const props = defineProps({
+  modelValue: { type: Boolean, default: true },
+  mobile: { type: Boolean, default: false },
+})
+const emit = defineEmits(['update:modelValue'])
+
 const isAdmin = computed(() => {
   const rawUser = localStorage.getItem('usuario')
   if (!rawUser) return false
@@ -41,11 +47,23 @@ function isActive(to) {
   return route.path === to
 }
 
+// No mobile, ao navegar, fecha o drawer automaticamente
+function onNavigate() {
+  if (props.mobile) emit('update:modelValue', false)
+}
+
 // AdminCard component encapsula login e ações administrativas
 </script>
 
 <template>
-  <v-navigation-drawer permanent color="#0F2038">
+  <v-navigation-drawer
+    :model-value="modelValue"
+    @update:model-value="emit('update:modelValue', $event)"
+    :permanent="!mobile"
+    :temporary="mobile"
+    :location="mobile ? 'left' : undefined"
+    color="#0F2038"
+  >
     <div class="drawer-content">
       <!-- Cabeçalho / Logo -->
       <div class="logo-wrap">
@@ -68,6 +86,7 @@ function isActive(to) {
           :to="item.to"
           class="lista-menu itemMenu"
           :class="{ 'lista-menu-ativo': isActive(item.to) }"
+          @click="onNavigate"
         >
           <v-icon :color="isActive(item.to) ? '#ffffff' : '#8FA3BF'" class="mr-3">{{ item.icon }}</v-icon>
           <span>{{ item.label }}</span>
@@ -77,7 +96,7 @@ function isActive(to) {
       <!-- Área administrativa (apenas se for admin) -->
       <template v-if="isAdmin">
         <div class="menu-divider" />
-        <router-link to="/usuarios" class="card-usuarios itemMenu">
+        <router-link to="/usuarios" class="card-usuarios itemMenu" @click="onNavigate">
           <v-icon color="#5B8DB8" size="36">mdi-account-supervisor</v-icon>
           <span class="card-usuarios-text">Gerenciamento<br>de Usuários</span>
         </router-link>
