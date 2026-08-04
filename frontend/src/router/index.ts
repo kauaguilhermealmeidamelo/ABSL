@@ -54,9 +54,6 @@ router.beforeEach((to: RouteLocationNormalized) => {
 
     // 2. Se é página pública E tem token -> tenta ir para uma área protegida
     // CORREÇÃO DO LOOP: Só redireciona se NÃO estivermos já em '/inicio'
-    if (!authRequired && token && to.path !== '/inicio') {
-        return '/inicio'
-    }
 
     // 3. Se nenhuma condição acima for verdadeira, permite a navegação (substitui o next())
     return true 
