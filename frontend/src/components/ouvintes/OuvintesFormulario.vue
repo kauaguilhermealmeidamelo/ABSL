@@ -37,14 +37,24 @@
     </div>
 
     <!-- Campos de identificação -->
-    <div v-if="modo === 'identificada'" class="fields-grid">
-      <div>
-        <label class="field-label">Nome completo</label>
-        <input v-model="nome" type="text" class="field-input" placeholder="Seu nome" />
+    <div v-if="modo === 'identificada'">
+      <div class="turma-field">
+        <label class="field-label">Turma (opcional)</label>
+        <select v-model="turma" class="field-input field-select">
+          <option value="">Selecione sua turma</option>
+          <option v-for="t in turmas" :key="t" :value="t">{{ t }}</option>
+        </select>
       </div>
-      <div>
-        <label class="field-label">E-mail (opcional)</label>
-        <input v-model="email" type="email" class="field-input" placeholder="seu@email.com" />
+
+      <div class="fields-grid">
+        <div>
+          <label class="field-label">Nome completo</label>
+          <input v-model="nome" type="text" class="field-input" placeholder="Seu nome" />
+        </div>
+        <div>
+          <label class="field-label">E-mail (opcional)</label>
+          <input v-model="email" type="email" class="field-input" placeholder="seu@email.com" />
+        </div>
       </div>
     </div>
 
@@ -77,7 +87,17 @@ import { ref } from 'vue'
 
 const emit = defineEmits(['enviar'])
 
+// Mesmo padrão de geração de turmas usado em Horario.vue
+function letters(prefix, from, to) {
+  const a = from.charCodeAt(0)
+  const b = to.charCodeAt(0)
+  return Array.from({ length: b - a + 1 }, (_, i) => prefix + String.fromCharCode(a + i))
+}
+
+const turmas = [...letters('1', 'A', 'P'), ...letters('2', 'A', 'P'), ...letters('3', 'A', 'O')]
+
 const modo = ref('identificada')
+const turma = ref('')
 const nome = ref('')
 const email = ref('')
 const texto = ref('')
@@ -90,11 +110,13 @@ function enviar() {
 
   emit('enviar', {
     anonimo: modo.value === 'anonima',
+    turma: modo.value === 'identificada' ? (turma.value || undefined) : undefined,
     nome: modo.value === 'identificada' ? nome.value : undefined,
     email: modo.value === 'identificada' ? email.value : undefined,
     texto: texto.value,
   })
 
+  turma.value = ''
   nome.value = ''
   email.value = ''
   texto.value = ''
@@ -217,6 +239,21 @@ function enviar() {
   font-weight: 500;
   color: #5a6a85;
   margin-bottom: 4px;
+}
+
+.turma-field {
+  margin-bottom: 12px;
+}
+
+.field-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%235a6a85'%3E%3Cpath fill-rule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z' clip-rule='evenodd'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  padding-right: 36px;
+  cursor: pointer;
 }
 
 .field-input,

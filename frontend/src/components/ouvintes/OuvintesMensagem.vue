@@ -8,6 +8,7 @@
         </span>
         <span v-if="mensagem.nome" class="msg-nome">{{ mensagem.nome }}</span>
         <span v-if="mensagem.email" class="msg-email">· {{ mensagem.email }}</span>
+        <span v-if="mensagem.turma" class="badge badge-turma">Turma {{ mensagem.turma }}</span>
         <span class="badge" :class="statusClass">{{ statusLabel }}</span>
       </div>
 
@@ -119,6 +120,11 @@ function salvarResposta() {
 .badge-identificada {
   background: #dbeafe;
   color: #1a3f8f;
+}
+
+.badge-turma {
+  background: #f5c518;
+  color: #6b4a00;
 }
 
 .badge-status-pendente {
@@ -286,4 +292,4 @@ function salvarResposta() {
 .btn-responder:hover {
   text-decoration: underline;
 }
-</style>
+</style>  
