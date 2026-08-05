@@ -1,3 +1,33 @@
+<script setup>
+import { ref } from 'vue'
+
+const props = defineProps({
+  days: { type: Array, required: true },
+  slots: { type: Array, required: true },
+  schedule: { type: Object, required: true },
+  isAdmin: { type: Boolean, default: false },
+  subjects: { type: Array, default: () => [] },
+})
+
+const emit = defineEmits(['editar-aula'])
+
+const editando = ref(null) // { day, time }
+
+function iniciarEdicao(day, time) {
+  if (!props.isAdmin) return
+  editando.value = { day, time }
+}
+
+function salvar(day, time, valor) {
+  emit('editar-aula', { day, time, subject: valor })
+  editando.value = null
+}
+
+function estaEditando(day, time) {
+  return editando.value?.day === day && editando.value?.time === time
+}
+</script>
+
 <template>
   <div class="table-card">
     <p class="scroll-hint">arraste para o lado →</p>
@@ -17,8 +47,33 @@
           >
             <td class="col-time time-cell">{{ slot.time }}</td>
             <td v-if="slot.isBreak" class="break-cell" :colspan="days.length">INTERVALO</td>
-            <td v-else v-for="day in days" :key="day" class="subject-cell">
-              {{ schedule[day]?.[slot.time] ?? '—' }}
+            <td
+              v-else
+              v-for="day in days"
+              :key="day"
+              class="subject-cell"
+              :class="{ 'subject-cell-editable': isAdmin }"
+            >
+              <select
+                v-if="isAdmin && estaEditando(day, slot.time)"
+                class="subject-select"
+                autofocus
+                :value="schedule[day]?.[slot.time]"
+                @change="salvar(day, slot.time, $event.target.value)"
+                @blur="editando = null"
+              >
+                <option v-for="s in subjects" :key="s" :value="s">{{ s }}</option>
+              </select>
+              <button
+                v-else
+                type="button"
+                class="subject-btn"
+                :disabled="!isAdmin"
+                @click="iniciarEdicao(day, slot.time)"
+              >
+                {{ schedule[day]?.[slot.time] ?? '—' }}
+                <v-icon v-if="isAdmin" size="11" class="subject-pencil">mdi-pencil</v-icon>
+              </button>
             </td>
           </tr>
         </tbody>
@@ -26,14 +81,6 @@
     </div>
   </div>
 </template>
-
-<script setup>
-defineProps({
-  days: { type: Array, required: true },
-  slots: { type: Array, required: true },
-  schedule: { type: Object, required: true },
-})
-</script>
 
 <style scoped>
 .table-card {
@@ -108,6 +155,36 @@ tbody tr.break {
   white-space: nowrap;
 }
 
+.subject-btn {
+  all: unset;
+  cursor: default;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.subject-cell-editable .subject-btn {
+  cursor: pointer;
+}
+.subject-cell-editable .subject-btn:hover {
+  color: #1a3f8f;
+}
+.subject-pencil {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.subject-cell-editable:hover .subject-pencil {
+  opacity: 1;
+}
+.subject-select {
+  width: 100%;
+  border: 1px solid #1a3f8f;
+  border-radius: 8px;
+  padding: 4px 6px;
+  font-size: 12px;
+  font-family: 'DM Sans', sans-serif;
+  background: #eef3fb;
+}
+
 .break-cell {
   text-align: center;
   padding: 8px;
@@ -118,7 +195,6 @@ tbody tr.break {
   text-transform: uppercase;
 }
 
-/* Keep the time column readable while scrolling horizontally on mobile */
 @media (max-width: 640px) {
   .scroll-hint {
     display: block;

@@ -1,3 +1,42 @@
+<script setup>
+import { ref, computed } from 'vue'
+import FiltrosHorario from '@/components/horario/FiltrosHorario.vue'
+import TabelaHorario from '@/components/horario/TabelaHorario.vue'
+import AdminBanner from '@/components/common/AdminBanner.vue'
+import { useAdmin } from '@/composables/useAdmin'
+import {
+  TURNO_ANOS, turmasState, DAYS, MAT_SLOTS, VES_SLOTS, SUBJECTS,
+  getSchedule, setHorarioOverride,
+} from '@/stores/appData'
+
+const { isAdmin } = useAdmin()
+
+const turno = ref('matutino')
+const ano = ref('2º ano')
+const turma = ref('2A')
+
+const anos = computed(() => TURNO_ANOS[turno.value])
+const turmas = computed(() => turmasState[turno.value]?.[ano.value] ?? [])
+const slots = computed(() => (turno.value === 'matutino' ? MAT_SLOTS : VES_SLOTS))
+const schedule = computed(() => getSchedule(turma.value))
+
+function onTurnoChange(value) {
+  turno.value = value
+  const newAno = TURNO_ANOS[value][0]
+  ano.value = newAno
+  turma.value = turmasState[value]?.[newAno]?.[0] ?? ''
+}
+
+function onAnoChange(value) {
+  ano.value = value
+  turma.value = turmasState[turno.value]?.[value]?.[0] ?? ''
+}
+
+function onEditarAula({ day, time, subject }) {
+  setHorarioOverride(turma.value, day, time, subject)
+}
+</script>
+
 <template>
   <div class="page">
     <header class="page-header">
@@ -5,6 +44,11 @@
       <h1>Horário das Aulas</h1>
       <p class="subtitle">Selecione o turno, o ano e a turma para visualizar a grade semanal.</p>
     </header>
+
+    <AdminBanner
+      v-if="isAdmin"
+      message="Modo administrador ativo — clique em uma matéria para editá-la."
+    />
 
     <FiltrosHorario
       :turno="turno"
@@ -17,104 +61,16 @@
       @update:turma="(v) => (turma = v)"
     />
 
-    <TabelaHorario :days="DAYS" :slots="slots" :schedule="schedule" />
+    <TabelaHorario
+      :days="DAYS"
+      :slots="slots"
+      :schedule="schedule"
+      :is-admin="isAdmin"
+      :subjects="SUBJECTS"
+      @editar-aula="onEditarAula"
+    />
   </div>
 </template>
-
-<script setup>
-import { ref, computed } from 'vue'
-import FiltrosHorario from '@/components/horario/FiltrosHorario.vue'
-import TabelaHorario from '@/components/horario/TabelaHorario.vue'
-
-const SUBJECTS = [
-  'Matemática', 'Português', 'Física', 'Química', 'Biologia', 'História',
-  'Geografia', 'Arte', 'Ed. Física', 'Filosofia', 'Sociologia', 'Literatura',
-  'Inglês', 'Redação',
-]
-const DAYS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta']
-
-const MAT_SLOTS = [
-  { time: '07:00–07:45', isBreak: false },
-  { time: '07:45–08:30', isBreak: false },
-  { time: '08:30–08:40', isBreak: true },
-  { time: '08:40–09:25', isBreak: false },
-  { time: '09:25–10:10', isBreak: false },
-  { time: '10:10–10:30', isBreak: true },
-  { time: '10:30–11:15', isBreak: false },
-  { time: '11:15–12:00', isBreak: false },
-]
-
-const VES_SLOTS = [
-  { time: '13:00–13:45', isBreak: false },
-  { time: '13:45–14:30', isBreak: false },
-  { time: '14:30–14:50', isBreak: true },
-  { time: '14:50–15:35', isBreak: false },
-  { time: '15:35–16:20', isBreak: false },
-  { time: '16:20–16:30', isBreak: true },
-  { time: '16:30–17:15', isBreak: false },
-  { time: '17:15–18:00', isBreak: false },
-]
-
-function letters(prefix, from, to) {
-  const a = from.charCodeAt(0)
-  const b = to.charCodeAt(0)
-  return Array.from({ length: b - a + 1 }, (_, i) => prefix + String.fromCharCode(a + i))
-}
-
-const TURNO_ANOS = {
-  matutino: ['2º ano', '3º ano'],
-  vespertino: ['1º ano', '2º ano'],
-}
-
-const TURNO_TURMAS = {
-  matutino: {
-    '2º ano': letters('2', 'A', 'H'),
-    '3º ano': letters('3', 'A', 'O'),
-  },
-  vespertino: {
-    '1º ano': letters('1', 'A', 'P'),
-    '2º ano': letters('2', 'I', 'P'),
-  },
-}
-
-// Gera uma grade determinística (mesma turma sempre cai nas mesmas matérias)
-function genSchedule(turma) {
-  const seed = turma.charCodeAt(0) * 31 + turma.charCodeAt(1)
-  const result = {}
-  let idx = seed
-  for (const day of DAYS) {
-    result[day] = {}
-    for (const slot of [...MAT_SLOTS, ...VES_SLOTS]) {
-      if (!slot.isBreak) {
-        result[day][slot.time] = SUBJECTS[Math.abs(idx) % SUBJECTS.length]
-        idx = (idx * 7919 + 137) % 9973
-      }
-    }
-  }
-  return result
-}
-
-const turno = ref('matutino')
-const ano = ref('2º ano')
-const turma = ref('2A')
-
-const anos = computed(() => TURNO_ANOS[turno.value])
-const turmas = computed(() => TURNO_TURMAS[turno.value][ano.value] ?? [])
-const slots = computed(() => (turno.value === 'matutino' ? MAT_SLOTS : VES_SLOTS))
-const schedule = computed(() => genSchedule(turma.value))
-
-function onTurnoChange(value) {
-  turno.value = value
-  const newAno = TURNO_ANOS[value][0]
-  ano.value = newAno
-  turma.value = TURNO_TURMAS[value][newAno][0]
-}
-
-function onAnoChange(value) {
-  ano.value = value
-  turma.value = TURNO_TURMAS[turno.value][value][0]
-}
-</script>
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700;1,900&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400;1,9..40,700&display=swap');

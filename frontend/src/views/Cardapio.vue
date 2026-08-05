@@ -1,32 +1,21 @@
-<script setup lang="ts">
-import { ref } from 'vue'
+<script setup>
 import PageHeader from '@/components/common/PageHeader.vue'
 import AdminBanner from '@/components/common/AdminBanner.vue'
 import CardapioSemana from '@/components/cardapio/CardapioSemana.vue'
 import CardapioTabela from '@/components/cardapio/CardapioTabela.vue'
+import { useAdmin } from '@/composables/useAdmin'
+import { cardapioSemana, cardapioDias } from '@/stores/appData'
 
-const props = withDefaults(defineProps<{ isAdmin?: boolean }>(), {
-  isAdmin: false,
-})
+const { isAdmin } = useAdmin()
 
-const DIAS_SEMANA = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira']
+const DIAS_SEMANA = Object.keys(cardapioDias)
 
-const cardapio = ref<Record<string, string>>({
-  'Segunda-feira': 'Galinhada',
-  'Terça-feira': 'Strogonoff de frango',
-  'Quarta-feira': 'Macarrão ao sugo com almôndegas',
-  'Quinta-feira': 'Peixe assado com limão e alho',
-  'Sexta-feira': 'Frango grelhado ao molho de ervas',
-})
-
-const semana = ref('28 jul – 01 ago 2026')
-
-function updateSemana(valor: string) {
-  semana.value = valor
+function updateSemana(valor) {
+  cardapioSemana.value = valor
 }
 
-function updateDia({ dia, valor }: { dia: string; valor: string }) {
-  cardapio.value = { ...cardapio.value, [dia]: valor }
+function updateDia({ dia, valor }) {
+  cardapioDias[dia] = valor
 }
 </script>
 
@@ -40,14 +29,14 @@ function updateDia({ dia, valor }: { dia: string; valor: string }) {
 
     <AdminBanner
       v-if="isAdmin"
-      message="Modo administrador ativo — você pode criar, editar e excluir conteúdo nesta página."
+      message="Modo administrador ativo — você pode editar a semana e os itens do cardápio."
     />
 
-    <CardapioSemana :semana="semana" :is-admin="isAdmin" @update="updateSemana" />
+    <CardapioSemana :semana="cardapioSemana" :is-admin="isAdmin" @update="updateSemana" />
 
     <CardapioTabela
       :dias="DIAS_SEMANA"
-      :cardapio="cardapio"
+      :cardapio="cardapioDias"
       :is-admin="isAdmin"
       @update-dia="updateDia"
     />

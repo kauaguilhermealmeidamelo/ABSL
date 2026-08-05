@@ -1,5 +1,16 @@
 /* frontend/src/assets/theme.css
-   Variáveis globais de cor e tipografia — ABSL / Grêmio Athos Bulcão */
+   Variáveis globais de cor e tipografia — ABSL / Grêmio Athos Bulcão
+
+   Convenções do projeto (Vue 3 + <script setup>):
+   1. Ordem dos blocos no .vue: <script setup> → <template> → <style scoped>.
+   2. Cada tela fica em src/views/*.vue e delega pedaços de UI para
+      componentes em src/components/<contexto>/*.vue (um componente por
+      responsabilidade — ex: gerenciamento/, horario/, cardapio/).
+   3. Estado que precisa ser compartilhado entre telas (sem backend ainda)
+      vive em src/stores/*.js como refs/reactive exportados — nada de
+      duplicar dados como turmas, gabarito, cardápio em cada view.
+   4. Paleta e tipografia sempre pelos tokens abaixo, nunca hex soltos.
+*/
 
 :root {
   /* Paleta principal */
@@ -23,9 +34,14 @@
   --color-border: #ececf3;
 
   /* Tipografia */
-  --font-heading: 'Fraunces', serif;
-  --font-body: 'Inter', system-ui, sans-serif;
+  --font-heading: 'Playfair Display', serif;
+  --font-body: 'DM Sans', sans-serif;
+  --font-mono: 'DM Mono', monospace;
 
   /* Espaçamento padrão de seção */
   --section-spacing: 56px;
+
+  /* Raio padrão de cards/botões */
+  --radius-card: 16px;
+  --radius-pill: 999px;
 }

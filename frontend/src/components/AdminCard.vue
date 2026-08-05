@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
-import api from '@/services/api'
+import { team } from '@/stores/appData'
 import logoImg from "@/assets/logo.png"
 import { useRouter } from 'vue-router'
 

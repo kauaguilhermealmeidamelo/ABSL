@@ -1,3 +1,13 @@
+<script setup>
+import PageHeader from '@/components/common/PageHeader.vue'
+import AdminBanner from '@/components/common/AdminBanner.vue'
+import GabaritoSecao from '@/components/gabarito/Gabaritosecao.vue'
+import { useAdmin } from '@/composables/useAdmin'
+import { gabMatGroups, gabVesGroups } from '@/stores/appData'
+
+const { isAdmin } = useAdmin()
+</script>
+
 <template>
   <div class="gabarito-page">
     <PageHeader
@@ -8,23 +18,10 @@
 
     <AdminBanner v-if="isAdmin" />
 
-    <GabaritoSecao title="Matutino" :groups="matGroups" :is-admin="isAdmin" />
-    <GabaritoSecao title="Vespertino" :groups="vesGroups" :is-admin="isAdmin" />
+    <GabaritoSecao title="Matutino" :groups="gabMatGroups" :is-admin="isAdmin" />
+    <GabaritoSecao title="Vespertino" :groups="gabVesGroups" :is-admin="isAdmin" />
   </div>
 </template>
-
-<script setup>
-import PageHeader from '@/components/common/PageHeader.vue'
-import AdminBanner from '@/components/common/AdminBanner.vue'
-import GabaritoSecao from '@/components/gabarito/Gabaritosecao.vue'
-import { useAdmin } from '@/composables/useAdmin'
-
-// Grupos de turmas conforme especificação do Figma
-const matGroups = ['2A até 2D', '2E até 2H', '3A até 3H', '3I até 3O']
-const vesGroups = ['1A até 1H', '1I até 1P']
-
-const { isAdmin } = useAdmin()
-</script>
 
 <style scoped>
 .gabarito-page {
