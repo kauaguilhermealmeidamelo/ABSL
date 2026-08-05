@@ -5,6 +5,7 @@ import GerenciamentoTabs from '@/components/gerenciamento/GerenciamentoTabs.vue'
 import TurmasManager from '@/components/gerenciamento/TurmasManager.vue'
 import DiretoriasManager from '@/components/gerenciamento/DiretoriasManager.vue'
 import GabaritoManager from '@/components/gerenciamento/GabaritoManager.vue'
+import MidiaManager from '@/components/gerenciamento/MidiaManager.vue'
 import { useAdmin } from '@/composables/useAdmin'
 
 const { isAdmin } = useAdmin()
@@ -13,6 +14,7 @@ const tabs = [
   { id: 'turmas', label: 'Turmas', icon: 'mdi-school-outline' },
   { id: 'diretorias', label: 'Diretorias', icon: 'mdi-domain' },
   { id: 'gabarito', label: 'Gabarito', icon: 'mdi-file-document-outline' },
+  { id: 'midia', label: 'Mídia', icon: 'mdi-filmstrip' },
 ]
 const tab = ref('turmas')
 </script>
@@ -35,6 +37,7 @@ const tab = ref('turmas')
       <TurmasManager v-if="tab === 'turmas'" />
       <DiretoriasManager v-else-if="tab === 'diretorias'" />
       <GabaritoManager v-else-if="tab === 'gabarito'" />
+      <MidiaManager v-else-if="tab === 'midia'" />
     </template>
   </div>
 </template>

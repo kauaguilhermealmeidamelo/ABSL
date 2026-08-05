@@ -152,6 +152,29 @@ export function saveDiretoriaMembers(index, members) {
   team[index].members = members.filter((m) => m.cargo || m.nome)
 }
 
+// ── Mídia da tela inicial ───────────────────────────────────────────────────
+export const inicioMedia = reactive({
+  file: null,
+  fileName: '',
+  videoUrl: '',
+})
+
+export function setInicioMedia(file) {
+  if (!file) return
+  inicioMedia.file = file
+  inicioMedia.fileName = file.name
+  inicioMedia.videoUrl = URL.createObjectURL(file)
+}
+
+export function clearInicioMedia() {
+  if (inicioMedia.videoUrl) {
+    URL.revokeObjectURL(inicioMedia.videoUrl)
+  }
+  inicioMedia.file = null
+  inicioMedia.fileName = ''
+  inicioMedia.videoUrl = ''
+}
+
 // ── Cardápio ─────────────────────────────────────────────────────────────
 export const cardapioSemana = ref('28 jul – 01 ago 2026')
 
