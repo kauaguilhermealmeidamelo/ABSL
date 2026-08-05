@@ -3,6 +3,7 @@ import menuLateral from '@/components/menuLateral.vue'
 import BottomNav from '@/components/BottomNav.vue'
 import { onMounted, ref } from 'vue'
 import { useDisplay } from 'vuetify'
+import api from '@/services/api'
 import { team } from '@/stores/appData'
 
 

@@ -75,6 +75,7 @@ function fechar() {
 
 <style scoped>
 .bottom-nav {
+    width: 100%;
     position: fixed;
     left: 0;
     right: 0;
@@ -82,7 +83,7 @@ function fechar() {
     z-index: 20;
     display: flex;
     align-items: stretch;
-    background: #ffffff;
+    background: #1b1174;
     border-top: 1px solid rgba(13, 31, 60, 0.08);
     box-shadow: 0 -2px 10px rgba(13, 31, 60, 0.06);
     padding-bottom: env(safe-area-inset-bottom, 0);
@@ -99,7 +100,7 @@ function fechar() {
     padding: 8px 4px 10px;
     border: none;
     background: transparent;
-    color: #8a95ab;
+    color: #ffffff;
     text-decoration: none;
     font-size: 10px;
     font-weight: 600;
@@ -116,7 +117,7 @@ function fechar() {
 }
 
 .more-sheet {
-    background: #ffffff;
+    background: #010147;
     border-radius: 20px 20px 0 0;
     padding: 8px 8px calc(20px + env(safe-area-inset-bottom, 0));
     font-family: 'DM Sans', sans-serif;
@@ -146,7 +147,7 @@ function fechar() {
     gap: 14px;
     padding: 12px;
     border-radius: 12px;
-    color: #0d1f3c;
+    color: #ffffff;
     text-decoration: none;
     font-size: 14px;
     font-weight: 500;
