@@ -1,16 +1,11 @@
 <script setup>
 import menuLateral from '@/components/menuLateral.vue'
-import { onMounted, ref, watch } from 'vue'
+import BottomNav from '@/components/BottomNav.vue'
+import { onMounted, ref } from 'vue'
 import { useDisplay } from 'vuetify'
 import api from '@/services/api'
 
 const { mobile } = useDisplay()
-
-// Desktop: menu sempre visível. Mobile: começa fechado.
-const drawer = ref(!mobile.value)
-watch(mobile, (isMobile) => {
-  drawer.value = !isMobile
-})
 
 const msg = ref('servidor off')
 const dividerItems = Array.from({ length: 36 }, (_, i) => i % 3)
@@ -27,14 +22,9 @@ onMounted(async () => {
 
 <template>
   <v-app>
-    <v-app-bar v-if="mobile" class="mobile-bar" density="comfortable" elevation="0">
-      <v-app-bar-nav-icon color="white" @click="drawer = !drawer" />
-      <span class="mobile-bar-title">ABSL</span>
-    </v-app-bar>
+    <menuLateral v-if="!mobile" :model-value="true" :mobile="false" />
 
-    <menuLateral v-model="drawer" :mobile="mobile" />
-
-    <v-main>
+    <v-main :class="{ 'has-bottom-nav': mobile }">
       <div class="geo-divider" role="presentation" aria-hidden="true">
         <div class="divider-strip">
           <span
@@ -46,19 +36,14 @@ onMounted(async () => {
       </div>
       <router-view />
     </v-main>
+
+    <BottomNav v-if="mobile" />
   </v-app>
 </template>
 
 <style scoped>
-.mobile-bar {
-  background-color: var(--color-navy, #0F2038) !important;
-}
-
-.mobile-bar-title {
-  color: #ffffff;
-  font-weight: 700;
-  font-size: 16px;
-  margin-left: 4px;
+.has-bottom-nav {
+  padding-bottom: calc(64px + env(safe-area-inset-bottom, 0));
 }
 
 .geo-divider {
@@ -66,16 +51,23 @@ onMounted(async () => {
   padding: 0.85rem 0;
   background-color: rgba(238, 241, 246, 0.75);
   border-bottom: 1px solid rgba(15, 32, 56, 0.06);
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+.geo-divider::-webkit-scrollbar {
+  display: none;
 }
 
 .divider-strip {
   display: flex;
   align-items: center;
   justify-content: flex-start;
+  flex-wrap: nowrap;
   gap: 0.55rem;
   padding: 0 1rem;
-  flex-wrap: wrap;
+  width: max-content;
 }
 
 .divider-item {
@@ -113,11 +105,11 @@ onMounted(async () => {
   }
   .divider-strip {
     padding: 0 0.75rem;
-    gap: 0.45rem;
+    gap: 0.4rem;
   }
   .divider-item {
-    width: 8px;
-    height: 8px;
+    width: 7px;
+    height: 7px;
   }
 }
 </style>

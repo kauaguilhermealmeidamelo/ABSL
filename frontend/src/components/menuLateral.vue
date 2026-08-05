@@ -94,14 +94,7 @@ function onNavigate() {
       </div>
 
       <!-- Área administrativa (apenas se for admin) -->
-      <template v-if="isAdmin">
-        <div class="menu-divider" />
-        <router-link to="/usuarios" class="card-usuarios itemMenu" @click="onNavigate">
-          <v-icon color="#5B8DB8" size="36">mdi-account-supervisor</v-icon>
-          <span class="card-usuarios-text">Gerenciamento<br>de Usuários</span>
-        </router-link>
-      </template>
-
+       
       <v-spacer />
 
       <!-- Rodapé: login/logout -->

@@ -1,7 +1,7 @@
 <template>
   <div class="view-container">
-    <h1>Gerenciamento de Usuários</h1>
-    <p>Área administrativa para gerir usuários.</p>
+    <h1>Gerenciamento Administrativo</h1>
+    <p>Área administrativa para gerir configurações e cadastros.</p>
   </div>
 </template>
 

@@ -88,7 +88,7 @@ function goUsuarios() {
         <span class="login-text">Login administrativo</span>
       </v-btn>
 
-      <v-dialog v-model="open" persistent max-width="480" >
+      <v-dialog v-model="open" max-width="480" content-class="admin-modal-wrap">
         <v-card class="admin-modal">
           <v-card-title class="popup-title">
             <div class="title-row">
@@ -97,25 +97,17 @@ function goUsuarios() {
                 <div class="title">Login Administrativo</div>
                 <div class="subtitle">ABSL — Grêmio Athos Bulcão</div>
               </div>
-              <v-btn icon variant="text" class="close-btn" @click="open = false"><v-icon>mdi-close</v-icon></v-btn>
             </div>
+            <v-btn icon variant="text" class="close-btn" @click="open = false"><v-icon>mdi-close</v-icon></v-btn>
           </v-card-title>
 
-          <v-card-text>
+          <v-card-text class="modal-scroll-area">
             <label class="field-label">Senha de administrador</label>
-            <v-text-field
-              v-model="password"
-              placeholder="Digite a senha"
-              type="password"
-              density="comfortable"
-              hide-details
-              variant="solo"
-              flat
-              class="password-field"
-            />
+            <v-text-field v-model="password" placeholder="Digite a senha" type="password" density="comfortable"
+              hide-details variant="solo" flat class="password-field" />
 
             <div class="hint">
-              Senha temporária para testes: <span class="hint-code">absl2026</span>
+              Use <span class="hint-code">{{ TEMP_ADMIN_PASSWORD }}</span> para o protótipo.
             </div>
 
             <div class="actions-row">
@@ -143,45 +135,62 @@ function goUsuarios() {
 </template>
 
 <style scoped>
-
 .admin-card {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
+
 .popup-title {
-  padding: 24px 24px 8px;
+  position: relative;
+  padding: 20px 44px 8px 20px;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: unset !important;
 }
 
 .title-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
 }
 
 .logo-small {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   flex-shrink: 0;
+}
+
+.title-block {
+  flex: 1 1 0%;
+  min-width: 0;
 }
 
 .title-block .title {
   font-weight: 700;
-  font-size: 19px;
+  font-size: 16px;
+  line-height: 1.3;
   color: #0F2038;
+  white-space: normal !important;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
 .title-block .subtitle {
-  font-size: 13px;
+  font-size: 12px;
   color: #6B7C93;
+  white-space: normal !important;
+  margin-top: 2px;
 }
 
 .close-btn {
-  margin-left: auto;
+  position: absolute;
+  top: 14px;
+  right: 10px;
   color: #6B7C93;
-}
+} 
 
 .admin-modal {
   border-radius: 20px;
@@ -234,15 +243,17 @@ function goUsuarios() {
   font-size: 13px;
   color: #6B7C93;
   margin-top: 18px;
+  text-align: center;
 }
 
 .hint-code {
   background-color: #EEF1F6;
   color: #1a2f4a;
-  padding: 2px 8px;
+  padding: 1px 6px;
   border-radius: 6px;
   font-weight: 600;
-  font-size: 13px;
+  font-size: 12.5px;
+  font-family: 'DM Mono', monospace;
 }
 
 .centered {
@@ -275,5 +286,74 @@ function goUsuarios() {
   color: #F17100;
   font-weight: 700;
   font-size: 15px;
+}
+
+.admin-modal-wrap {
+  width: calc(100vw - 32px);
+  margin: 0 16px;
+}
+
+.admin-modal {
+  max-height: calc(100vh - 64px);
+  display: flex;
+  flex-direction: column;
+}
+
+.popup-title {
+  flex-shrink: 0;
+}
+
+.modal-scroll-area {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+.title-block {
+  min-width: 0;
+  flex: 1;
+}
+
+.title-block .title {
+  font-weight: 700;
+  font-size: 19px;
+  color: #0F2038;
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
+.title-block .subtitle {
+  font-size: 13px;
+  color: #6B7C93;
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
+.close-btn {
+  margin-left: auto;
+  color: #6B7C93;
+  flex-shrink: 0;
+}
+
+@media (max-width: 420px) {
+  .popup-title {
+    padding: 20px 16px 8px;
+  }
+
+  .title-block .title {
+    font-size: 16px;
+  }
+
+  .admin-modal :deep(.v-card-text) {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
 }
 </style>
