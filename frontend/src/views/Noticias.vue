@@ -1,22 +1,21 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import PageHeader from '@/components/common/PageHeader.vue'
 import AdminBanner from '@/components/common/AdminBanner.vue'
+import NoticiaTabs from '@/components/noticias/NoticiaTabs.vue'
 import NoticiaCard from '@/components/noticias/NoticiaCard.vue'
 import NoticiaFormModal from '@/components/noticias/NoticiaFormModal.vue'
 import { useAdmin } from '@/composables/useAdmin'
+import { useNoticias } from '@/composables/useNoticias'
 
 const { isAdmin } = useAdmin()
+const { noticias, adicionar, atualizar, remover } = useNoticias()
+const router = useRouter()
 
-// TODO: substituir por chamada à API (endpoint de notícias ainda não existe no backend)
-const noticias = ref([
-  { id: 1, data_publicacao: '14 de março de 2026', titulo: 'Resultado da eleição: chapa Movimento assume o grêmio', texto: 'Com 71% dos votos e alta participação, a nova gestão foi eleita em votação aberta no pátio da escola.' },
-  { id: 2, data_publicacao: '03 de abril de 2026', titulo: 'Feira Cultural ABSL reúne 20 turmas no ginásio', texto: 'Apresentações de teatro, dança e exposição de artes marcaram a primeira edição do ano, organizada pela Diretoria de Cultura.' },
-  { id: 3, data_publicacao: '12 de abril de 2026', titulo: 'Torneio Interclasses abre inscrições para o 1º semestre', texto: 'Futebol, vôlei e handebol. Inscrições até o dia 20, feitas com o representante de cada turma.' },
-  { id: 4, data_publicacao: '28 de maio de 2026', titulo: 'Campanha do Agasalho: escola arrecada mais de 400 peças', texto: 'Em parceria com a Diretoria Social, a campanha bateu recorde e as doações foram entregues à ONG Recomeçar.' },
-  { id: 5, data_publicacao: '10 de junho de 2026', titulo: 'Grêmio leva pauta de reforma do refeitório à direção', texto: 'Após 340 assinaturas de alunos, a presidência entregou documento formal e aguarda resposta até o fim do semestre.' },
-  { id: 6, data_publicacao: '18 de junho de 2026', titulo: 'Semana da Saúde Mental: atividades gratuitas para todos', texto: 'Rodas de conversa, meditação guiada e atendimento com profissionais durante os intervalos da semana.' },
-])
+const aba = ref('gremio') // 'gremio' | 'escola'
+
+const noticiasVisiveis = computed(() => noticias.value.filter((n) => n.categoria === aba.value))
 
 const modalOpen = ref(false)
 const editando = ref(null)
@@ -33,14 +32,18 @@ function abrirEdicao(noticia) {
 
 function salvar(dados) {
   if (editando.value) {
-    noticias.value = noticias.value.map((n) => (n.id === editando.value.id ? { ...n, ...dados } : n))
+    atualizar(editando.value.id, dados)
   } else {
-    noticias.value.unshift({ id: Date.now(), ...dados })
+    adicionar({ categoria: aba.value, ...dados })
   }
 }
 
 function excluir(id) {
-  noticias.value = noticias.value.filter((n) => n.id !== id)
+  remover(id)
+}
+
+function abrirDetalhe(noticia) {
+  router.push(`/noticias/${noticia.id}`)
 }
 </script>
 
@@ -52,6 +55,8 @@ function excluir(id) {
       subtitle="Tudo que acontece no grêmio e na escola, direto da Diretoria de Imprensa e Comunicação."
     />
 
+    <NoticiaTabs v-model="aba" />
+
     <div v-if="isAdmin" class="admin-row">
       <AdminBanner />
       <button type="button" class="btn-nova" @click="abrirNova">
@@ -62,14 +67,19 @@ function excluir(id) {
 
     <div class="noticias-grid">
       <NoticiaCard
-        v-for="noticia in noticias"
+        v-for="noticia in noticiasVisiveis"
         :key="noticia.id"
         :noticia="noticia"
         :is-admin="isAdmin"
+        @abrir="abrirDetalhe"
         @editar="abrirEdicao"
         @excluir="excluir"
       />
     </div>
+
+    <p v-if="noticiasVisiveis.length === 0" class="vazio">
+      Nenhuma notícia publicada nesta categoria ainda.
+    </p>
 
     <NoticiaFormModal v-model="modalOpen" :noticia="editando" @salvar="salvar" />
   </div>
@@ -125,6 +135,12 @@ function excluir(id) {
   .noticias-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+
+.vazio {
+  color: #5a6a85;
+  font-size: 14px;
+  padding: 24px 0;
 }
 
 @media (max-width: 480px) {

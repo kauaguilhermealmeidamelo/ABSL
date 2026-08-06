@@ -4,11 +4,11 @@ defineProps({
   isAdmin: { type: Boolean, default: false },
 })
 
-defineEmits(['editar', 'excluir'])
+defineEmits(['abrir', 'editar', 'excluir'])
 </script>
 
 <template>
-  <article class="noticia-card">
+  <article class="noticia-card" @click="$emit('abrir', noticia)">
     <div class="noticia-imagem">
       <div class="noticia-imagem-textura" />
     </div>
@@ -18,7 +18,7 @@ defineEmits(['editar', 'excluir'])
       <h3 class="noticia-titulo">{{ noticia.titulo }}</h3>
       <p class="noticia-resumo">{{ noticia.texto }}</p>
 
-      <div v-if="isAdmin" class="noticia-acoes">
+      <div v-if="isAdmin" class="noticia-acoes" @click.stop>
         <button type="button" class="btn-editar" @click="$emit('editar', noticia)">
           <v-icon size="13">mdi-pencil-outline</v-icon>
           Editar
@@ -40,6 +40,7 @@ defineEmits(['editar', 'excluir'])
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  cursor: pointer;
   transition: box-shadow 0.15s ease;
   font-family: 'DM Sans', sans-serif;
 }
@@ -85,6 +86,11 @@ defineEmits(['editar', 'excluir'])
   font-size: 15px;
   line-height: 1.35;
   margin: 0;
+  transition: color 0.15s ease;
+}
+
+.noticia-card:hover .noticia-titulo {
+  color: #1a3f8f;
 }
 
 .noticia-resumo {

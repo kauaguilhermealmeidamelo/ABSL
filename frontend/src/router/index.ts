@@ -2,9 +2,9 @@ import { createRouter, createWebHistory, type RouteLocationNormalized } from 'vu
 import MainLayout from '@/MainLayout.vue'
 import inicio from '@/views/inicio.vue'
 
-// Importe as novas views
 import Horario from '@/views/Horario.vue'
 import Noticias from '@/views/Noticias.vue'
+import NoticiaDetalhe from '@/views/NoticiaDetalhe.vue'
 import Projetos from '@/views/Projetos.vue'
 import Gabarito from '@/views/Gabarito.vue'
 import Transparencia from '@/views/Transparencia.vue'
@@ -22,16 +22,16 @@ const routes = [
       { path: 'inicio', name: 'inicio', component: inicio },
       { path: 'horario', name: 'horario', component: Horario },
       { path: 'noticias', name: 'noticias', component: Noticias },
+      { path: 'noticias/:id', name: 'noticia-detalhe', component: NoticiaDetalhe },
       { path: 'projetos', name: 'projetos', component: Projetos },
       { path: 'gabarito', name: 'gabarito', component: Gabarito },
       { path: 'transparencia', name: 'transparencia', component: Transparencia },
-        { path: 'cardapio', name: 'cardapio', component: Cardapio },
-        { path: 'ouvintes', name: 'ouvintes', component: Ouvintes },
-        { path: 'mapa', name: 'mapa', component: Mapa },
-        { path: 'usuarios', name: 'usuarios', component: Usuarios },
+      { path: 'cardapio', name: 'cardapio', component: Cardapio },
+      { path: 'ouvintes', name: 'ouvintes', component: Ouvintes },
+      { path: 'mapa', name: 'mapa', component: Mapa },
+      { path: 'usuarios', name: 'usuarios', component: Usuarios },
     ]
-  }
-  ,
+  },
 ]
 
 const router = createRouter({
@@ -39,24 +39,16 @@ const router = createRouter({
   routes
 })
 
-// ... (seu código de beforeEach continua aqui)
-
-
 router.beforeEach((to: RouteLocationNormalized) => {
-    const publicPages = ['/', '/inicio', '/horario', '/noticias', '/projetos', '/gabarito', '/transparencia', '/cardapio', '/ouvintes', '/mapa']
-    const authRequired = !publicPages.includes(to.path)
+    const publicPrefixes = ['/', '/inicio', '/horario', '/noticias', '/projetos', '/gabarito', '/transparencia', '/cardapio', '/ouvintes', '/mapa']
+    const authRequired = !publicPrefixes.some((p) => to.path === p || to.path.startsWith(`${p}/`))
     const token = localStorage.getItem('token')
 
-    // 1. Se requer auth e não tem token -> volta para home
     if (authRequired && !token) {
-        return '/' 
+        return '/'
     }
 
-    // 2. Se é página pública E tem token -> tenta ir para uma área protegida
-    // CORREÇÃO DO LOOP: Só redireciona se NÃO estivermos já em '/inicio'
-
-    // 3. Se nenhuma condição acima for verdadeira, permite a navegação (substitui o next())
-    return true 
+    return true
 })
 
-export default router   
+export default router
