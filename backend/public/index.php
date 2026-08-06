@@ -10,13 +10,6 @@ if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php'))
     require $maintenance;
 }
 
-# No raiz do projeto
-rm -rf backend/public/js backend/public/css backend/public/index.html
-
-cp -r frontend/dist/* backend/public/
-
-# ou no Windows
-# xcopy frontend\dist\* backend\public\ /E /Y
 // Register the Composer autoloader...
 require __DIR__.'/../vendor/autoload.php';
 
