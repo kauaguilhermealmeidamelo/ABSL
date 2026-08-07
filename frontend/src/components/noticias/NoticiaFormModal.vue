@@ -53,7 +53,7 @@ function salvar() {
         <input v-model="form.titulo" type="text" class="field-input" placeholder="Título da notícia" />
 
         <label class="field-label">Data de publicação</label>
-        <input v-model="form.data_publicacao" type="text" class="field-input" placeholder="Ex: 29 de julho de 2026" />
+        <input v-model="form.data_publicacao" type="date" class="field-input" placeholder="Ex: 29 de julho de 2026" />
 
         <label class="field-label">Resumo / texto</label>
         <textarea v-model="form.texto" rows="4" class="field-textarea" placeholder="Descrição breve da notícia" />
