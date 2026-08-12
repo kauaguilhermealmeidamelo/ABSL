@@ -3,34 +3,24 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\CardapioResource;
 use App\Models\Cardapio;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 
 class CardapioController extends Controller
 {
-    /**
-     * Lista o cardápio ativo, ordenado por data.
-     */
     public function index()
     {
-        // Return active menu items including date and description for the weekly menu.
-        return Cardapio::where('ativo', true)
-            ->orderBy('data', 'asc')
-            ->get(['id', 'data', 'dia_semana', 'refeicao', 'descricao', 'observacoes', 'ativo']);
+        return CardapioResource::collection(
+            Cardapio::where('ativo', true)->orderBy('data', 'asc')->get()
+        );
     }
 
-    /**
-     * Exibe um item do cardápio específico.
-     */
     public function show(string $id)
     {
-        return Cardapio::findOrFail($id);
+        return new CardapioResource(Cardapio::findOrFail($id));
     }
 
-    /**
-     * Cria um novo item de cardápio. Protegido por 'auth:sanctum'.
-     */
     public function store(Request $request)
     {
         $data = $request->validate([
@@ -48,12 +38,9 @@ class CardapioController extends Controller
 
         $data['criado_por'] = $request->user() ? $request->user()->id : null;
 
-        return response()->json(Cardapio::create($data), 201);
+        return new CardapioResource(Cardapio::create($data));
     }
 
-    /**
-     * Atualiza um item de cardápio existente. Protegido por 'auth:sanctum'.
-     */
     public function update(Request $request, string $id)
     {
         $cardapio = Cardapio::findOrFail($id);
@@ -69,12 +56,9 @@ class CardapioController extends Controller
 
         $cardapio->update($data);
 
-        return $cardapio;
+        return new CardapioResource($cardapio);
     }
 
-    /**
-     * Remove um item de cardápio. Protegido por 'auth:sanctum'.
-     */
     public function destroy(string $id)
     {
         Cardapio::findOrFail($id)->delete();

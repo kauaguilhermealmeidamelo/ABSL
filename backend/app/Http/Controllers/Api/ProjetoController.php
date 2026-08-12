@@ -3,30 +3,24 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\ProjetoResource;
 use App\Models\Projeto;
 use Illuminate\Http\Request;
 
 class ProjetoController extends Controller
 {
-    /**
-     * Lista projetos, mais recentes primeiro.
-     */
     public function index()
     {
-        return Projeto::orderBy('created_at', 'desc')->get();
+        return ProjetoResource::collection(
+            Projeto::orderBy('created_at', 'desc')->get()
+        );
     }
 
-    /**
-     * Exibe um projeto específico.
-     */
     public function show(string $id)
     {
-        return Projeto::findOrFail($id);
+        return new ProjetoResource(Projeto::findOrFail($id));
     }
 
-    /**
-     * Cria um novo projeto. Protegido por 'auth:sanctum' em routes/api.php.
-     */
     public function store(Request $request)
     {
         $data = $request->validate([
@@ -36,8 +30,6 @@ class ProjetoController extends Controller
             'categoria' => 'nullable|string|max:255',
             'imagem_url' => 'nullable|string',
             'conteudo_detalhado' => 'nullable|string',
-            // Valores reais usados pela UI (ver ProjetoFormModal.vue),
-            // diferentes do default 'ativo' da migration original.
             'status' => 'nullable|in:em_andamento,concluido',
             'data_conclusao' => 'nullable|string|max:100',
             'destaque' => 'boolean',
@@ -45,12 +37,9 @@ class ProjetoController extends Controller
 
         $data['responsavel_id'] = $request->user()->id;
 
-        return response()->json(Projeto::create($data), 201);
+        return new ProjetoResource(Projeto::create($data));
     }
 
-    /**
-     * Atualiza um projeto existente. Protegido por 'auth:sanctum'.
-     */
     public function update(Request $request, string $id)
     {
         $projeto = Projeto::findOrFail($id);
@@ -69,12 +58,9 @@ class ProjetoController extends Controller
 
         $projeto->update($data);
 
-        return $projeto;
+        return new ProjetoResource($projeto);
     }
 
-    /**
-     * Remove um projeto. Protegido por 'auth:sanctum'.
-     */
     public function destroy(string $id)
     {
         Projeto::findOrFail($id)->delete();

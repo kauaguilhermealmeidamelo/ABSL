@@ -3,32 +3,24 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\GabaritoResource;
 use App\Models\Gabarito;
 use Illuminate\Http\Request;
 
 class GabaritoController extends Controller
 {
-    /**
-     * Lista gabaritos ativos, mais recentes primeiro.
-     */
     public function index()
     {
-        return Gabarito::where('ativo', true)
-            ->orderBy('data_prova', 'desc')
-            ->get();
+        return GabaritoResource::collection(
+            Gabarito::where('ativo', true)->orderBy('data_prova', 'desc')->get()
+        );
     }
 
-    /**
-     * Exibe um gabarito específico.
-     */
     public function show(string $id)
     {
-        return Gabarito::findOrFail($id);
+        return new GabaritoResource(Gabarito::findOrFail($id));
     }
 
-    /**
-     * Cria um novo gabarito. Protegido por 'auth:sanctum'.
-     */
     public function store(Request $request)
     {
         $data = $request->validate([
@@ -45,12 +37,9 @@ class GabaritoController extends Controller
 
         $data['publicado_por'] = $request->user()->id;
 
-        return response()->json(Gabarito::create($data), 201);
+        return new GabaritoResource(Gabarito::create($data));
     }
 
-    /**
-     * Atualiza um gabarito existente. Protegido por 'auth:sanctum'.
-     */
     public function update(Request $request, string $id)
     {
         $gabarito = Gabarito::findOrFail($id);
@@ -69,12 +58,9 @@ class GabaritoController extends Controller
 
         $gabarito->update($data);
 
-        return $gabarito;
+        return new GabaritoResource($gabarito);
     }
 
-    /**
-     * Remove um gabarito. Protegido por 'auth:sanctum'.
-     */
     public function destroy(string $id)
     {
         Gabarito::findOrFail($id)->delete();

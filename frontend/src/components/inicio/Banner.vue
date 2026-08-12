@@ -22,44 +22,17 @@
           <button class="btn-primary">
             CONHEÇA O GRÊMIO <span class="arrow">→</span>
           </button>
-          <button
-            v-if="inicioMedia.videoUrl"
-            class="btn-ghost"
-            type="button"
-            @click="openVideo"
-          >
+          <button class="btn-ghost">
             <span class="play-icon">▶</span> Ver Vídeo
           </button>
         </div>
-      </div>
-    </div>
-
-    <div v-if="videoDialog" class="video-modal" @click.self="videoDialog = false">
-      <div class="video-modal-card">
-        <button type="button" class="modal-close" @click="videoDialog = false">×</button>
-        <video
-          class="modal-video"
-          :src="inicioMedia.videoUrl"
-          controls
-          autoplay
-          playsinline
-        ></video>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
 import heroBg from '@/components/inicio/icons/iniciobanner.png'
-import { inicioMedia } from '@/stores/appData'
-
-const videoDialog = ref(false)
-function openVideo() {
-  if (inicioMedia.videoUrl) {
-    videoDialog.value = true
-  }
-}
 </script>
 
 <style scoped>
@@ -249,41 +222,5 @@ function openVideo() {
     width: 100%;
     justify-content: center;
   }
-}
-
-.video-modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.75);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  z-index: 1000;
-}
-.video-modal-card {
-  position: relative;
-  width: min(900px, 100%);
-  max-width: 100%;
-}
-.modal-close {
-  position: absolute;
-  top: -10px;
-  right: -10px;
-  width: 36px;
-  height: 36px;
-  border: none;
-  border-radius: 999px;
-  background: #ffffff;
-  color: #0d1f3c;
-  font-size: 20px;
-  cursor: pointer;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
-}
-.modal-video {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  border-radius: 20px;
-  background: #000;
 }
 </style>

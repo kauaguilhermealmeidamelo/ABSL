@@ -16,14 +16,9 @@ export default defineConfig({
     },
   },
   server: {
-    proxy: {
-      // Em dev, o frontend roda em :5173 e o backend Laravel em :8000
-      // (php artisan serve). services/api.ts usa baseURL '/api' relativa,
-      // então precisamos redirecionar para o backend real aqui.
-      '/api': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      },
-    },
+  proxy: {
+    '/api': { target: 'http://localhost:8000', changeOrigin: true },
+    '/sanctum': { target: 'http://localhost:8000', changeOrigin: true },
   },
+},
 })

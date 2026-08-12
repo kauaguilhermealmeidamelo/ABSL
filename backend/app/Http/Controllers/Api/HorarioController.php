@@ -3,41 +3,31 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\HorarioResource;
 use App\Models\Horario;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 
 class HorarioController extends Controller
 {
-    /**
-     * Lista todos os horários ativos.
-     */
     public function index()
     {
-        return Horario::where('ativo', true)
-            ->orderBy('turma')
-            ->orderBy('dia_semana')
-            ->orderBy('horario_inicio')
-            ->get();
+        return HorarioResource::collection(
+            Horario::where('ativo', true)
+                ->orderBy('turma')->orderBy('dia_semana')->orderBy('horario_inicio')
+                ->get()
+        );
     }
 
-    /**
-     * Exibe a grade de horários de uma turma específica.
-     * Nota: a rota é '/horario/{turma}', então o parâmetro é a turma
-     * (ex: "1A"), não o id de um registro individual.
-     */
     public function show(string $turma)
     {
-        return Horario::where('turma', $turma)
-            ->where('ativo', true)
-            ->orderBy('dia_semana')
-            ->orderBy('horario_inicio')
-            ->get();
+        return HorarioResource::collection(
+            Horario::where('turma', $turma)->where('ativo', true)
+                ->orderBy('dia_semana')->orderBy('horario_inicio')
+                ->get()
+        );
     }
 
-    /**
-     * Cria um novo horário. Protegido por 'auth:sanctum'.
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -53,15 +43,8 @@ class HorarioController extends Controller
         ]);
 
         $data = Arr::only($validated, [
-            'turma',
-            'dia_semana',
-            'horario_inicio',
-            'horario_fim',
-            'disciplina',
-            'professor',
-            'sala',
-            'observacoes',
-            'ativo',
+            'turma', 'dia_semana', 'horario_inicio', 'horario_fim',
+            'disciplina', 'professor', 'sala', 'observacoes', 'ativo',
         ]);
 
         $data['criado_por'] = $request->user()->id;
@@ -75,12 +58,11 @@ class HorarioController extends Controller
             $data
         );
 
-        return response()->json($horario, $horario->wasRecentlyCreated ? 201 : 200);
+        return (new HorarioResource($horario))
+            ->response()
+            ->setStatusCode($horario->wasRecentlyCreated ? 201 : 200);
     }
 
-    /**
-     * Atualiza um horário existente (por id). Protegido por 'auth:sanctum'.
-     */
     public function update(Request $request, string $id)
     {
         $horario = Horario::findOrFail($id);
@@ -99,12 +81,9 @@ class HorarioController extends Controller
 
         $horario->update($data);
 
-        return $horario;
+        return new HorarioResource($horario);
     }
 
-    /**
-     * Remove um horário (por id). Protegido por 'auth:sanctum'.
-     */
     public function destroy(string $id)
     {
         Horario::findOrFail($id)->delete();

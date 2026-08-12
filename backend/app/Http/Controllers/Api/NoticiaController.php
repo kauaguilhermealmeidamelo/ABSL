@@ -3,32 +3,24 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\NoticiaResource;
 use App\Models\Noticia;
 use Illuminate\Http\Request;
 
 class NoticiaController extends Controller
 {
-    /**
-     * Lista notícias ativas, mais recentes primeiro.
-     */
     public function index()
     {
-        return Noticia::where('ativo', true)
-            ->orderBy('data_publicacao', 'desc')
-            ->get();
+        return NoticiaResource::collection(
+            Noticia::where('ativo', true)->orderBy('data_publicacao', 'desc')->get()
+        );
     }
 
-    /**
-     * Exibe uma notícia específica.
-     */
     public function show(string $id)
     {
-        return Noticia::findOrFail($id);
+        return new NoticiaResource(Noticia::findOrFail($id));
     }
 
-    /**
-     * Cria uma nova notícia. Protegido por 'auth:sanctum' em routes/api.php.
-     */
     public function store(Request $request)
     {
         $data = $request->validate([
@@ -44,12 +36,9 @@ class NoticiaController extends Controller
 
         $data['autor_id'] = $request->user()->id;
 
-        return response()->json(Noticia::create($data), 201);
+        return new NoticiaResource(Noticia::create($data));
     }
 
-    /**
-     * Atualiza uma notícia existente. Protegido por 'auth:sanctum'.
-     */
     public function update(Request $request, string $id)
     {
         $noticia = Noticia::findOrFail($id);
@@ -67,12 +56,9 @@ class NoticiaController extends Controller
 
         $noticia->update($data);
 
-        return $noticia;
+        return new NoticiaResource($noticia);
     }
 
-    /**
-     * Remove uma notícia. Protegido por 'auth:sanctum'.
-     */
     public function destroy(string $id)
     {
         Noticia::findOrFail($id)->delete();
