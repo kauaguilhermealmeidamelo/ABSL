@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import PageHeader from '@/components/common/PageHeader.vue'
 import AdminBanner from '@/components/common/AdminBanner.vue'
 import DiretoriaSelectorGrid from '@/components/projetos/DiretoriaSelectorGrid.vue'
@@ -7,18 +7,27 @@ import ProjetosDialog from '@/components/projetos/ProjetosDialog.vue'
 import ProjetoDetalheDialog from '@/components/projetos/ProjetoDetalheDialog.vue'
 import ProjetoFormModal from '@/components/projetos/ProjetoFormModal.vue'
 import { useAdmin } from '@/composables/useAdmin'
+import { projetosService } from '@/services/projetos'
 
 const { isAdmin } = useAdmin()
 
-// TODO: substituir por chamada à API (endpoint de projetos ainda não existe no backend)
-const projetos = ref([
-  { id: 1, categoria: 'Diretoria Social', status: 'concluido', titulo: 'Campanha do Agasalho 2026', descricao: 'Arrecadação de roupas e calçados em todas as turmas, com entrega a instituições da cidade.', data_conclusao: 'Maio 2026' },
-  { id: 2, categoria: 'Esporte e Lazer', status: 'em_andamento', titulo: 'Torneio Interclasses', descricao: 'Competição entre turmas de futsal, vôlei e handebol, com tabela publicada e arbitragem voluntária.' },
-  { id: 3, categoria: 'Cultura', status: 'em_andamento', titulo: 'Feira Cultural ABSL', descricao: 'Mostra de música, teatro e artes visuais produzidos pelos alunos, com palco montado no ginásio.' },
-  { id: 4, categoria: 'Presidência', status: 'em_andamento', titulo: 'Reforma do Espaço de Convivência', descricao: 'Bancos, sombrite e torneiras no pátio central, negociadas junto à direção a partir de pauta do estudantil.' },
-  { id: 5, categoria: 'Saúde e Meio Ambiente', status: 'em_andamento', titulo: 'Semana da Saúde Mental', descricao: 'Rodas de conversa e atividades com profissionais convidados durante os intervalos.' },
-  { id: 6, categoria: 'Tecnologia e Inovação', status: 'em_andamento', titulo: 'Portal do Estudante', descricao: 'Canal digital com horários, gabaritos e notícias do grêmio reunidos em um só lugar.' },
-])
+const projetos = ref([])
+const loading = ref(false)
+const error = ref('')
+
+async function carregar() {
+  loading.value = true
+  error.value = ''
+  try {
+    projetos.value = await projetosService.list()
+  } catch {
+    error.value = 'Não foi possível carregar os projetos.'
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(carregar)
 
 // Categoria selecionada no grid: null (nada aberto) | '__geral__' | nome da categoria
 const categoriaSelecionada = ref(null)
@@ -47,17 +56,28 @@ function abrirEdicao(projeto) {
   projetoDetalhe.value = null
 }
 
-function salvar(dados) {
-  if (projetoEditando.value) {
-    projetos.value = projetos.value.map((p) => (p.id === projetoEditando.value.id ? { ...p, ...dados } : p))
-  } else {
-    projetos.value = [{ id: Date.now(), ...dados }, ...projetos.value]
+async function salvar(dados) {
+  try {
+    if (projetoEditando.value) {
+      const atualizado = await projetosService.update(projetoEditando.value.id, dados)
+      projetos.value = projetos.value.map((p) => (p.id === atualizado.id ? atualizado : p))
+    } else {
+      const criado = await projetosService.create(dados)
+      projetos.value = [criado, ...projetos.value]
+    }
+  } catch {
+    error.value = 'Não foi possível salvar o projeto.'
   }
 }
 
-function excluir(id) {
-  projetos.value = projetos.value.filter((p) => p.id !== id)
-  projetoDetalhe.value = null
+async function excluir(id) {
+  try {
+    await projetosService.remove(id)
+    projetos.value = projetos.value.filter((p) => p.id !== id)
+    projetoDetalhe.value = null
+  } catch {
+    error.value = 'Não foi possível excluir o projeto.'
+  }
 }
 </script>
 
@@ -77,16 +97,21 @@ function excluir(id) {
       </button>
     </div>
 
-    <DiretoriaSelectorGrid
-      :projetos="projetos"
-      :selecionado="categoriaSelecionada"
-      @selecionar="selecionarCategoria"
-    />
+    <p v-if="loading" class="status-msg">Carregando projetos...</p>
+    <p v-else-if="error" class="status-msg status-erro">{{ error }}</p>
 
-    <div class="dica-vazia">
-      <v-icon size="34" color="#5A6A85" style="opacity: 0.25">mdi-folder-multiple-outline</v-icon>
-      <p>Escolha uma diretoria acima para ver os projetos.</p>
-    </div>
+    <template v-else>
+      <DiretoriaSelectorGrid
+        :projetos="projetos"
+        :selecionado="categoriaSelecionada"
+        @selecionar="selecionarCategoria"
+      />
+
+      <div class="dica-vazia">
+        <v-icon size="34" color="#5A6A85" style="opacity: 0.25">mdi-folder-multiple-outline</v-icon>
+        <p>Escolha uma diretoria acima para ver os projetos.</p>
+      </div>
+    </template>
 
     <ProjetosDialog
       v-if="categoriaSelecionada !== null"
@@ -156,6 +181,15 @@ function excluir(id) {
 }
 .btn-novo:hover {
   background: #16509b;
+}
+
+.status-msg {
+  color: #5a6a85;
+  font-size: 14px;
+  padding: 24px 0;
+}
+.status-erro {
+  color: #dc2626;
 }
 
 .dica-vazia {

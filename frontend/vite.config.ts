@@ -15,4 +15,15 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  server: {
+    proxy: {
+      // Em dev, o frontend roda em :5173 e o backend Laravel em :8000
+      // (php artisan serve). services/api.ts usa baseURL '/api' relativa,
+      // então precisamos redirecionar para o backend real aqui.
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
+    },
+  },
 })

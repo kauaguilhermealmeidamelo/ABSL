@@ -1,3 +1,63 @@
+<script setup>
+import { onMounted, ref } from 'vue'
+import PageHeader from '@/components/common/PageHeader.vue'
+import OuvintesFormulario from '@/components/ouvintes/OuvintesFormulario.vue'
+import OuvintesLista from '@/components/ouvintes/OuvintesLista.vue'
+import { useAdmin } from '@/composables/useAdmin'
+import { ouvintesService } from '@/services/ouvintes'
+
+const { isAdmin } = useAdmin()
+
+const mensagens = ref([])
+const loading = ref(false)
+const error = ref('')
+
+async function carregar() {
+  // GET /ouvintes (listagem completa) exige token de admin — não faz
+  // sentido chamar se o visitante não estiver logado como admin.
+  if (!isAdmin.value) return
+
+  loading.value = true
+  error.value = ''
+  try {
+    mensagens.value = await ouvintesService.list()
+  } catch {
+    error.value = 'Não foi possível carregar as mensagens.'
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(carregar)
+
+async function adicionarMensagem(payload) {
+  try {
+    await ouvintesService.create(payload)
+    if (isAdmin.value) await carregar()
+  } catch {
+    error.value = 'Não foi possível enviar a mensagem.'
+  }
+}
+
+async function excluirMensagem(id) {
+  try {
+    await ouvintesService.remove(id)
+    mensagens.value = mensagens.value.filter((m) => m.id !== id)
+  } catch {
+    error.value = 'Não foi possível excluir a mensagem.'
+  }
+}
+
+async function responderMensagem({ id, resposta }) {
+  try {
+    const atualizada = await ouvintesService.update(id, { resposta })
+    mensagens.value = mensagens.value.map((m) => (m.id === id ? atualizada : m))
+  } catch {
+    error.value = 'Não foi possível salvar a resposta.'
+  }
+}
+</script>
+
 <template>
   <div class="ouvintes-page">
     <PageHeader
@@ -10,96 +70,18 @@
       <OuvintesFormulario @enviar="adicionarMensagem" />
     </div>
 
-    <OuvintesLista
-      v-if="isAdmin"
-      :mensagens="mensagens"
-      @excluir="excluirMensagem"
-      @responder="responderMensagem"
-    />
+    <template v-if="isAdmin">
+      <p v-if="loading" class="status-msg">Carregando mensagens...</p>
+      <p v-else-if="error" class="status-msg status-erro">{{ error }}</p>
+      <OuvintesLista
+        v-else
+        :mensagens="mensagens"
+        @excluir="excluirMensagem"
+        @responder="responderMensagem"
+      />
+    </template>
   </div>
 </template>
-
-<script setup>
-import { computed, ref } from 'vue'
-import PageHeader from '@/components/common/PageHeader.vue'
-import OuvintesFormulario from '@/components/ouvintes/OuvintesFormulario.vue'
-import OuvintesLista from '@/components/ouvintes/OuvintesLista.vue'
-
-// Mesmo critério usado em AdminCard.vue / menuLateral.vue / Gabarito.vue para detectar admin
-const isAdmin = computed(() => {
-  const raw = localStorage.getItem('usuario')
-  if (!raw) return false
-
-  try {
-    const parsed = JSON.parse(raw)
-    if (parsed && typeof parsed === 'object') {
-      const role = String(
-        parsed.role || parsed.tipo || parsed.perfil || parsed.is_admin || parsed.administrador || ''
-      ).toLowerCase()
-      return (
-        role === 'admin' ||
-        role === 'administrator' ||
-        role === 'administrador' ||
-        role === 'super_admin' ||
-        role === 'super-admin' ||
-        parsed.is_admin === true ||
-        parsed.administrador === true
-      )
-    }
-  } catch {
-    // fallback para valores simples armazenados como texto
-  }
-
-  return String(raw).toLowerCase().includes('admin')
-})
-
-// TODO: substituir por chamadas à API (não há endpoint de ouvidoria no backend ainda)
-const mensagens = ref([
-  {
-    id: 1,
-    anonimo: false,
-    nome: 'Ana Souza',
-    email: 'ana@email.com',
-    texto: 'Gostaria de sugerir que a biblioteca fique aberta no contraturno para estudos.',
-    status: 'pendente',
-    data_envio: '12 jun 2026',
-  },
-  {
-    id: 2,
-    anonimo: true,
-    texto: 'O refeitório precisa de mais opções vegetarianas no cardápio.',
-    status: 'pendente',
-    data_envio: '18 jun 2026',
-  },
-  {
-    id: 3,
-    anonimo: false,
-    nome: 'Carlos Lima',
-    email: 'carlos@email.com',
-    texto: 'Seria ótimo ter mais tomadas na sala de informática para carregar os notebooks.',
-    status: 'respondida',
-    resposta: 'Estamos levando essa demanda à direção da escola.',
-    data_envio: '25 jun 2026',
-  },
-])
-
-function adicionarMensagem(payload) {
-  mensagens.value.push({
-    id: Date.now(),
-    status: 'pendente',
-    data_envio: new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }),
-    ...payload,
-  })
-}
-
-function excluirMensagem(id) {
-  mensagens.value = mensagens.value.filter((m) => m.id !== id)
-}
-
-function responderMensagem({ id, resposta }) {
-  mensagens.value = mensagens.value.map((m) => (m.id === id ? { ...m, resposta, status: 'respondida' } : m))
-}
-</script>
 
 <style scoped>
 .ouvintes-page {
@@ -116,5 +98,14 @@ function responderMensagem({ id, resposta }) {
 .form-wrapper {
   max-width: 560px;
   margin: 0 auto 32px;
+}
+
+.status-msg {
+  color: #5a6a85;
+  font-size: 14px;
+  padding: 12px 0;
+}
+.status-erro {
+  color: #dc2626;
 }
 </style>

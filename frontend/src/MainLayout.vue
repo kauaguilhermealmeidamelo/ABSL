@@ -1,25 +1,11 @@
 <script setup>
 import menuLateral from '@/components/menuLateral.vue'
 import BottomNav from '@/components/BottomNav.vue'
-import { onMounted, ref } from 'vue'
 import { useDisplay } from 'vuetify'
-import api from '@/services/api'
-import { team } from '@/stores/appData'
-
 
 const { mobile } = useDisplay()
 
-const msg = ref('servidor off')
-const dividerItems = Array.from({ length: 36 }, (_, i) => i % 3)
-
-onMounted(async () => {
-  try {
-    const response = await api.get('/teste')
-    msg.value = response.data.mensagem
-  } catch (error) {
-    console.error(error)
-  }
-})
+const dividerItems = Array.from({ length: 36 }, (_, i) => i % 4)
 </script>
 
 <template>
@@ -65,7 +51,6 @@ onMounted(async () => {
 .divider-strip {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
   flex-wrap: nowrap;
   gap: 0.55rem;
   padding: 0 1rem;
@@ -79,26 +64,29 @@ onMounted(async () => {
   flex-shrink: 0;
 }
 
+/* círculo - azul */
 .divider-item-0 {
   border-radius: 50%;
-  background: rgba(115, 118, 130, 0.55);
+  background: rgba(26, 63, 143, 0.55);
 }
 
+/* quadrado - azul escuro */
 .divider-item-1 {
   border-radius: 2px;
-  background: rgba(22, 80, 155, 0.55);
+  background: rgba(13, 31, 60, 0.55);
 }
 
+/* diamante - amarelo */
 .divider-item-2 {
-  width: 10px;
-  height: 10px;
   transform: rotate(45deg);
-  background: rgba(245, 197, 24, 0.55);
+  background: rgba(245, 197, 24, 0.7);
   border-radius: 2px;
 }
 
-.divider-item:nth-child(3n) {
-  margin-right: 1.2rem;
+/* semicírculo - ciano */
+.divider-item-3 {
+  border-radius: 50% 50% 0 0;
+  background: rgba(56, 189, 248, 0.6);
 }
 
 @media (max-width: 720px) {

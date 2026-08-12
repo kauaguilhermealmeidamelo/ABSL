@@ -1,151 +1,149 @@
 <script setup>
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import PageHeader from '@/components/common/PageHeader.vue'
-import AdminBanner from '@/components/common/AdminBanner.vue'
-import NoticiaTabs from '@/components/noticias/NoticiaTabs.vue'
-import NoticiaCard from '@/components/noticias/NoticiaCard.vue'
-import NoticiaFormModal from '@/components/noticias/NoticiaFormModal.vue'
-import { useAdmin } from '@/composables/useAdmin'
 import { useNoticias } from '@/composables/useNoticias'
 
-const { isAdmin } = useAdmin()
-const { noticias, adicionar, atualizar, remover } = useNoticias()
+const route = useRoute()
 const router = useRouter()
+const { getById, fetchNoticias } = useNoticias()
 
-const aba = ref('gremio') // 'gremio' | 'escola'
+onMounted(() => {
+  // Garante os dados carregados também quando a página é acessada
+  // diretamente por URL (sem passar antes por /noticias).
+  fetchNoticias()
+})
 
-const noticiasVisiveis = computed(() => noticias.value.filter((n) => n.categoria === aba.value))
+const noticia = computed(() => getById(route.params.id))
 
-const modalOpen = ref(false)
-const editando = ref(null)
-
-function abrirNova() {
-  editando.value = null
-  modalOpen.value = true
-}
-
-function abrirEdicao(noticia) {
-  editando.value = noticia
-  modalOpen.value = true
-}
-
-function salvar(dados) {
-  if (editando.value) {
-    atualizar(editando.value.id, dados)
-  } else {
-    adicionar({ categoria: aba.value, ...dados })
-  }
-}
-
-function excluir(id) {
-  remover(id)
-}
-
-function abrirDetalhe(noticia) {
-  router.push(`/noticias/${noticia.id}`)
+function voltar() {
+  router.push('/noticias')
 }
 </script>
 
 <template>
-  <div class="noticias-page">
-    <PageHeader
-      label="ABSL"
-      title="Notícias"
-      subtitle="Tudo que acontece no grêmio e na escola, direto da Diretoria de Imprensa e Comunicação."
-    />
-
-    <NoticiaTabs v-model="aba" />
-
-    <div v-if="isAdmin" class="admin-row">
-      <AdminBanner />
-      <button type="button" class="btn-nova" @click="abrirNova">
-        <v-icon size="15">mdi-plus</v-icon>
-        Nova Notícia
+  <div class="detalhe-page">
+    <template v-if="noticia">
+      <button type="button" class="btn-voltar" @click="voltar">
+        <v-icon size="16">mdi-arrow-left</v-icon>
+        Voltar para Notícias
       </button>
-    </div>
 
-    <div class="noticias-grid">
-      <NoticiaCard
-        v-for="noticia in noticiasVisiveis"
-        :key="noticia.id"
-        :noticia="noticia"
-        :is-admin="isAdmin"
-        @abrir="abrirDetalhe"
-        @editar="abrirEdicao"
-        @excluir="excluir"
-      />
-    </div>
+      <div class="detalhe-imagem">
+        <div class="detalhe-imagem-textura" />
+      </div>
 
-    <p v-if="noticiasVisiveis.length === 0" class="vazio">
-      Nenhuma notícia publicada nesta categoria ainda.
-    </p>
+      <span class="detalhe-badge" :class="noticia.categoria === 'gremio' ? 'badge-gremio' : 'badge-escola'">
+        {{ noticia.categoria === 'gremio' ? 'Notícias do Grêmio' : 'Notícias da Escola' }}
+      </span>
 
-    <NoticiaFormModal v-model="modalOpen" :noticia="editando" @salvar="salvar" />
+      <p class="detalhe-data">{{ noticia.data_publicacao }}</p>
+      <h1 class="detalhe-titulo">{{ noticia.titulo }}</h1>
+      <p class="detalhe-texto">{{ noticia.texto }}</p>
+    </template>
+
+    <template v-else>
+      <PageHeader label="ABSL" title="Notícia não encontrada" />
+      <button type="button" class="btn-voltar" @click="voltar">
+        <v-icon size="16">mdi-arrow-left</v-icon>
+        Voltar para Notícias
+      </button>
+    </template>
   </div>
 </template>
 
 <style scoped>
-.noticias-page {
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700;1,900&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400;1,9..40,700&display=swap');
+
+.detalhe-page {
   font-family: 'DM Sans', sans-serif;
-  padding: 24px;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px 24px 64px;
 }
 
-.admin-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.admin-row :deep(.admin-banner) {
-  margin-bottom: 0;
-  flex: 1;
-  min-width: 240px;
-}
-
-.btn-nova {
+.btn-voltar {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 10px 20px;
-  border-radius: 999px;
-  background: #0d1f3c;
-  color: #ffffff;
+  border: none;
+  background: transparent;
+  color: #1a3f8f;
   font-size: 13px;
   font-weight: 600;
-  border: none;
   cursor: pointer;
-  white-space: nowrap;
-  margin-bottom: 24px;
-  transition: background-color 0.15s ease;
+  padding: 0;
+  margin-bottom: 20px;
 }
-.btn-nova:hover {
-  background: #16509b;
-}
-
-.noticias-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 20px;
+.btn-voltar:hover {
+  text-decoration: underline;
 }
 
-@media (min-width: 720px) {
-  .noticias-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+.detalhe-imagem {
+  height: 220px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #1a3f8f, #16509b);
+  position: relative;
+  margin-bottom: 20px;
+}
+.detalhe-imagem-textura {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.18) 1.5px, transparent 1.5px);
+  background-size: 16px 16px;
 }
 
-.vazio {
+.detalhe-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 4px 12px;
+  border-radius: 999px;
+  margin-bottom: 12px;
+}
+.badge-gremio {
+  background: #dbeafe;
+  color: #1a3f8f;
+}
+.badge-escola {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.detalhe-data {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
   color: #5a6a85;
-  font-size: 14px;
-  padding: 24px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 0 8px;
+}
+
+.detalhe-titulo {
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+  font-size: 28px;
+  color: #0d1f3c;
+  line-height: 1.3;
+  margin: 0 0 20px;
+}
+
+.detalhe-texto {
+  color: #3d4a5c;
+  font-size: 16px;
+  line-height: 1.8;
+  margin: 0;
 }
 
 @media (max-width: 480px) {
-  .noticias-page {
-    padding: 16px;
+  .detalhe-page {
+    padding: 20px;
+  }
+  .detalhe-titulo {
+    font-size: 22px;
   }
 }
 </style>

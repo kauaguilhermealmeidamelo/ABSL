@@ -1,63 +1,34 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { team } from '@/stores/appData'
-import logoImg from "@/assets/logo.png"
+import logoImg from '@/assets/logo.png'
 import { useRouter } from 'vue-router'
+import { login, logout } from '@/services/auth'
 
 const router = useRouter()
 const open = ref(false)
+const email = ref('')
 const password = ref('')
 const loading = ref(false)
 const error = ref('')
-const TEMP_ADMIN_PASSWORD = 'absl2026'
-const TEMP_ADMIN_USER = {
-  id: 1,
-  name: 'Admin Teste',
-  role: 'admin'
-}
 
 const isLoggedIn = computed(() => !!localStorage.getItem('token'))
 
-function rawUser() {
-  const raw = localStorage.getItem('usuario') || ''
-  try {
-    return JSON.parse(raw || '{}')
-  } catch {
-    // fallback para valores simples armazenados como texto
-    return {}
-  }
-}
-
-const isAdmin = computed(() => {
-  const parsedUser = rawUser()
-  if (!parsedUser) return false
-
-  const role = String(parsedUser.role || parsedUser.tipo || parsedUser.perfil || parsedUser.is_admin || parsedUser.administrador || '').toLowerCase()
-  return role === 'admin' || role === 'administrator' || role === 'administrador' || role === 'super_admin' || role === 'super-admin' || parsedUser.is_admin === true || parsedUser.administrador === true
-})
-
 async function submit() {
   error.value = ''
+
+  if (!email.value || !password.value) {
+    error.value = 'Informe e-mail e senha.'
+    return
+  }
+
   loading.value = true
-
   try {
-    if (password.value === TEMP_ADMIN_PASSWORD) {
-      localStorage.setItem('token', 'frontend-admin-test-token')
-      localStorage.setItem('usuario', JSON.stringify(TEMP_ADMIN_USER))
-      password.value = ''
-      open.value = false
-      return
-    }
-
-    const resp = await api.post('/login', { password: password.value })
-    if (resp && resp.data) {
-      localStorage.setItem('token', resp.data.token || resp.data.access_token || '')
-      localStorage.setItem('usuario', JSON.stringify(resp.data.user || resp.data.usuario || {}))
-      open.value = false
-    }
+    await login(email.value, password.value)
+    email.value = ''
+    password.value = ''
+    open.value = false
   } catch (err) {
-    error.value = 'Credenciais inválidas'
-    console.error(err)
+    error.value = err?.response?.data?.message || 'Credenciais inválidas.'
   } finally {
     loading.value = false
   }
@@ -65,12 +36,8 @@ async function submit() {
 
 async function doLogout() {
   try {
-    await api.post('/logout')
-  } catch (err) {
-    console.error(err)
+    await logout()
   } finally {
-    localStorage.removeItem('token')
-    localStorage.removeItem('usuario')
     router.replace('/')
   }
 }
@@ -98,23 +65,43 @@ function goUsuarios() {
                 <div class="subtitle">ABSL — Grêmio Athos Bulcão</div>
               </div>
             </div>
-            <v-btn icon variant="text" class="close-btn" @click="open = false"><v-icon>mdi-close</v-icon></v-btn>
+            <v-btn icon variant="text" class="close-btn" @click="open = false">
+              <v-icon>mdi-close</v-icon>
+            </v-btn>
           </v-card-title>
 
           <v-card-text class="modal-scroll-area">
-            <label class="field-label">Senha de administrador</label>
-            <v-text-field v-model="password" placeholder="Digite a senha" type="password" density="comfortable"
-              hide-details variant="solo" flat class="password-field" />
+            <label class="field-label">E-mail</label>
+            <v-text-field
+              v-model="email"
+              placeholder="admin@absl.local"
+              type="email"
+              density="comfortable"
+              hide-details
+              variant="solo"
+              flat
+              class="password-field"
+              @keydown.enter="submit"
+            />
 
-            <div class="hint">
-              Use <span class="hint-code">{{ TEMP_ADMIN_PASSWORD }}</span> para o protótipo.
-            </div>
+            <label class="field-label field-label-spaced">Senha</label>
+            <v-text-field
+              v-model="password"
+              placeholder="Digite a senha"
+              type="password"
+              density="comfortable"
+              hide-details
+              variant="solo"
+              flat
+              class="password-field"
+              @keydown.enter="submit"
+            />
 
             <div class="actions-row">
               <v-btn :loading="loading" class="enter-btn" block @click="submit">Entrar</v-btn>
             </div>
 
-            <div class="error" v-if="error">{{ error }}</div>
+            <div v-if="error" class="error">{{ error }}</div>
           </v-card-text>
         </v-card>
       </v-dialog>
@@ -146,7 +133,6 @@ function goUsuarios() {
   padding: 20px 44px 8px 20px;
   white-space: normal !important;
   overflow: visible !important;
-  text-overflow: unset !important;
 }
 
 .title-row {
@@ -154,6 +140,7 @@ function goUsuarios() {
   align-items: center;
   gap: 10px;
   width: 100%;
+  min-width: 0;
 }
 
 .logo-small {
@@ -164,7 +151,7 @@ function goUsuarios() {
 }
 
 .title-block {
-  flex: 1 1 0%;
+  flex: 1;
   min-width: 0;
 }
 
@@ -173,15 +160,13 @@ function goUsuarios() {
   font-size: 16px;
   line-height: 1.3;
   color: #0F2038;
-  white-space: normal !important;
-  overflow-wrap: normal;
-  word-break: normal;
+  white-space: normal;
 }
 
 .title-block .subtitle {
   font-size: 12px;
   color: #6B7C93;
-  white-space: normal !important;
+  white-space: normal;
   margin-top: 2px;
 }
 
@@ -190,7 +175,7 @@ function goUsuarios() {
   top: 14px;
   right: 10px;
   color: #6B7C93;
-} 
+}
 
 .admin-modal {
   border-radius: 20px;
@@ -199,12 +184,21 @@ function goUsuarios() {
   box-shadow: 0 20px 50px rgba(4, 20, 40, 0.25);
 }
 
+.modal-scroll-area {
+  overflow-y: auto;
+  padding: 8px 20px 4px;
+}
+
 .field-label {
   display: block;
   font-size: 14px;
   font-weight: 600;
   color: #1a2f4a;
   margin: 4px 0 8px;
+}
+
+.field-label-spaced {
+  margin-top: 18px;
 }
 
 .password-field {
@@ -239,31 +233,10 @@ function goUsuarios() {
   box-shadow: none !important;
 }
 
-.hint {
-  font-size: 13px;
-  color: #6B7C93;
-  margin-top: 18px;
-  text-align: center;
-}
-
-.hint-code {
-  background-color: #EEF1F6;
-  color: #1a2f4a;
-  padding: 1px 6px;
-  border-radius: 6px;
-  font-weight: 600;
-  font-size: 12.5px;
-  font-family: 'DM Mono', monospace;
-}
-
-.centered {
-  text-align: center;
-}
-
 .error {
-  color: #ff6b6b;
+  color: #dc2626;
   font-size: 13px;
-  margin-top: 10px;
+  margin-top: 12px;
   text-align: center;
 }
 
@@ -293,67 +266,12 @@ function goUsuarios() {
   margin: 0 16px;
 }
 
-.admin-modal {
-  max-height: calc(100vh - 64px);
-  display: flex;
-  flex-direction: column;
-}
-
-.popup-title {
-  flex-shrink: 0;
-}
-
-.modal-scroll-area {
-  overflow-y: auto;
-  flex: 1;
-}
-
-.title-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  min-width: 0;
-}
-
-.title-block {
-  min-width: 0;
-  flex: 1;
-}
-
-.title-block .title {
-  font-weight: 700;
-  font-size: 19px;
-  color: #0F2038;
-  white-space: normal;
-  overflow-wrap: break-word;
-}
-
-.title-block .subtitle {
-  font-size: 13px;
-  color: #6B7C93;
-  white-space: normal;
-  overflow-wrap: break-word;
-}
-
-.close-btn {
-  margin-left: auto;
-  color: #6B7C93;
-  flex-shrink: 0;
-}
-
 @media (max-width: 420px) {
   .popup-title {
     padding: 20px 16px 8px;
   }
-
   .title-block .title {
     font-size: 16px;
-  }
-
-  .admin-modal :deep(.v-card-text) {
-    padding-left: 16px;
-    padding-right: 16px;
   }
 }
 </style>
