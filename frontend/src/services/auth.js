@@ -1,4 +1,5 @@
 import api from './api'
+import { setSession, clearSession } from '@/stores/auth'
 
 /**
  * Autentica com e-mail + senha reais (backend). Salva token e usuário
@@ -6,7 +7,7 @@ import api from './api'
  */
 export async function login(email, password) {
   const { data } = await api.post('/login', { email, password })
-  persistSession(data)
+  setSession(data)
   return data.user
 }
 
@@ -17,7 +18,7 @@ export async function login(email, password) {
  */
 export async function register({ name, email, password, password_confirmation }) {
   const { data } = await api.post('/register', { name, email, password, password_confirmation })
-  persistSession(data)
+  setSession(data)
   return data.user
 }
 
@@ -32,12 +33,4 @@ export async function logout() {
   }
 }
 
-function persistSession(data) {
-  localStorage.setItem('token', data.access_token)
-  localStorage.setItem('usuario', JSON.stringify(data.user))
-}
-
-function clearSession() {
-  localStorage.removeItem('token')
-  localStorage.removeItem('usuario')
-}
+// persist/clear are handled by auth store

@@ -10,6 +10,9 @@ use App\Http\Controllers\Api\{
     TransparenciaController,
     GabaritoController,
     HorarioController,
+    TurmaController,
+    DiretoriaController,
+    InicioMediaController,
     AuthController
 };
 
@@ -32,6 +35,11 @@ Route::get('/gabarito/{id}', [GabaritoController::class, 'show']);
 
 Route::get('/horario', [HorarioController::class, 'index']);
 Route::get('/horario/{turma}', [HorarioController::class, 'show']);
+
+// Turmas e Diretorias
+Route::get('/turmas', [TurmaController::class, 'index']);
+Route::get('/diretorias', [DiretoriaController::class, 'index']);
+Route::get('/inicio-media', [InicioMediaController::class, 'index']);
 
 Route::get('/transparencia', [TransparenciaController::class, 'index']);
 Route::get('/transparencia/{id}', [TransparenciaController::class, 'show']);
@@ -79,6 +87,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/horario', [HorarioController::class, 'store']);
     Route::put('/horario/{id}', [HorarioController::class, 'update']);
     Route::delete('/horario/{id}', [HorarioController::class, 'destroy']);
+
+    // Gerenciar turmas/diretorias/media (admin)
+    Route::post('/turmas', [TurmaController::class, 'store']);
+    Route::delete('/turmas/{codigo}', [TurmaController::class, 'destroy']);
+
+    Route::post('/diretorias', [DiretoriaController::class, 'store']);
+    Route::put('/diretorias/{id}', [DiretoriaController::class, 'update']);
+    Route::delete('/diretorias/{id}', [DiretoriaController::class, 'destroy']);
+
+    Route::post('/inicio-media', [InicioMediaController::class, 'store']);
 
     // Gerenciar Ouvintes (admin)
     Route::get('/ouvintes', [OuvinteController::class, 'index']);

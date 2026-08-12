@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Cardapio;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 
 class CardapioController extends Controller
 {
@@ -13,9 +14,10 @@ class CardapioController extends Controller
      */
     public function index()
     {
+        // Return active menu items including date and description for the weekly menu.
         return Cardapio::where('ativo', true)
             ->orderBy('data', 'asc')
-            ->get();
+            ->get(['id', 'data', 'dia_semana', 'refeicao', 'descricao', 'observacoes', 'ativo']);
     }
 
     /**
@@ -32,15 +34,19 @@ class CardapioController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'data' => 'required|date',
-            'dia_semana' => 'required|string|max:20',
+            'data' => 'nullable|date',
+            'dia_semana' => 'required|string|max:50',
             'refeicao' => 'required|string',
             'descricao' => 'required|string',
             'observacoes' => 'nullable|string',
             'ativo' => 'boolean',
         ]);
 
-        $data['criado_por'] = $request->user()->id;
+        if (empty($data['data'])) {
+            $data['data'] = now()->toDateString();
+        }
+
+        $data['criado_por'] = $request->user() ? $request->user()->id : null;
 
         return response()->json(Cardapio::create($data), 201);
     }
@@ -54,7 +60,7 @@ class CardapioController extends Controller
 
         $data = $request->validate([
             'data' => 'sometimes|required|date',
-            'dia_semana' => 'sometimes|required|string|max:20',
+            'dia_semana' => 'sometimes|required|string|max:50',
             'refeicao' => 'sometimes|required|string',
             'descricao' => 'sometimes|required|string',
             'observacoes' => 'nullable|string',

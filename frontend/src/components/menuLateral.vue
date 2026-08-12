@@ -1,6 +1,7 @@
 <script setup>
 import logoImg from "@/assets/logo.png"
 import { computed } from 'vue'
+import { user, token } from '@/stores/auth'
 import { useRoute } from 'vue-router'
 import AdminCard from '@/components/AdminCard.vue'
 
@@ -13,23 +14,17 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue'])
 
 const isAdmin = computed(() => {
-  const rawUser = localStorage.getItem('usuario')
-  if (!rawUser) return false
-
+  const parsedUser = user.value
+  if (!parsedUser) return false
   try {
-    const parsedUser = JSON.parse(rawUser)
-    if (parsedUser && typeof parsedUser === 'object') {
-      const role = String(parsedUser.role || parsedUser.tipo || parsedUser.perfil || parsedUser.is_admin || parsedUser.administrador || '').toLowerCase()
-      return role === 'admin' || role === 'administrator' || role === 'administrador' || role === 'super_admin' || role === 'super-admin' || parsedUser.is_admin === true || parsedUser.administrador === true
-    }
+    const role = String(parsedUser.role || parsedUser.tipo || parsedUser.perfil || parsedUser.is_admin || parsedUser.administrador || '').toLowerCase()
+    return role === 'admin' || role === 'administrator' || role === 'administrador' || role === 'super_admin' || role === 'super-admin' || parsedUser.is_admin === true || parsedUser.administrador === true
   } catch {
-    // fallback para valores simples armazenados como texto
+    return String(parsedUser).toLowerCase().includes('admin')
   }
-
-  return String(rawUser).toLowerCase().includes('admin')
 })
 
-const isLoggedIn = computed(() => !!localStorage.getItem('token'))
+const isLoggedIn = computed(() => !!token.value)
 
 const menuItems = [
   { label: 'Início', to: '/', icon: 'mdi-home' },

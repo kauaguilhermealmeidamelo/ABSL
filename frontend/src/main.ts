@@ -14,6 +14,7 @@ import { registerPlugins } from '@/plugins'
 import App from './App.vue'
 
 import router from './router'
+import { initAppData } from '@/stores/appData'
 
 // Styles
 import 'vuetify/styles'
@@ -26,8 +27,16 @@ import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue-next/dist/bootstrap-vue-next.css'
 
 
-const app = createApp(App)
-registerPlugins(app)
-app.use(createBootstrap()) 
-app.use(router)
-app.mount('#app')
+async function bootstrap() {
+	const app = createApp(App)
+	registerPlugins(app)
+	app.use(createBootstrap())
+	app.use(router)
+
+	// initialize app data from backend (non-fatal)
+	await initAppData().catch(() => {})
+
+	app.mount('#app')
+}
+
+bootstrap()

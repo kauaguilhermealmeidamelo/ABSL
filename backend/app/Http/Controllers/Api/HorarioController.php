@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Horario;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 
 class HorarioController extends Controller
 {
@@ -39,7 +40,7 @@ class HorarioController extends Controller
      */
     public function store(Request $request)
     {
-        $data = $request->validate([
+        $validated = $request->validate([
             'turma' => 'required|string|max:10',
             'dia_semana' => 'required|string|max:20',
             'horario_inicio' => 'required|date_format:H:i',
@@ -51,9 +52,30 @@ class HorarioController extends Controller
             'ativo' => 'boolean',
         ]);
 
+        $data = Arr::only($validated, [
+            'turma',
+            'dia_semana',
+            'horario_inicio',
+            'horario_fim',
+            'disciplina',
+            'professor',
+            'sala',
+            'observacoes',
+            'ativo',
+        ]);
+
         $data['criado_por'] = $request->user()->id;
 
-        return response()->json(Horario::create($data), 201);
+        $horario = Horario::updateOrCreate(
+            [
+                'turma' => $data['turma'],
+                'dia_semana' => $data['dia_semana'],
+                'horario_inicio' => $data['horario_inicio'],
+            ],
+            $data
+        );
+
+        return response()->json($horario, $horario->wasRecentlyCreated ? 201 : 200);
     }
 
     /**

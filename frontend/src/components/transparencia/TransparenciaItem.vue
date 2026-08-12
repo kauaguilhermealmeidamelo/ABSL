@@ -2,6 +2,7 @@
 defineProps({
   titulo: { type: String, required: true },
   descricao: { type: String, required: true },
+  arquivoUrl: { type: String, default: '' },
   isAdmin: { type: Boolean, default: false },
 })
 
@@ -20,8 +21,18 @@ defineEmits(['excluir'])
     </div>
 
     <div class="transp-acoes">
-      <button type="button" class="btn-pdf">
+      <a
+        v-if="arquivoUrl"
+        :href="arquivoUrl"
+        target="_blank"
+        rel="noreferrer"
+        class="btn-pdf"
+      >
         <v-icon size="13">mdi-download</v-icon>
+        PDF
+      </a>
+      <button v-else type="button" class="btn-pdf btn-disabled" disabled>
+        <v-icon size="13">mdi-file-outline</v-icon>
         PDF
       </button>
       <button v-if="isAdmin" type="button" class="btn-excluir" @click="$emit('excluir')">

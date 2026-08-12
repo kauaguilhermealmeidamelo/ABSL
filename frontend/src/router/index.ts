@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory, type RouteLocationNormalized } from 'vue-router'
 import MainLayout from '@/MainLayout.vue'
+import { token } from '@/stores/auth'
 import inicio from '@/views/inicio.vue'
 
 import Horario from '@/views/Horario.vue'
@@ -42,9 +43,9 @@ const router = createRouter({
 router.beforeEach((to: RouteLocationNormalized) => {
     const publicPrefixes = ['/', '/inicio', '/horario', '/noticias', '/projetos', '/gabarito', '/transparencia', '/cardapio', '/ouvintes', '/mapa']
     const authRequired = !publicPrefixes.some((p) => to.path === p || to.path.startsWith(`${p}/`))
-    const token = localStorage.getItem('token')
+    const t = token.value
 
-    if (authRequired && !token) {
+    if (authRequired && !t) {
         return '/'
     }
 

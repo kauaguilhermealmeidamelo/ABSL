@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { TURNO_ANOS, turmasState, addTurma, removeTurma } from '@/stores/appData'
+import api from '@/services/api'
 
 const novoTurno = ref('matutino')
 const novoAno = ref(TURNO_ANOS.matutino[0])

@@ -10,23 +10,27 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // Criar usuário admin
-        User::create([
-            'name' => 'Admin ABSL',
-            'email' => 'admin@absl.local',
-            'password' => Hash::make('senha_super_segura_123'),
-            'role' => 'admin',
-            'is_admin' => true,
-        ]);
+        // Criar ou atualizar usuário admin
+        User::updateOrCreate(
+            ['email' => 'admin@absl.local'],
+            [
+                'name' => 'Admin ABSL',
+                'password' => Hash::make('senha_super_segura_123'),
+                'role' => 'admin',
+                'is_admin' => true,
+            ]
+        );
 
-        // Criar usuário comum
-        User::create([
-            'name' => 'Usuário Teste',
-            'email' => 'usuario@absl.local',
-            'password' => Hash::make('senha_123'),
-            'role' => 'user',
-            'is_admin' => false,
-            'turma' => '1A',
-        ]);
+        // Criar ou atualizar usuário comum
+        User::updateOrCreate(
+            ['email' => 'usuario@absl.local'],
+            [
+                'name' => 'Usuário Teste',
+                'password' => Hash::make('senha_123'),
+                'role' => 'user',
+                'is_admin' => false,
+                'turma' => '1A',
+            ]
+        );
     }
 }

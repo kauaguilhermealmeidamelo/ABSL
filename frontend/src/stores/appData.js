@@ -7,6 +7,7 @@
 //
 // TODO: substituir por chamadas à API quando os endpoints existirem.
 import { reactive, ref } from 'vue'
+import api from '@/services/api'
 
 // ── Turmas ──────────────────────────────────────────────────────────────
 export const TURNO_ANOS = {
@@ -31,19 +32,30 @@ export const turmasState = reactive({
   },
 })
 
-export function addTurma(turno, ano, letra) {
+export async function addTurma(turno, ano, letra) {
   if (!letra) return false
   const codigo = `${ano.charAt(0)}${letra.toUpperCase()}`
-  const atual = turmasState[turno]?.[ano] ?? []
-  if (atual.includes(codigo)) return false
-  turmasState[turno] = { ...turmasState[turno], [ano]: [...atual, codigo].sort() }
-  return true
+  try {
+    const res = await api.post('/turmas', { turno, ano, codigo })
+    // push into local state if created
+    const atual = turmasState[turno]?.[ano] ?? []
+    turmasState[turno] = { ...turmasState[turno], [ano]: [...atual, codigo].sort() }
+    return true
+  } catch (err) {
+    console.error('addTurma failed', err)
+    return false
+  }
 }
 
-export function removeTurma(turno, ano, codigo) {
-  turmasState[turno] = {
-    ...turmasState[turno],
-    [ano]: (turmasState[turno]?.[ano] ?? []).filter((t) => t !== codigo),
+export async function removeTurma(turno, ano, codigo) {
+  try {
+    await api.delete(`/turmas/${codigo}`)
+    turmasState[turno] = {
+      ...turmasState[turno],
+      [ano]: (turmasState[turno]?.[ano] ?? []).filter((t) => t !== codigo),
+    }
+  } catch (err) {
+    console.error('removeTurma failed', err)
   }
 }
 
@@ -114,8 +126,22 @@ export function getSchedule(turma) {
   return merged
 }
 
-export function setHorarioOverride(turma, day, time, subject) {
-  horarioOverrides[scheduleKey(turma, day, time)] = subject
+export async function setHorarioOverride(turma, day, time, subject) {
+  const key = scheduleKey(turma, day, time)
+  try {
+    // store as a Horario entry in the backend
+    await api.post('/horario', {
+      turma,
+      dia_semana: day,
+      horario_inicio: time.split('–')[0].trim(),
+      horario_fim: time.split('–')[1]?.trim() ?? time,
+      disciplina: subject,
+      ativo: true,
+    })
+    horarioOverrides[key] = subject
+  } catch (err) {
+    console.error('setHorarioOverride failed', err)
+  }
 }
 
 // ── Gabarito (rótulos dos grupos de turmas) ────────────────────────────────
@@ -136,20 +162,51 @@ export const team = reactive([
   { icon: 'mdi-laptop', name: 'Tecnologia e Inovação', members: [{ cargo: 'Diretor-Geral', nome: 'Kauan Guilherme' }, { cargo: '1º Diretor', nome: 'Pedro Lucas' }, { cargo: '2º Diretor', nome: 'Maria Eduarda' }] },
 ])
 
-export function addDiretoria({ name, diretorGeral, primeiro, segundo }) {
+export async function addDiretoria({ name, diretorGeral, primeiro, segundo }) {
   if (!name?.trim()) return
   const members = [{ cargo: 'Diretor(a)-Geral', nome: diretorGeral }]
   if (primeiro) members.push({ cargo: '1º(ª) Diretor(a)', nome: primeiro })
   if (segundo) members.push({ cargo: '2º(ª) Diretor(a)', nome: segundo })
-  team.push({ icon: 'mdi-domain', name, members })
+  try {
+    const res = await api.post('/diretorias', { name, members, icon: 'mdi-domain' })
+    team.push(res.data)
+  } catch (err) {
+    console.error('addDiretoria failed', err)
+  }
 }
 
-export function removeDiretoria(index) {
-  team.splice(index, 1)
+export async function removeDiretoria(index) {
+  const dir = team[index]
+  if (!dir) return
+  try {
+    if (dir.id) {
+      await api.delete(`/diretorias/${dir.id}`)
+    }
+    team.splice(index, 1)
+  } catch (err) {
+    console.error('removeDiretoria failed', err)
+  }
 }
 
-export function saveDiretoriaMembers(index, members) {
-  team[index].members = members.filter((m) => m.cargo || m.nome)
+export async function saveDiretoriaMembers(index, members) {
+  const dir = team[index]
+  if (!dir) return
+  const payload = { members: members.filter((m) => m.cargo || m.nome) }
+  try {
+    let res
+    if (dir.id) {
+      res = await api.put(`/diretorias/${dir.id}`, payload)
+    } else {
+      res = await api.post('/diretorias', {
+        name: dir.name,
+        icon: dir.icon ?? 'mdi-domain',
+        members: payload.members,
+      })
+    }
+    team[index] = res.data
+  } catch (err) {
+    console.error('saveDiretoriaMembers failed', err)
+  }
 }
 
 // ── Mídia da tela inicial ───────────────────────────────────────────────────
@@ -161,9 +218,18 @@ export const inicioMedia = reactive({
 
 export function setInicioMedia(file) {
   if (!file) return
-  inicioMedia.file = file
-  inicioMedia.fileName = file.name
-  inicioMedia.videoUrl = URL.createObjectURL(file)
+  // upload to backend and use returned URL
+  const fd = new FormData()
+  fd.append('file', file)
+  api.post('/inicio-media', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+    .then((res) => {
+      inicioMedia.file = null
+      inicioMedia.fileName = res.data.file_name || file.name
+      inicioMedia.videoUrl = res.data.url
+    })
+    .catch((err) => {
+      console.error('upload inicio media failed', err)
+    })
 }
 
 export function clearInicioMedia() {
@@ -176,12 +242,106 @@ export function clearInicioMedia() {
 }
 
 // ── Cardápio ─────────────────────────────────────────────────────────────
-export const cardapioSemana = ref('28 jul – 01 ago 2026')
+export const CARDAPIO_DIAS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']
 
-export const cardapioDias = reactive({
-  'Segunda-feira': 'Galinhada',
-  'Terça-feira': 'Strogonoff de frango',
-  'Quarta-feira': 'Macarrão ao sugo com almôndegas',
-  'Quinta-feira': 'Peixe assado com limão e alho',
-  'Sexta-feira': 'Frango grelhado ao molho de ervas',
-})
+export const cardapioSemana = ref('')
+
+export const cardapioDias = reactive({})
+for (const dia of CARDAPIO_DIAS) {
+  cardapioDias[dia] = ''
+}
+
+// helper map: dia_semana -> cardapio record (id + metadata)
+const cardapioMap = {}
+
+export async function setCardapioSemana(valor) {
+  cardapioSemana.value = valor
+}
+
+export async function setCardapioDia(dia, valor) {
+  try {
+    const existing = cardapioMap[dia]
+    if (existing && existing.id) {
+      const res = await api.put(`/cardapio/${existing.id}`, {
+        descricao: valor,
+      })
+      cardapioDias[dia] = res.data.descricao
+      cardapioMap[dia] = res.data
+    } else {
+      const today = new Date().toISOString().slice(0, 10)
+      const res = await api.post('/cardapio', {
+        data: today,
+        dia_semana: dia,
+        refeicao: 'Lanche',
+        descricao: valor,
+        ativo: true,
+      })
+      cardapioDias[dia] = res.data.descricao
+      cardapioMap[dia] = res.data
+    }
+  } catch (err) {
+    console.error('setCardapioDia failed', err)
+  }
+}
+
+export async function initAppData() {
+  try {
+    const [turmasRes, dirsRes, mediaRes] = await Promise.all([
+      api.get('/turmas').catch(() => ({ data: [] })),
+      api.get('/diretorias').catch(() => ({ data: [] })),
+      api.get('/inicio-media').catch(() => ({ data: null })),
+    ])
+
+    // populate turmasState from server (merge by turno/ano)
+    for (const t of turmasRes.data ?? []) {
+      if (!turmasState[t.turno]) turmasState[t.turno] = {}
+      if (!turmasState[t.turno][t.ano]) turmasState[t.turno][t.ano] = []
+      if (!turmasState[t.turno][t.ano].includes(t.codigo)) {
+        turmasState[t.turno][t.ano].push(t.codigo)
+        turmasState[t.turno][t.ano].sort()
+      }
+    }
+
+    // populate team
+    if (Array.isArray(dirsRes.data)) {
+      team.splice(0, team.length, ...dirsRes.data)
+    }
+
+    // inicio media
+    if (mediaRes.data) {
+      inicioMedia.file = null
+      inicioMedia.fileName = mediaRes.data.file_name ?? ''
+      inicioMedia.videoUrl = mediaRes.data.url ?? ''
+    }
+    // populate cardapio
+    const cardRes = await api.get('/cardapio').catch(() => ({ data: [] }))
+    if (Array.isArray(cardRes.data)) {
+      for (const item of cardRes.data) {
+        cardapioDias[item.dia_semana] = item.descricao
+        cardapioMap[item.dia_semana] = item
+      }
+      if (cardRes.data.length) {
+        const first = cardRes.data[0].data
+        const last = cardRes.data[cardRes.data.length - 1].data
+        cardapioSemana.value = `${first} → ${last}`
+      }
+    }
+
+    // populate horarios from backend for each turma
+    const turmaList = []
+    for (const turnoKey of Object.keys(turmasState)) {
+      for (const anoKey of Object.keys(turmasState[turnoKey] || {})) {
+        turmaList.push(...(turmasState[turnoKey][anoKey] || []))
+      }
+    }
+    await Promise.all(turmaList.map(async (t) => {
+      const res = await api.get(`/horario/${t}`).catch(() => ({ data: [] }))
+      for (const h of res.data ?? []) {
+        const key = scheduleKey(h.turma, h.dia_semana, `${h.horario_inicio}–${h.horario_fim}`)
+        horarioOverrides[key] = h.disciplina
+      }
+    }))
+  } catch (err) {
+    console.error('initAppData failed', err)
+  }
+}

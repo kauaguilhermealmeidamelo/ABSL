@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Gabarito extends Model
 {
+    protected $table = 'gabarito';
     protected $fillable = [
         'titulo',
         'descricao',

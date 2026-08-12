@@ -4,18 +4,18 @@ import AdminBanner from '@/components/common/AdminBanner.vue'
 import CardapioSemana from '@/components/cardapio/CardapioSemana.vue'
 import CardapioTabela from '@/components/cardapio/CardapioTabela.vue'
 import { useAdmin } from '@/composables/useAdmin'
-import { cardapioSemana, cardapioDias } from '@/stores/appData'
+import { CARDAPIO_DIAS, cardapioSemana, cardapioDias, setCardapioSemana, setCardapioDia } from '@/stores/appData'
 
 const { isAdmin } = useAdmin()
 
-const DIAS_SEMANA = Object.keys(cardapioDias)
+const DIAS_SEMANA = CARDAPIO_DIAS
 
 function updateSemana(valor) {
-  cardapioSemana.value = valor
+  setCardapioSemana(valor)
 }
 
 function updateDia({ dia, valor }) {
-  cardapioDias[dia] = valor
+  setCardapioDia(dia, valor)
 }
 </script>
 

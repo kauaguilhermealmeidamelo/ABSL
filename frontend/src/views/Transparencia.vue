@@ -85,6 +85,7 @@ async function excluir(id) {
         :key="item.id"
         :titulo="item.referencia"
         :descricao="item.descricao"
+        :arquivo-url="item.arquivo_url"
         :is-admin="isAdmin"
         @excluir="excluir(item.id)"
       />

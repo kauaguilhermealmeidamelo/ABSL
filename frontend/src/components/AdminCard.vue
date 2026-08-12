@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import logoImg from '@/assets/logo.png'
 import { useRouter } from 'vue-router'
 import { login, logout } from '@/services/auth'
+import { token } from '@/stores/auth'
 
 const router = useRouter()
 const open = ref(false)
@@ -11,7 +12,7 @@ const password = ref('')
 const loading = ref(false)
 const error = ref('')
 
-const isLoggedIn = computed(() => !!localStorage.getItem('token'))
+const isLoggedIn = computed(() => !!token.value)
 
 async function submit() {
   error.value = ''
@@ -27,6 +28,7 @@ async function submit() {
     email.value = ''
     password.value = ''
     open.value = false
+    // no refresh needed; auth store updates reactivity
   } catch (err) {
     error.value = err?.response?.data?.message || 'Credenciais inválidas.'
   } finally {

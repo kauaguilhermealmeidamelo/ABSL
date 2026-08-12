@@ -10,7 +10,8 @@ defineEmits(['abrir', 'editar', 'excluir'])
 <template>
   <article class="noticia-card" @click="$emit('abrir', noticia)">
     <div class="noticia-imagem">
-      <div class="noticia-imagem-textura" />
+      <img v-if="noticia.imagem_url" :src="noticia.imagem_url" alt="capa" class="noticia-imagem-img" />
+      <div v-else class="noticia-imagem-textura" />
     </div>
 
     <div class="noticia-corpo">
@@ -55,6 +56,8 @@ defineEmits(['abrir', 'editar', 'excluir'])
   position: relative;
   overflow: hidden;
 }
+
+.noticia-imagem-img { width:100%; height:100%; object-fit:cover }
 
 .noticia-imagem-textura {
   position: absolute;

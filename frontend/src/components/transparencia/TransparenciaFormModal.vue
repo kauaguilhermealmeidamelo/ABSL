@@ -8,21 +8,41 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'salvar'])
 
-const form = ref({ referencia: '', descricao: '', arquivo: '' })
+const form = ref({ referencia: '', descricao: '', data_documento: '', arquivo: null })
+const previewUrl = ref('')
 
 watch(
   () => props.modelValue,
   (open) => {
-    if (open) form.value = { referencia: '', descricao: '', arquivo: '' }
+    if (open) {
+      form.value = { referencia: '', descricao: '', data_documento: '', arquivo: null }
+      previewUrl.value && URL.revokeObjectURL(previewUrl.value)
+      previewUrl.value = ''
+    }
+  }
+)
+
+watch(
+  () => form.value.arquivo,
+  (file, oldFile) => {
+    if (oldFile && previewUrl.value) {
+      URL.revokeObjectURL(previewUrl.value)
+      previewUrl.value = ''
+    }
+    if (file instanceof File) {
+      previewUrl.value = URL.createObjectURL(file)
+    }
   }
 )
 
 function close() {
   emit('update:modelValue', false)
+  previewUrl.value && URL.revokeObjectURL(previewUrl.value)
+  previewUrl.value = ''
 }
 
 function salvar() {
-  if (!form.value.referencia.trim()) return
+  if (!form.value.data_documento || !form.value.descricao.trim()) return
   emit('salvar', { ...form.value })
   close()
 }
@@ -36,8 +56,8 @@ function salvar() {
       </v-card-title>
 
       <v-card-text class="modal-body">
-        <label class="field-label">{{ tipo === 'ata' ? 'Data da reunião' : 'Período de referência' }}</label>
-        <input v-model="form.referencia" type="text" class="field-input" placeholder="Ex: 29 de julho de 2026" />
+        <label class="field-label">{{ tipo === 'ata' ? 'Data da reunião' : 'Data do documento' }}</label>
+        <input v-model="form.data_documento" type="date" class="field-input" />
 
         <label class="field-label">{{ tipo === 'ata' ? 'Pauta resumida' : 'Descrição' }}</label>
         <textarea v-model="form.descricao" rows="3" class="field-textarea" placeholder="Descrição breve" />
@@ -46,9 +66,16 @@ function salvar() {
         <label class="upload-box">
           <v-icon size="18" color="#5a6a85">mdi-file-upload-outline</v-icon>
           <span>Selecionar PDF</span>
-          <input type="file" accept="application/pdf" hidden @change="form.arquivo = $event.target.files?.[0]?.name || ''" />
+          <input type="file" accept="application/pdf" hidden @change="form.arquivo = $event.target.files?.[0] || null" />
         </label>
-        <span v-if="form.arquivo" class="upload-file-name">{{ form.arquivo }}</span>
+        <span v-if="form.arquivo" class="upload-file-name">{{ form.arquivo.name }}</span>
+        <a
+          v-if="previewUrl"
+          :href="previewUrl"
+          target="_blank"
+          rel="noreferrer"
+          class="preview-link"
+        >Visualizar PDF</a>
       </v-card-text>
 
       <v-card-actions class="modal-actions">

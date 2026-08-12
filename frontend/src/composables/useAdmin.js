@@ -1,5 +1,5 @@
 import { computed } from 'vue'
-
+import { user } from '@/stores/auth'
 /**
  * useAdmin
  * Detecta se o usuário logado (localStorage.usuario) possui papel de administrador.
@@ -8,11 +8,9 @@ import { computed } from 'vue'
  */
 export function useAdmin() {
   const isAdmin = computed(() => {
-    const raw = localStorage.getItem('usuario')
-    if (!raw) return false
-
+    const parsed = user.value
+    if (!parsed) return false
     try {
-      const parsed = JSON.parse(raw)
       if (parsed && typeof parsed === 'object') {
         const role = String(
           parsed.role || parsed.tipo || parsed.perfil || parsed.is_admin || parsed.administrador || ''
@@ -28,10 +26,9 @@ export function useAdmin() {
         )
       }
     } catch {
-      // fallback para valores simples armazenados como texto
+      // fallback
     }
-
-    return String(raw).toLowerCase().includes('admin')
+    return String(parsed).toLowerCase().includes('admin')
   })
 
   return { isAdmin }

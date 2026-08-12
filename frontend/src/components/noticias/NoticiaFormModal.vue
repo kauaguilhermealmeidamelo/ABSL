@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -9,14 +9,22 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'salvar'])
 
 const form = ref({ titulo: '', data_publicacao: '', texto: '', imagem_url: '' })
+const imagemFile = ref(null)
+const imagemPreview = ref('')
 
 watch(
   () => [props.modelValue, props.noticia],
   () => {
     if (props.modelValue) {
-      form.value = props.noticia
-        ? { ...props.noticia }
-        : { titulo: '', data_publicacao: '', texto: '', imagem_url: '' }
+      if (props.noticia) {
+        form.value = { ...props.noticia }
+        imagemPreview.value = props.noticia.imagem_url || ''
+        imagemFile.value = null
+      } else {
+        form.value = { titulo: '', data_publicacao: '', texto: '', imagem_url: '' }
+        imagemPreview.value = ''
+        imagemFile.value = null
+      }
     }
   },
   { immediate: true }
@@ -26,9 +34,39 @@ function close() {
   emit('update:modelValue', false)
 }
 
+function onFileChange(e) {
+  const f = e.target.files?.[0]
+  if (!f) return
+  imagemFile.value = f
+  imagemPreview.value = URL.createObjectURL(f)
+}
+
+function formatDateForInput(d) {
+  if (!d) return ''
+  const dt = new Date(d)
+  if (Number.isNaN(dt.getTime())) return ''
+  const y = dt.getFullYear()
+  const m = String(dt.getMonth() + 1).padStart(2, '0')
+  const day = String(dt.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+const imagemPreviewName = computed(() => {
+  if (imagemFile.value) return imagemFile.value.name
+  if (form.value.imagem_url) return String(form.value.imagem_url).split('/').pop()
+  return ''
+})
+
 function salvar() {
   if (!form.value.titulo.trim()) return
-  emit('salvar', { ...form.value })
+  const payload = {
+    titulo: form.value.titulo,
+    data_publicacao: formatDateForInput(form.value.data_publicacao) || '',
+    texto: form.value.texto,
+    imagem_url: imagemPreview.value || form.value.imagem_url || '',
+  }
+
+  emit('salvar', payload)
   close()
 }
 </script>
@@ -45,9 +83,10 @@ function salvar() {
         <label class="upload-box">
           <v-icon size="20" color="#5a6a85">mdi-image-outline</v-icon>
           <span>Selecionar imagem</span>
-          <input type="file" accept="image/*" hidden @change="form.imagem_url = $event.target.files?.[0]?.name || ''" />
+          <input type="file" accept="image/*" hidden @change="onFileChange" />
         </label>
-        <span v-if="form.imagem_url" class="upload-file-name">{{ form.imagem_url }}</span>
+        <span v-if="imagemPreviewName" class="upload-file-name">{{ imagemPreviewName }}</span>
+        <img v-if="imagemPreview" :src="imagemPreview" alt="preview" class="upload-preview" />
 
         <label class="field-label">Título</label>
         <input v-model="form.titulo" type="text" class="field-input" placeholder="Título da notícia" />
@@ -138,6 +177,8 @@ function salvar() {
   color: #1a3f8f;
   margin-top: 4px;
 }
+
+.upload-preview { max-width: 100%; border-radius: 8px; margin-top: 8px }
 
 .modal-actions {
   padding: 12px 20px 20px;

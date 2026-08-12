@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Transparencia;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Storage;
 
 class TransparenciaController extends Controller
 {
@@ -37,10 +39,26 @@ class TransparenciaController extends Controller
             'descricao' => 'required|string',
             'categoria' => 'required|string|max:100',
             'arquivo_url' => 'nullable|string',
+            'file' => 'nullable|file|mimetypes:application/pdf,application/x-pdf',
             'tipo_documento' => 'required|string|max:100',
             'data_documento' => 'required|date',
             'ativo' => 'boolean',
         ]);
+
+        $data = Arr::only($data, [
+            'titulo',
+            'descricao',
+            'categoria',
+            'arquivo_url',
+            'tipo_documento',
+            'data_documento',
+            'ativo',
+        ]);
+
+        if ($request->hasFile('file')) {
+            $path = $request->file('file')->store('public/transparencia');
+            $data['arquivo_url'] = Storage::url($path);
+        }
 
         $data['publicado_por'] = $request->user()->id;
 
@@ -59,10 +77,26 @@ class TransparenciaController extends Controller
             'descricao' => 'sometimes|required|string',
             'categoria' => 'sometimes|required|string|max:100',
             'arquivo_url' => 'nullable|string',
+            'file' => 'nullable|file|mimetypes:application/pdf,application/x-pdf',
             'tipo_documento' => 'sometimes|required|string|max:100',
             'data_documento' => 'sometimes|required|date',
             'ativo' => 'boolean',
         ]);
+
+        $data = Arr::only($data, [
+            'titulo',
+            'descricao',
+            'categoria',
+            'arquivo_url',
+            'tipo_documento',
+            'data_documento',
+            'ativo',
+        ]);
+
+        if ($request->hasFile('file')) {
+            $path = $request->file('file')->store('public/transparencia');
+            $data['arquivo_url'] = Storage::url($path);
+        }
 
         $transparencia->update($data);
 
