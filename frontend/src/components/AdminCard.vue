@@ -3,7 +3,7 @@ import { ref, computed } from 'vue'
 import logoImg from '@/assets/logo.png'
 import { useRouter } from 'vue-router'
 import { login, logout } from '@/services/auth'
-import { token } from '@/stores/auth'
+import { user } from '@/stores/auth'
 
 const router = useRouter()
 const open = ref(false)
@@ -12,7 +12,7 @@ const password = ref('')
 const loading = ref(false)
 const error = ref('')
 
-const isLoggedIn = computed(() => !!token.value)
+const isLoggedIn = computed(() => !!user.value)
 
 async function submit() {
   error.value = ''

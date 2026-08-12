@@ -1,7 +1,7 @@
 <script setup>
 import logoImg from "@/assets/logo.png"
 import { computed } from 'vue'
-import { user, token } from '@/stores/auth'
+import { user } from '@/stores/auth'
 import { useRoute } from 'vue-router'
 import AdminCard from '@/components/AdminCard.vue'
 
@@ -24,7 +24,7 @@ const isAdmin = computed(() => {
   }
 })
 
-const isLoggedIn = computed(() => !!token.value)
+const isLoggedIn = computed(() => !!user.value)
 
 const menuItems = [
   { label: 'Início', to: '/', icon: 'mdi-home' },
