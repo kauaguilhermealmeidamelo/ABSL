@@ -1,34 +1,68 @@
+<script setup>
+import { computed, ref } from 'vue'
+
+const props = defineProps({
+  documento: { type: Object, required: true }, // { id, grupo_turma, tipo_prova, tipo_documento, documento_url }
+  isAdmin: { type: Boolean, default: false },
+})
+
+const emit = defineEmits(['substituir'])
+
+const fileInput = ref(null)
+const enviando = ref(false)
+
+const isGabarito = computed(() => props.documento.tipo_documento === 'gabarito')
+
+const nomeArquivo = computed(() => {
+  const prefixo = isGabarito.value ? 'Gabarito' : 'Prova'
+  return `${prefixo} ${props.documento.tipo_prova} – ${props.documento.grupo_turma}.pdf`
+})
+
+const descricaoTipo = computed(() => (isGabarito.value ? 'Gabarito' : 'Prova para consulta'))
+
+function abrirSeletor() {
+  fileInput.value?.click()
+}
+
+function onFileChange(event) {
+  const file = event.target.files?.[0]
+  event.target.value = '' // permite selecionar o mesmo arquivo de novo depois
+  if (!file) return
+  enviando.value = true
+  emit('substituir', props.documento.id, file, () => {
+    enviando.value = false
+  })
+}
+</script>
+
 <template>
   <div class="doc-row">
-    <div class="doc-icon" :class="type === 'gabarito' ? 'doc-icon-gabarito' : 'doc-icon-prova'">
-      <v-icon size="15" :color="type === 'gabarito' ? '#1a3f8f' : '#d97706'">mdi-file-document-outline</v-icon>
+    <div class="doc-icon" :class="isGabarito ? 'doc-icon-gabarito' : 'doc-icon-prova'">
+      <v-icon size="15" :color="isGabarito ? '#1a3f8f' : '#d97706'">mdi-file-document-outline</v-icon>
     </div>
 
     <div class="doc-info">
-      <p class="doc-name">{{ name }}</p>
-      <p class="doc-type">{{ type === 'gabarito' ? 'Gabarito' : 'Prova para consulta' }}</p>
+      <p class="doc-name">{{ nomeArquivo }}</p>
+      <p class="doc-type">{{ descricaoTipo }}</p>
     </div>
 
     <div class="doc-actions">
-      <button type="button" class="doc-download">
+      <a :href="documento.documento_url" target="_blank" rel="noreferrer" class="doc-download">
+        <v-icon size="12">mdi-eye-outline</v-icon>
+        Ver
+      </a>
+      <a :href="documento.documento_url" download class="doc-download">
         <v-icon size="12">mdi-download</v-icon>
-        PDF
-      </button>
+        Baixar
+      </a>
 
-      <button v-if="isAdmin" type="button" class="doc-replace">
-        Substituir
+      <button v-if="isAdmin" type="button" class="doc-replace" :disabled="enviando" @click="abrirSeletor">
+        {{ enviando ? 'Enviando...' : 'Substituir' }}
       </button>
+      <input ref="fileInput" type="file" accept="application/pdf" hidden @change="onFileChange" />
     </div>
   </div>
 </template>
-
-<script setup>
-defineProps({
-  name: { type: String, required: true },
-  type: { type: String, required: true, validator: (v) => ['gabarito', 'prova'].includes(v) },
-  isAdmin: { type: Boolean, default: false },
-})
-</script>
 
 <style scoped>
 .doc-row {
@@ -78,7 +112,6 @@ defineProps({
 @media (max-width: 360px) {
   .doc-actions {
     margin-left: 44px;
-    /* alinha com o texto, abaixo do ícone, quando quebra de linha */
   }
 }
 
@@ -107,6 +140,7 @@ defineProps({
   background: #eef3fb;
   color: #1a3f8f;
   font-size: 12px;
+  text-decoration: none;
   border: none;
   cursor: pointer;
   flex-shrink: 0;
@@ -129,7 +163,12 @@ defineProps({
   transition: background-color 0.15s ease;
 }
 
-.doc-replace:hover {
+.doc-replace:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.doc-replace:hover:not(:disabled) {
   background: #fffbeb;
 }
 </style>

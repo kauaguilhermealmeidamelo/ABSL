@@ -16,7 +16,7 @@ async function fetchNoticias(force = false) {
     noticias.value = await noticiasService.list()
     loaded.value = true
   } catch {
-    error.value = 'Não foi possível carregar as notícias. Tente novamente.'
+    error.value = 'Não foi possível carregar as notícias. Contate o administrador.'
   } finally {
     loading.value = false
   }

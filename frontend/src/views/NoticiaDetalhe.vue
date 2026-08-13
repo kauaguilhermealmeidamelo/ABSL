@@ -1,14 +1,18 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PageHeader from '@/components/common/PageHeader.vue'
 import { useNoticias } from '@/composables/useNoticias'
 
 const route = useRoute()
 const router = useRouter()
-const { getById } = useNoticias()
+const { getById, fetchNoticias } = useNoticias()
 
 const noticia = computed(() => getById(route.params.id))
+
+onMounted(async () => {
+  await fetchNoticias(true)
+})
 
 function voltar() {
   router.push('/noticias')

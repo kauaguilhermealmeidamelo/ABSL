@@ -1,12 +1,19 @@
 <template>
-  <section class="gab-section">
+  <section v-if="grupos.length" class="gab-section">
     <div class="gab-section-heading">
       <span class="gab-section-title">{{ title }}</span>
       <div class="gab-section-divider" />
     </div>
 
     <div class="gab-section-grid">
-      <GabaritoCard v-for="grupo in groups" :key="grupo" :label="grupo" :is-admin="isAdmin" />
+      <GabaritoCard
+        v-for="grupo in grupos"
+        :key="grupo.label"
+        :label="grupo.label"
+        :documentos="grupo.documentos"
+        :is-admin="isAdmin"
+        @substituir="(...args) => $emit('substituir', ...args)"
+      />
     </div>
   </section>
 </template>
@@ -16,9 +23,11 @@ import GabaritoCard from './Gabaritocard.vue'
 
 defineProps({
   title: { type: String, required: true },
-  groups: { type: Array, required: true },
+  grupos: { type: Array, required: true }, // [{ label, documentos: [] }]
   isAdmin: { type: Boolean, default: false },
 })
+
+defineEmits(['substituir'])
 </script>
 
 <style scoped>

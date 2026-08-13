@@ -3,8 +3,7 @@
 // o formulário de projeto e o diálogo de detalhe — evita repetir a
 // mesma lista/emoji em vários componentes.
 
-export const PROJECT_CATS = [
-  'Presidência',
+export const PROJECT_CATS = [ 
   'Secretaria',
   'Tesouraria',
   'Esporte e Lazer',

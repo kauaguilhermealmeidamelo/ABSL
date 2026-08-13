@@ -64,8 +64,19 @@ function salvar() {
     data_publicacao: formatDateForInput(form.value.data_publicacao) || '',
     texto: form.value.texto,
     imagem_url: imagemPreview.value || form.value.imagem_url || '',
+    methods: {
+  onFileChange(event) {
+    const file = event.target.files[0];
+    if (file) {
+      this.form.imagem = file; // O arquivo em si para envio ao backend
+      this.imagemPreviewName = file.name;
+      this.imagemPreview = URL.createObjectURL(file); // Gera a URL temporária para o preview
+    }
+  }
+}   
   }
 
+  
   emit('salvar', payload)
   close()
 }
