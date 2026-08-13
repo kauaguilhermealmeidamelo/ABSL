@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\GabaritoResource;
 use App\Models\Gabarito;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
 class GabaritoController extends Controller
@@ -30,14 +31,14 @@ class GabaritoController extends Controller
             'disciplina' => 'required|string|max:255',
             'serie' => 'nullable|string|max:20',
             'tipo_prova' => 'required|string|max:100',
+            // 'gabarito' (resposta) ou 'prova' (arquivo para consulta).
+            'tipo_documento' => 'required|in:gabarito,prova',
             'data_prova' => 'required|date',
-            // Upload real do PDF. 10MB de limite.
             'arquivo' => 'required|file|mimetypes:application/pdf,application/x-pdf|max:10240',
             'ativo' => 'boolean',
         ]);
 
         $data['publicado_por'] = $request->user()->id;
-        $data['tipo_documento'] = 'pdf';
         $data['documento_url'] = $this->storeArquivo($request->file('arquivo'));
 
         return new GabaritoResource(Gabarito::create($data));
@@ -53,6 +54,7 @@ class GabaritoController extends Controller
             'disciplina' => 'sometimes|required|string|max:255',
             'serie' => 'nullable|string|max:20',
             'tipo_prova' => 'sometimes|required|string|max:100',
+            'tipo_documento' => 'sometimes|required|in:gabarito,prova',
             'data_prova' => 'sometimes|required|date',
             // Opcional aqui: só manda 'arquivo' quando for SUBSTITUIR o PDF.
             'arquivo' => 'sometimes|file|mimetypes:application/pdf,application/x-pdf|max:10240',
@@ -62,7 +64,9 @@ class GabaritoController extends Controller
         if ($request->hasFile('arquivo')) {
             $this->deleteArquivoAntigo($gabarito->documento_url);
             $data['documento_url'] = $this->storeArquivo($request->file('arquivo'));
-            $data['tipo_documento'] = 'pdf';
+            // OBS: não sobrescrevemos mais 'tipo_documento' aqui — trocar o
+            // PDF (ex: no botão "Substituir") não deve mudar se o
+            // documento é um gabarito ou uma prova.
         }
 
         $gabarito->update($data);
@@ -85,11 +89,14 @@ class GabaritoController extends Controller
      * forçado — o navegador abre o PDF direto, sem precisar de programa
      * instalado. Para baixar, basta o botão "download" no <a> do frontend.
      */
-    private function storeArquivo($file): string
+    private function storeArquivo(UploadedFile $file): string
     {
         $path = $file->store('gabarito', 'public');
 
-        return Storage::disk('public')->url($path);
+        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
+        $disk = Storage::disk('public');
+
+        return $disk->url($path);
     }
 
     /**
@@ -102,9 +109,6 @@ class GabaritoController extends Controller
             return;
         }
 
-        // Storage::disk('public')->url() gera algo como /storage/gabarito/x.pdf
-        // (ou http://host/storage/gabarito/x.pdf). Extraímos o caminho relativo
-        // ao disk 'public' (tudo depois de "/storage/").
         $path = preg_replace('#^.*/storage/#', '', $url);
 
         if ($path && Storage::disk('public')->exists($path)) {

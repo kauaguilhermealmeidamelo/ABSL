@@ -3,7 +3,7 @@ import { team } from '@/stores/appData'
 </script>
 
 <template>
-  <section class="team">
+  <section id="equipe" class="team">
     <h2>Equipe</h2>
     <div class="team-grid">
       <article class="team-card" v-for="dir in team" :key="dir.name">

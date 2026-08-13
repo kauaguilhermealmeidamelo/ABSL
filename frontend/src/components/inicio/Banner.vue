@@ -1,3 +1,26 @@
+<script setup>
+import { ref } from 'vue'
+import heroBg from '@/components/inicio/icons/iniciobanner.png'
+import { inicioMedia } from '@/stores/appData'
+
+const showVideo = ref(false)
+
+function abrirVideo() {
+  if (!inicioMedia.videoUrl) return
+  showVideo.value = true
+}
+
+function fecharVideo() {
+  showVideo.value = false
+}
+
+
+function irParaEquipe() {
+  document.getElementById('equipe')?.scrollIntoView({ behavior: 'smooth' })
+}
+
+</script>
+
 <template>
   <div class="hero">
     <!-- Azulejo background -->
@@ -19,21 +42,27 @@
           </p>
         </div>
         <div class="hero-actions">
-          <button class="btn-primary">
+          <button class="btn-primary" type="button" @click="irParaEquipe">
             CONHEÇA O GRÊMIO <span class="arrow">→</span>
           </button>
-          <button class="btn-ghost">
+          <button v-if="inicioMedia.videoUrl" class="btn-ghost" type="button" @click="abrirVideo">
             <span class="play-icon">▶</span> Ver Vídeo
           </button>
         </div>
       </div>
     </div>
   </div>
+  <div v-if="showVideo" class="video-overlay" @click.self="fecharVideo">
+    <div class="video-modal">
+      <button type="button" class="video-close" @click="fecharVideo">
+        <span>&times;</span>
+      </button>
+      <video :src="inicioMedia.videoUrl" controls autoplay class="video-player"></video>
+    </div>
+  </div>
 </template>
 
-<script setup>
-import heroBg from '@/components/inicio/icons/iniciobanner.png'
-</script>
+
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700;1,900&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400;1,9..40,700&display=swap');
@@ -58,12 +87,10 @@ import heroBg from '@/components/inicio/icons/iniciobanner.png'
 .hero-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    135deg,
-    rgba(13, 31, 60, 0.82) 0%,
-    rgba(26, 63, 143, 0.72) 60%,
-    rgba(37, 99, 235, 0.6) 100%
-  );
+  background: linear-gradient(135deg,
+      rgba(13, 31, 60, 0.82) 0%,
+      rgba(26, 63, 143, 0.72) 60%,
+      rgba(37, 99, 235, 0.6) 100%);
 }
 
 .hero-content {
@@ -92,13 +119,16 @@ import heroBg from '@/components/inicio/icons/iniciobanner.png'
   font-size: 60px;
   margin: 0 0 4px;
 }
+
 .title-white {
   color: #ffffff;
 }
+
 .title-gold {
   color: #f5c518;
   font-style: italic;
 }
+
 .title-sm {
   font-size: 48px;
   font-style: italic;
@@ -116,18 +146,21 @@ import heroBg from '@/components/inicio/icons/iniciobanner.png'
   display: flex;
   gap: 12px;
 }
+
 .accent-bar {
   width: 4px;
   border-radius: 999px;
   flex-shrink: 0;
   background: #f5c518;
 }
+
 .hero-text {
   color: rgba(255, 255, 255, 0.85);
   font-size: 14px;
   line-height: 1.6;
   margin: 0;
 }
+
 .hero-text strong {
   color: #ffffff;
 }
@@ -155,9 +188,11 @@ import heroBg from '@/components/inicio/icons/iniciobanner.png'
   gap: 8px;
   transition: background-color 0.15s ease;
 }
+
 .btn-primary:hover {
   background: #f5c518;
 }
+
 .arrow {
   font-size: 14px;
 }
@@ -173,9 +208,11 @@ import heroBg from '@/components/inicio/icons/iniciobanner.png'
   cursor: pointer;
   transition: color 0.15s ease;
 }
+
 .btn-ghost:hover {
   color: #ffffff;
 }
+
 .play-icon {
   width: 32px;
   height: 32px;
@@ -191,9 +228,11 @@ import heroBg from '@/components/inicio/icons/iniciobanner.png'
   .title {
     font-size: 40px;
   }
+
   .title-sm {
     font-size: 32px;
   }
+
   .hero-content {
     padding: 24px;
   }
@@ -203,24 +242,66 @@ import heroBg from '@/components/inicio/icons/iniciobanner.png'
   .hero {
     min-height: unset;
   }
+
   .hero-content {
     padding: 20px;
     min-height: unset;
   }
+
   .title {
     font-size: 30px;
   }
+
   .title-sm {
     font-size: 24px;
     margin-bottom: 20px;
   }
+
   .hero-actions {
     flex-direction: column;
     align-items: flex-start;
   }
+
   .btn-primary {
     width: 100%;
     justify-content: center;
   }
+}
+
+.video-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.75);
+  padding: 16px;
+}
+
+.video-modal {
+  position: relative;
+  width: 100%;
+  max-width: 860px;
+}
+
+.video-player {
+  width: 100%;
+  max-height: 80vh;
+  border-radius: 12px;
+  background: #000;
+  display: block;
+}
+
+.video-close {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
 }
 </style>

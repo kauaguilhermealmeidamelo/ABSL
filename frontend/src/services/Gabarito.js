@@ -15,7 +15,7 @@ export const gabaritoService = {
     return data.data ?? data
   },
 
-  // dados = { grupo_turma, tipo_prova, tipo_documento: 'gabarito'|'prova', arquivo: File }
+  // dados = { titulo, disciplina, serie, tipo_prova, tipo_documento: 'gabarito'|'prova', data_prova, arquivo: File }
   async create(dados) {
     const { data } = await api.post('/gabarito', toFormData(dados), {
       headers: { 'Content-Type': 'multipart/form-data' },

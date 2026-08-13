@@ -61,6 +61,7 @@ const novo = reactive({
   disciplina: '',
   serie: '',
   tipo_prova: '',
+  tipo_documento: 'gabarito', // 'gabarito' | 'prova'
   data_prova: '',
   arquivo: null,
 })
@@ -70,6 +71,7 @@ function resetForm() {
   novo.disciplina = ''
   novo.serie = ''
   novo.tipo_prova = ''
+  novo.tipo_documento = 'gabarito'
   novo.data_prova = ''
   novo.arquivo = null
 }
@@ -120,6 +122,10 @@ async function salvarNovo() {
         <input v-model="novo.disciplina" class="field-input" placeholder="Disciplina" />
         <input v-model="novo.serie" class="field-input" placeholder="Grupo/série (ex: 2A até 2D)" />
         <input v-model="novo.tipo_prova" class="field-input" placeholder="Tipo (ex: Provão, 2ª Chamada)" />
+        <select v-model="novo.tipo_documento" class="field-input">
+          <option value="gabarito">Gabarito (resposta)</option>
+          <option value="prova">Prova para consulta</option>
+        </select>
         <input v-model="novo.data_prova" type="date" class="field-input" />
         <label class="upload-box">
           <v-icon size="16" color="#5a6a85">mdi-file-upload-outline</v-icon>

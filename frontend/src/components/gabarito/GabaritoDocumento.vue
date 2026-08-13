@@ -15,7 +15,7 @@ const isGabarito = computed(() => props.documento.tipo_documento === 'gabarito')
 
 const nomeArquivo = computed(() => {
   const prefixo = isGabarito.value ? 'Gabarito' : 'Prova'
-  return `${prefixo} ${props.documento.tipo_prova} – ${props.documento.grupo_turma}.pdf`
+  return `${prefixo} ${props.documento.tipo_prova} – ${props.documento.serie}.pdf`
 })
 
 const descricaoTipo = computed(() => (isGabarito.value ? 'Gabarito' : 'Prova para consulta'))

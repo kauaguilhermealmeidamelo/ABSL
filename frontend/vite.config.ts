@@ -19,6 +19,7 @@ export default defineConfig({
   proxy: {
     '/api': { target: 'http://localhost:8000', changeOrigin: true },
     '/sanctum': { target: 'http://localhost:8000', changeOrigin: true },
+    '/storage': { target: 'http://localhost:8000', changeOrigin: true },
   },
 },
 })

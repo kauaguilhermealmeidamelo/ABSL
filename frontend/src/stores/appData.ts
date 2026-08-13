@@ -1,43 +1,80 @@
-// src/stores/appData.js
+// src/stores/appData.ts
 //
-// Estado compartilhado do app (ainda sem backend). Centraliza os dados que a
-// tela de Gerenciamento edita e que as telas públicas (Início, Horário,
-// Cardápio, Gabarito) exibem — uma alteração feita pelo admin em /usuarios
-// aparece na hora nas outras telas.
+// Estado compartilhado do app, sincronizado com a API Laravel. Centraliza
+// os dados que a tela de Gerenciamento edita e que as telas públicas
+// (Início, Horário, Cardápio, Equipe) exibem — uma alteração feita pelo
+// admin em /usuarios aparece na hora nas outras telas, porque tudo aqui é
+// reatividade do Vue sobre o mesmo estado em memória.
 //
-// TODO: substituir por chamadas à API quando os endpoints existirem.
+// Tudo neste arquivo reflete dados reais vindos do backend. Não há mais
+// geração local/fake de conteúdo — isso existia como placeholder antes do
+// backend ficar pronto e foi removido para o deploy em produção.
 import { reactive, ref } from 'vue'
 import api from '@/services/api'
 
+// ── Tipos ────────────────────────────────────────────────────────────────
+export interface Member {
+  cargo: string
+  nome: string
+}
+
+export interface Diretoria {
+  id?: number
+  name: string
+  icon?: string
+  members: Member[]
+}
+
+interface TurmaApiItem {
+  turno: string
+  ano: string
+  codigo: string
+}
+
+interface HorarioApiItem {
+  id: number
+  turma: string
+  dia_semana: string
+  horario_inicio: string
+  horario_fim: string
+  disciplina: string
+}
+
+interface CardapioApiItem {
+  id: number
+  data: string
+  dia_semana: string
+  descricao: string
+}
+
+interface InicioMediaApiItem {
+  file_name: string
+  url: string
+}
+
 // ── Turmas ──────────────────────────────────────────────────────────────
-export const TURNO_ANOS = {
+// Anos possíveis por turno — é configuração fixa do colégio, não dado de
+// turma cadastrada, então continua hardcoded (não é "mock").
+export const TURNO_ANOS: Record<string, string[]> = {
   matutino: ['2º ano', '3º ano'],
   vespertino: ['1º ano', '2º ano'],
 }
 
-function letters(prefix, from, to) {
-  const a = from.charCodeAt(0)
-  const b = to.charCodeAt(0)
-  return Array.from({ length: b - a + 1 }, (_, i) => prefix + String.fromCharCode(a + i))
-}
-
-export const turmasState = reactive({
-  matutino: {
-    '2º ano': letters('2', 'A', 'H'),
-    '3º ano': letters('3', 'A', 'O'),
-  },
-  vespertino: {
-    '1º ano': letters('1', 'A', 'P'),
-    '2º ano': letters('2', 'I', 'P'),
-  },
+// Começa vazio de propósito — as turmas reais só chegam via initAppData().
+// Antes havia uma lista de turmas fixas (2A–2H, 3A–3O, etc.) pré-populada
+// aqui, que aparecia pro público mesmo se o banco estivesse vazio ou a API
+// fora do ar. Removido: em produção é melhor mostrar "nenhuma turma
+// cadastrada" do que turmas fictícias.
+export const turmasState = reactive<Record<string, Record<string, string[]>>>({
+  matutino: {},
+  vespertino: {},
 })
 
-export async function addTurma(turno, ano, letra) {
+export async function addTurma(turno: string, ano: string, letra: string): Promise<boolean> {
   if (!letra) return false
   const codigo = `${ano.charAt(0)}${letra.toUpperCase()}`
   try {
-    const res = await api.post('/turmas', { turno, ano, codigo })
-    // push into local state if created
+    await api.post('/turmas', { turno, ano, codigo })
     const atual = turmasState[turno]?.[ano] ?? []
     turmasState[turno] = { ...turmasState[turno], [ano]: [...atual, codigo].sort() }
     return true
@@ -47,7 +84,7 @@ export async function addTurma(turno, ano, letra) {
   }
 }
 
-export async function removeTurma(turno, ano, codigo) {
+export async function removeTurma(turno: string, ano: string, codigo: string): Promise<void> {
   try {
     await api.delete(`/turmas/${codigo}`)
     turmasState[turno] = {
@@ -60,6 +97,8 @@ export async function removeTurma(turno, ano, codigo) {
 }
 
 // ── Horário ──────────────────────────────────────────────────────────────
+// Lista de matérias disponíveis para o admin escolher ao editar uma aula —
+// é opção de formulário, não dado exibido como se fosse real.
 export const SUBJECTS = [
   'Matemática', 'Português', 'Física', 'Química', 'Biologia', 'História',
   'Geografia', 'Arte', 'Ed. Física', 'Filosofia', 'Sociologia', 'Literatura',
@@ -67,7 +106,12 @@ export const SUBJECTS = [
 ]
 export const DAYS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta']
 
-export const MAT_SLOTS = [
+export interface HorarioSlot {
+  time: string
+  isBreak: boolean
+}
+
+export const MAT_SLOTS: HorarioSlot[] = [
   { time: '07:00–07:45', isBreak: false },
   { time: '07:45–08:30', isBreak: false },
   { time: '08:30–08:40', isBreak: true },
@@ -78,7 +122,7 @@ export const MAT_SLOTS = [
   { time: '11:15–12:00', isBreak: false },
 ]
 
-export const VES_SLOTS = [
+export const VES_SLOTS: HorarioSlot[] = [
   { time: '13:00–13:45', isBreak: false },
   { time: '13:45–14:30', isBreak: false },
   { time: '14:30–14:50', isBreak: true },
@@ -89,52 +133,51 @@ export const VES_SLOTS = [
   { time: '17:15–18:00', isBreak: false },
 ]
 
-// Grade base determinística (mesma turma sempre cai nas mesmas matérias)
-function baseSchedule(turma) {
-  const seed = turma.charCodeAt(0) * 31 + turma.charCodeAt(1)
-  const result = {}
-  let idx = seed
-  for (const day of DAYS) {
-    result[day] = {}
-    for (const slot of [...MAT_SLOTS, ...VES_SLOTS]) {
-      if (!slot.isBreak) {
-        result[day][slot.time] = SUBJECTS[Math.abs(idx) % SUBJECTS.length]
-        idx = (idx * 7919 + 137) % 9973
-      }
-    }
-  }
-  return result
-}
+// Aulas cadastradas via API: chave "turma|dia|horario" -> matéria.
+// Não existe mais gerador de matérias "aleatórias" por turma (baseSchedule
+// com seed pseudo-aleatório) — se uma célula não tem registro no backend,
+// a UI mostra vazio ("—"), como já faz TabelaHorario.vue.
+export const horarioOverrides = reactive<Record<string, string>>({})
 
-// Edições feitas pelo admin: { "turma|dia|horario": "Matéria" }
-export const horarioOverrides = reactive({})
-
-function scheduleKey(turma, day, time) {
+function scheduleKey(turma: string, day: string, time: string): string {
   return `${turma}|${day}|${time}`
 }
 
-export function getSchedule(turma) {
-  const base = baseSchedule(turma)
-  const merged = {}
-  for (const day of DAYS) {
-    merged[day] = {}
-    for (const time in base[day]) {
-      const key = scheduleKey(turma, day, time)
-      merged[day][time] = horarioOverrides[key] ?? base[day][time]
-    }
+// Colunas TIME do MySQL voltam do Eloquent como "07:00:00" (com segundos),
+// mas os slots do frontend usam "07:00" (sem segundos). Sem normalizar, a
+// chave montada aqui nunca bateria com a chave usada por getSchedule() ao
+// consultar slot.time — a aula cadastrada pelo admin nunca apareceria na
+// tabela pública depois de um reload.
+function toHHMM(time: string): string {
+  return time.length > 5 ? time.slice(0, 5) : time
+}
+
+export function getSchedule(turma: string): Record<string, Record<string, string>> {
+  const merged: Record<string, Record<string, string>> = {}
+  for (const day of DAYS) merged[day] = {}
+
+  for (const key in horarioOverrides) {
+    const [t, day, time] = key.split('|')
+    if (t !== turma || !day || !time) continue
+    if (!merged[day]) merged[day] = {}
+
+    const value = horarioOverrides[key]
+    if (value === undefined) continue
+    merged[day][time] = value
   }
+
   return merged
 }
 
-export async function setHorarioOverride(turma, day, time, subject) {
+export async function setHorarioOverride(turma: string, day: string, time: string, subject: string): Promise<void> {
   const key = scheduleKey(turma, day, time)
+  const [inicio, fim] = time.split('–').map((s) => s.trim())
   try {
-    // store as a Horario entry in the backend
     await api.post('/horario', {
       turma,
       dia_semana: day,
-      horario_inicio: time.split('–')[0].trim(),
-      horario_fim: time.split('–')[1]?.trim() ?? time,
+      horario_inicio: inicio,
+      horario_fim: fim ?? inicio,
       disciplina: subject,
       ativo: true,
     })
@@ -144,12 +187,13 @@ export async function setHorarioOverride(turma, day, time, subject) {
   }
 }
 
-// ── Gabarito (rótulos dos grupos de turmas) ────────────────────────────────
-export const gabMatGroups = reactive(['2A até 2D', '2E até 2H', '3A até 3H', '3I até 3O'])
-export const gabVesGroups = reactive(['1A até 1H', '1I até 1P'])
-
 // ── Equipe / Diretorias ─────────────────────────────────────────────────────
-export const team = reactive([
+// Fallback exibido só enquanto GET /diretorias ainda não respondeu (ou
+// falhou) — evita a tela "Equipe" aparecer vazia no primeiro load. Assim
+// que a API devolver dados reais, essa lista é substituída (ver
+// initAppData). Se preferir, isso pode virar um seeder no backend em vez de
+// ficar hardcoded no frontend — fica a critério de vocês.
+const TEAM_FALLBACK: Diretoria[] = [
   { icon: 'mdi-crown', name: 'Presidência', members: [{ cargo: 'Presidente', nome: 'Samuel' }, { cargo: 'Vice-Presidente', nome: 'Bárbara' }, { cargo: '1º Vice-Presidente', nome: 'Jósue' }] },
   { icon: 'mdi-clipboard-text-outline', name: 'Secretaria', members: [{ cargo: 'Secretário-Geral', nome: 'Marcus Paulo' }, { cargo: '1ª Secretária', nome: 'Giovanna' }, { cargo: '2ª Secretária', nome: 'Brenda' }] },
   { icon: 'mdi-cash', name: 'Tesouraria', members: [{ cargo: 'Tesoureira-Geral', nome: 'Andressa' }, { cargo: '1º Tesoureiro', nome: 'Rafael' }, { cargo: '2º Tesoureiro', nome: 'Vitor' }] },
@@ -160,22 +204,25 @@ export const team = reactive([
   { icon: 'mdi-handshake-outline', name: 'Diretoria Social', members: [{ cargo: 'Diretor-Geral', nome: 'David' }, { cargo: '1ª Diretora', nome: 'Mariana' }, { cargo: '2º Diretor', nome: 'Matheus' }] },
   { icon: 'mdi-bullhorn-variant-outline', name: 'Imprensa e Comunicação', members: [{ cargo: 'Diretora-Geral', nome: 'Yara' }, { cargo: '1ª Diretora', nome: 'Giulia' }, { cargo: '2ª Diretora', nome: 'Ana Júlia' }] },
   { icon: 'mdi-laptop', name: 'Tecnologia e Inovação', members: [{ cargo: 'Diretor-Geral', nome: 'Kauan Guilherme' }, { cargo: '1º Diretor', nome: 'Pedro Lucas' }, { cargo: '2º Diretor', nome: 'Maria Eduarda' }] },
-])
+]
 
-export async function addDiretoria({ name, diretorGeral, primeiro, segundo }) {
+export const team = reactive<Diretoria[]>([...TEAM_FALLBACK])
+
+export async function addDiretoria(payload: { name: string; diretorGeral: string; primeiro?: string; segundo?: string }): Promise<void> {
+  const { name, diretorGeral, primeiro, segundo } = payload
   if (!name?.trim()) return
-  const members = [{ cargo: 'Diretor(a)-Geral', nome: diretorGeral }]
+  const members: Member[] = [{ cargo: 'Diretor(a)-Geral', nome: diretorGeral }]
   if (primeiro) members.push({ cargo: '1º(ª) Diretor(a)', nome: primeiro })
   if (segundo) members.push({ cargo: '2º(ª) Diretor(a)', nome: segundo })
   try {
-    const res = await api.post('/diretorias', { name, members, icon: 'mdi-domain' })
+    const res = await api.post<Diretoria>('/diretorias', { name, members, icon: 'mdi-domain' })
     team.push(res.data)
   } catch (err) {
     console.error('addDiretoria failed', err)
   }
 }
 
-export async function removeDiretoria(index) {
+export async function removeDiretoria(index: number): Promise<void> {
   const dir = team[index]
   if (!dir) return
   try {
@@ -188,21 +235,18 @@ export async function removeDiretoria(index) {
   }
 }
 
-export async function saveDiretoriaMembers(index, members) {
+export async function saveDiretoriaMembers(index: number, members: Member[]): Promise<void> {
   const dir = team[index]
   if (!dir) return
   const payload = { members: members.filter((m) => m.cargo || m.nome) }
   try {
-    let res
-    if (dir.id) {
-      res = await api.put(`/diretorias/${dir.id}`, payload)
-    } else {
-      res = await api.post('/diretorias', {
-        name: dir.name,
-        icon: dir.icon ?? 'mdi-domain',
-        members: payload.members,
-      })
-    }
+    const res = dir.id
+      ? await api.put<Diretoria>(`/diretorias/${dir.id}`, payload)
+      : await api.post<Diretoria>('/diretorias', {
+          name: dir.name,
+          icon: dir.icon ?? 'mdi-domain',
+          members: payload.members,
+        })
     team[index] = res.data
   } catch (err) {
     console.error('saveDiretoriaMembers failed', err)
@@ -211,17 +255,17 @@ export async function saveDiretoriaMembers(index, members) {
 
 // ── Mídia da tela inicial ───────────────────────────────────────────────────
 export const inicioMedia = reactive({
-  file: null,
+  file: null as File | null,
   fileName: '',
   videoUrl: '',
 })
 
-export function setInicioMedia(file) {
+export function setInicioMedia(file: File | null): void {
   if (!file) return
-  // upload to backend and use returned URL
   const fd = new FormData()
   fd.append('file', file)
-  api.post('/inicio-media', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+  api
+    .post<InicioMediaApiItem>('/inicio-media', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
     .then((res) => {
       inicioMedia.file = null
       inicioMedia.fileName = res.data.file_name || file.name
@@ -232,10 +276,7 @@ export function setInicioMedia(file) {
     })
 }
 
-export function clearInicioMedia() {
-  if (inicioMedia.videoUrl) {
-    URL.revokeObjectURL(inicioMedia.videoUrl)
-  }
+export function clearInicioMedia(): void {
   inicioMedia.file = null
   inicioMedia.fileName = ''
   inicioMedia.videoUrl = ''
@@ -246,30 +287,29 @@ export const CARDAPIO_DIAS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 
 
 export const cardapioSemana = ref('')
 
-export const cardapioDias = reactive({})
+export const cardapioDias = reactive<Record<string, string>>({})
 for (const dia of CARDAPIO_DIAS) {
   cardapioDias[dia] = ''
 }
 
-// helper map: dia_semana -> cardapio record (id + metadata)
-const cardapioMap = {}
+// Mapa auxiliar dia_semana -> registro completo (com id), pra saber se
+// setCardapioDia deve criar (POST) ou atualizar (PUT).
+const cardapioMap: Record<string, CardapioApiItem> = {}
 
-export async function setCardapioSemana(valor) {
+export async function setCardapioSemana(valor: string): Promise<void> {
   cardapioSemana.value = valor
 }
 
-export async function setCardapioDia(dia, valor) {
+export async function setCardapioDia(dia: string, valor: string): Promise<void> {
   try {
     const existing = cardapioMap[dia]
-    if (existing && existing.id) {
-      const res = await api.put(`/cardapio/${existing.id}`, {
-        descricao: valor,
-      })
+    if (existing?.id) {
+      const res = await api.put<CardapioApiItem>(`/cardapio/${existing.id}`, { descricao: valor })
       cardapioDias[dia] = res.data.descricao
       cardapioMap[dia] = res.data
     } else {
       const today = new Date().toISOString().slice(0, 10)
-      const res = await api.post('/cardapio', {
+      const res = await api.post<CardapioApiItem>('/cardapio', {
         data: today,
         dia_semana: dia,
         refeicao: 'Lanche',
@@ -284,63 +324,57 @@ export async function setCardapioDia(dia, valor) {
   }
 }
 
-export async function initAppData() {
+// ── Bootstrap ────────────────────────────────────────────────────────────
+export async function initAppData(): Promise<void> {
   try {
     const [turmasRes, dirsRes, mediaRes] = await Promise.all([
-      api.get('/turmas').catch(() => ({ data: [] })),
-      api.get('/diretorias').catch(() => ({ data: [] })),
-      api.get('/inicio-media').catch(() => ({ data: null })),
+      api.get<TurmaApiItem[]>('/turmas').catch(() => ({ data: [] as TurmaApiItem[] })),
+      api.get<Diretoria[]>('/diretorias').catch(() => ({ data: [] as Diretoria[] })),
+      api.get<InicioMediaApiItem | null>('/inicio-media').catch(() => ({ data: null })),
     ])
 
-    // populate turmasState from server (merge by turno/ano)
-    for (const t of turmasRes.data ?? []) {
+   for (const t of turmasRes.data ?? []) {
       if (!turmasState[t.turno]) turmasState[t.turno] = {}
-      if (!turmasState[t.turno][t.ano]) turmasState[t.turno][t.ano] = []
-      if (!turmasState[t.turno][t.ano].includes(t.codigo)) {
-        turmasState[t.turno][t.ano].push(t.codigo)
-        turmasState[t.turno][t.ano].sort()
+      const anoList = turmasState[t.turno]!
+      if (!anoList[t.ano]) anoList[t.ano] = []
+      const codigos = anoList[t.ano]!
+      if (!codigos.includes(t.codigo)) {
+        codigos.push(t.codigo)
+        codigos.sort()
       }
     }
 
-    // populate team
-    if (Array.isArray(dirsRes.data)) {
+    // Só substitui o fallback se a API realmente devolveu diretorias — uma
+    // resposta vazia não deve apagar a lista e deixar "Equipe" em branco.
+    if (Array.isArray(dirsRes.data) && dirsRes.data.length > 0) {
       team.splice(0, team.length, ...dirsRes.data)
     }
 
-    // inicio media
     if (mediaRes.data) {
       inicioMedia.file = null
       inicioMedia.fileName = mediaRes.data.file_name ?? ''
       inicioMedia.videoUrl = mediaRes.data.url ?? ''
     }
-    // populate cardapio
-    const cardRes = await api.get('/cardapio').catch(() => ({ data: [] }))
+
+    const cardRes = await api.get<CardapioApiItem[]>('/cardapio').catch(() => ({ data: [] as CardapioApiItem[] }))
     if (Array.isArray(cardRes.data)) {
       for (const item of cardRes.data) {
         cardapioDias[item.dia_semana] = item.descricao
         cardapioMap[item.dia_semana] = item
       }
       if (cardRes.data.length) {
-        const first = cardRes.data[0].data
-        const last = cardRes.data[cardRes.data.length - 1].data
+        const first = cardRes.data[0]!.data
+        const last = cardRes.data[cardRes.data.length - 1]!.data
         cardapioSemana.value = `${first} → ${last}`
       }
     }
 
-    // populate horarios from backend for each turma
-    const turmaList = []
-    for (const turnoKey of Object.keys(turmasState)) {
-      for (const anoKey of Object.keys(turmasState[turnoKey] || {})) {
-        turmaList.push(...(turmasState[turnoKey][anoKey] || []))
-      }
+    const horarioRes = await api.get<HorarioApiItem[]>('/horario').catch(() => ({ data: [] as HorarioApiItem[] }))
+    for (const h of horarioRes.data ?? []) {
+      const key = scheduleKey(h.turma, h.dia_semana, `${toHHMM(h.horario_inicio)}–${toHHMM(h.horario_fim)}`)
+      horarioOverrides[key] = h.disciplina
     }
-    await Promise.all(turmaList.map(async (t) => {
-      const res = await api.get(`/horario/${t}`).catch(() => ({ data: [] }))
-      for (const h of res.data ?? []) {
-        const key = scheduleKey(h.turma, h.dia_semana, `${h.horario_inicio}–${h.horario_fim}`)
-        horarioOverrides[key] = h.disciplina
-      }
-    }))
+      
   } catch (err) {
     console.error('initAppData failed', err)
   }
