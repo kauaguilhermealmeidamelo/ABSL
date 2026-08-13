@@ -38,6 +38,9 @@ function onFileChange(e) {
   const f = e.target.files?.[0]
   if (!f) return
   imagemFile.value = f
+  // Preview local via blob: só serve para exibir no formulário. Nunca é
+  // enviado ao backend nem salvo como imagem_url — um link blob: só existe
+  // nesta aba/sessão do navegador e quebraria assim que a página recarregasse.
   imagemPreview.value = URL.createObjectURL(f)
 }
 
@@ -59,24 +62,22 @@ const imagemPreviewName = computed(() => {
 
 function salvar() {
   if (!form.value.titulo.trim()) return
+
   const payload = {
     titulo: form.value.titulo,
     data_publicacao: formatDateForInput(form.value.data_publicacao) || '',
     texto: form.value.texto,
-    imagem_url: imagemPreview.value || form.value.imagem_url || '',
-    methods: {
-  onFileChange(event) {
-    const file = event.target.files[0];
-    if (file) {
-      this.form.imagem = file; // O arquivo em si para envio ao backend
-      this.imagemPreviewName = file.name;
-      this.imagemPreview = URL.createObjectURL(file); // Gera a URL temporária para o preview
-    }
-  }
-}   
   }
 
-  
+  if (imagemFile.value) {
+    // Imagem nova selecionada: manda o arquivo real; o backend salva no
+    // disco e devolve a URL definitiva.
+    payload.imagem = imagemFile.value
+  } else {
+    // Sem alteração de imagem: mantém a URL que já existia (ou vazio).
+    payload.imagem_url = form.value.imagem_url || ''
+  }
+
   emit('salvar', payload)
   close()
 }
@@ -103,7 +104,7 @@ function salvar() {
         <input v-model="form.titulo" type="text" class="field-input" placeholder="Título da notícia" />
 
         <label class="field-label">Data de publicação</label>
-        <input v-model="form.data_publicacao" type="date" class="field-input" placeholder="Ex: 29 de julho de 2026" />
+        <input v-model="form.data_publicacao" type="date" class="field-input" />
 
         <label class="field-label">Resumo / texto</label>
         <textarea v-model="form.texto" rows="4" class="field-textarea" placeholder="Descrição breve da notícia" />
@@ -189,7 +190,11 @@ function salvar() {
   margin-top: 4px;
 }
 
-.upload-preview { max-width: 100%; border-radius: 8px; margin-top: 8px }
+.upload-preview {
+  max-width: 100%;
+  border-radius: 8px;
+  margin-top: 8px;
+}
 
 .modal-actions {
   padding: 12px 20px 20px;

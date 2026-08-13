@@ -13,6 +13,7 @@ import Cardapio from '@/views/Cardapio.vue'
 import Ouvintes from '@/views/Ouvintes.vue'
 import Mapa from '@/views/Mapa.vue'
 import Usuarios from '@/views/Usuarios.vue'
+import ProjetoDetalhes from '@/views/ProjetoDetalhes.vue'
 
 const routes = [
   {
@@ -24,7 +25,8 @@ const routes = [
       { path: 'horario', name: 'horario', component: Horario },
       { path: 'noticias', name: 'noticias', component: Noticias },
       { path: 'noticias/:id', name: 'noticia-detalhe', component: NoticiaDetalhe },
-      { path: 'projetos', name: 'projetos', component: Projetos },
+      { path: 'projetos', name: 'projetos', component: Projetos } ,
+      {path: 'projetos/:id', name: 'projeto-detalhes', component: ProjetoDetalhes },
       { path: 'gabarito', name: 'gabarito', component: Gabarito },
       { path: 'transparencia', name: 'transparencia', component: Transparencia },
       { path: 'cardapio', name: 'cardapio', component: Cardapio },

@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import PageHeader from '@/components/common/PageHeader.vue'
 import NoticiaCard from '@/components/noticias/NoticiaCard.vue'
 import NoticiaTabs from '@/components/noticias/NoticiaTabs.vue'
@@ -7,6 +8,7 @@ import NoticiaFormModal from '@/components/noticias/NoticiaFormModal.vue'
 import { useNoticias } from '@/composables/useNoticias'
 import { useAdmin } from '@/composables/useAdmin'
 
+const router = useRouter()
 const { isAdmin } = useAdmin()
 const { noticias, loading, error, fetchNoticias, adicionar, atualizar, remover } = useNoticias()
 
@@ -17,7 +19,7 @@ const editing = ref(null)
 onMounted(() => fetchNoticias(true))
 
 function abrirNoticia(n) {
-  window.location.href = `/noticias/${n.id}`
+  router.push(`/noticias/${n.id}`)
 }
 
 function onAdd() {
@@ -46,9 +48,7 @@ async function onSave(payload) {
 
     showModal.value = false
   } catch (err) {
-    const msg = err?.response?.data?.message || err?.response?.data || err?.message || 'Erro ao salvar notícia'
-    // aviso simples para o usuário; evita erro não tratado no handler
-    alert(`Erro ao salvar notícia: ${msg}`)
+    error.value = err?.response?.data?.message || 'Erro ao salvar notícia.' 
   }
 }
 

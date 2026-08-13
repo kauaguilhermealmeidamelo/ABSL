@@ -99,7 +99,7 @@ defineEmits(['abrir', 'editar', 'excluir'])
 .noticia-resumo {
   display: -webkit-box;
   -webkit-line-clamp: 2;
-  line-clamp: 2; /* adiciona esta linha */
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }

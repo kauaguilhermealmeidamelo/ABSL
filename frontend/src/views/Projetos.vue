@@ -1,37 +1,22 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import PageHeader from '@/components/common/PageHeader.vue'
 import AdminBanner from '@/components/common/AdminBanner.vue'
 import DiretoriaSelectorGrid from '@/components/projetos/DiretoriaSelectorGrid.vue'
 import ProjetosDialog from '@/components/projetos/ProjetosDialog.vue'
-import ProjetoDetalheDialog from '@/components/projetos/ProjetoDetalheDialog.vue'
 import ProjetoFormModal from '@/components/projetos/ProjetoFormModal.vue'
 import { useAdmin } from '@/composables/useAdmin'
-import { projetosService } from '@/services/projetos'
+import { useProjetos } from '@/composables/useProjetos'
 
+const router = useRouter()
 const { isAdmin } = useAdmin()
+const { projetos, loading, error, fetchProjetos, adicionar, atualizar, remover } = useProjetos()
 
-const projetos = ref([])
-const loading = ref(false)
-const error = ref('')
-
-async function carregar() {
-  loading.value = true
-  error.value = ''
-  try {
-    projetos.value = await projetosService.list()
-  } catch {
-    error.value = 'Não foi possível carregar os projetos.'
-  } finally {
-    loading.value = false
-  }
-}
-
-onMounted(carregar)
+onMounted(() => fetchProjetos(true))
 
 // Categoria selecionada no grid: null (nada aberto) | '__geral__' | nome da categoria
 const categoriaSelecionada = ref(null)
-const projetoDetalhe = ref(null)
 const modalAberto = ref(false)
 const projetoEditando = ref(null)
 
@@ -53,17 +38,21 @@ function abrirNovo() {
 function abrirEdicao(projeto) {
   projetoEditando.value = projeto
   modalAberto.value = true
-  projetoDetalhe.value = null
+}
+
+// A divisão por diretoria (grid + dialog da categoria) continua igual.
+// Só o que muda: em vez de abrir um segundo modal com o detalhe, agora
+// navega pra página própria do projeto — mesma lógica de Notícias.
+function abrirDetalhe(projeto) {
+  router.push(`/projetos/${projeto.id}`)
 }
 
 async function salvar(dados) {
   try {
     if (projetoEditando.value) {
-      const atualizado = await projetosService.update(projetoEditando.value.id, dados)
-      projetos.value = projetos.value.map((p) => (p.id === atualizado.id ? atualizado : p))
+      await atualizar(projetoEditando.value.id, dados)
     } else {
-      const criado = await projetosService.create(dados)
-      projetos.value = [criado, ...projetos.value]
+      await adicionar(dados)
     }
   } catch {
     error.value = 'Não foi possível salvar o projeto.'
@@ -72,9 +61,7 @@ async function salvar(dados) {
 
 async function excluir(id) {
   try {
-    await projetosService.remove(id)
-    projetos.value = projetos.value.filter((p) => p.id !== id)
-    projetoDetalhe.value = null
+    await remover(id)
   } catch {
     error.value = 'Não foi possível excluir o projeto.'
   }
@@ -122,16 +109,7 @@ async function excluir(id) {
       @novo="abrirNovo"
       @editar="abrirEdicao"
       @excluir="excluir"
-      @abrir-detalhe="projetoDetalhe = $event"
-    />
-
-    <ProjetoDetalheDialog
-      v-if="projetoDetalhe"
-      :projeto="projetoDetalhe"
-      :is-admin="isAdmin"
-      @fechar="projetoDetalhe = null"
-      @editar="abrirEdicao"
-      @excluir="excluir"
+      @abrir-detalhe="abrirDetalhe"
     />
 
     <ProjetoFormModal
