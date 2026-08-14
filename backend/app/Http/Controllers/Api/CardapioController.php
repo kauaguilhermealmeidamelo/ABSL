@@ -6,13 +6,16 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\CardapioResource;
 use App\Models\Cardapio;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class CardapioController extends Controller
 {
     public function index()
     {
         return CardapioResource::collection(
-            Cardapio::where('ativo', true)->orderBy('data', 'asc')->get()
+            Cache::remember('cardapio.index', 300, function () {
+                return Cardapio::where('ativo', true)->orderBy('data', 'asc')->get();
+            })
         );
     }
 
@@ -37,7 +40,7 @@ class CardapioController extends Controller
         }
 
         $data['criado_por'] = $request->user() ? $request->user()->id : null;
-
+        Cache::forget('cardapio.index');
         return new CardapioResource(Cardapio::create($data));
     }
 
@@ -55,14 +58,14 @@ class CardapioController extends Controller
         ]);
 
         $cardapio->update($data);
-
+        Cache::forget('cardapio.index');
         return new CardapioResource($cardapio);
     }
 
     public function destroy(string $id)
     {
         Cardapio::findOrFail($id)->delete();
-
+        Cache::forget('cardapio.index');
         return response()->noContent();
     }
 }

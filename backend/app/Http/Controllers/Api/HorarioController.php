@@ -7,27 +7,37 @@ use App\Http\Resources\HorarioResource;
 use App\Models\Horario;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Cache;
 
 class HorarioController extends Controller
 {
     public function index()
     {
         return HorarioResource::collection(
-            Horario::where('ativo', true)
-                ->orderBy('turma')->orderBy('dia_semana')->orderBy('horario_inicio')
-                ->get()
+            Cache::remember(
+                'horario.index',
+                300,
+                fn() =>
+                Horario::where('ativo', true)
+                    ->orderBy('turma')->orderBy('dia_semana')->orderBy('horario_inicio')
+                    ->get()
+            )
         );
     }
 
     public function show(string $turma)
     {
         return HorarioResource::collection(
-            Horario::where('turma', $turma)->where('ativo', true)
-                ->orderBy('dia_semana')->orderBy('horario_inicio')
-                ->get()
+            Cache::remember(
+                "horario.turma.$turma",
+                300,
+                fn() =>
+                Horario::where('turma', $turma)->where('ativo', true)
+                    ->orderBy('dia_semana')->orderBy('horario_inicio')
+                    ->get()
+            )
         );
     }
-
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -43,8 +53,15 @@ class HorarioController extends Controller
         ]);
 
         $data = Arr::only($validated, [
-            'turma', 'dia_semana', 'horario_inicio', 'horario_fim',
-            'disciplina', 'professor', 'sala', 'observacoes', 'ativo',
+            'turma',
+            'dia_semana',
+            'horario_inicio',
+            'horario_fim',
+            'disciplina',
+            'professor',
+            'sala',
+            'observacoes',
+            'ativo',
         ]);
 
         $data['criado_por'] = $request->user()->id;
@@ -57,7 +74,8 @@ class HorarioController extends Controller
             ],
             $data
         );
-
+        Cache::forget('horario.index');
+        Cache::forget("horario.turma.{$data['turma']}");
         return (new HorarioResource($horario))
             ->response()
             ->setStatusCode($horario->wasRecentlyCreated ? 201 : 200);
@@ -65,6 +83,7 @@ class HorarioController extends Controller
 
     public function update(Request $request, string $id)
     {
+        
         $horario = Horario::findOrFail($id);
 
         $data = $request->validate([
@@ -79,15 +98,26 @@ class HorarioController extends Controller
             'ativo' => 'boolean',
         ]);
 
+        $turmaAntiga = $horario->turma;
         $horario->update($data);
+        
+        Cache::forget('horario.index');
+        Cache::forget("horario.turma.$turmaAntiga");
+        if (isset($data['turma']) && $data['turma'] !== $turmaAntiga) {
+            Cache::forget("horario.turma.{$data['turma']}");
+        }
 
         return new HorarioResource($horario);
     }
 
-    public function destroy(string $id)
-    {
-        Horario::findOrFail($id)->delete();
-
-        return response()->noContent();
-    }
+    // destroy():
+public function destroy(string $id)
+{
+    $horario = Horario::findOrFail($id);
+    $turma = $horario->turma;
+    $horario->delete();
+    Cache::forget('horario.index');
+    Cache::forget("horario.turma.$turma");
+    return response()->noContent();
+}
 }

@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\{
 // exigia estar autenticado para acessar login/register, o que nunca acontece.
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:6,1');
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:6,1');
+Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 
 Route::get('/noticias', [NoticiaController::class, 'index']);
 Route::get('/noticias/{id}', [NoticiaController::class, 'show']);
@@ -29,6 +30,7 @@ Route::get('/diretorias', [DiretoriaController::class, 'index']);
 Route::get('/inicio-media', [InicioMediaController::class, 'index']);
 Route::get('/transparencia', [TransparenciaController::class, 'index']);
 Route::get('/transparencia/{id}', [TransparenciaController::class, 'show']);
+Route::post('/ouvintes', [OuvinteController::class, 'store']);
 
 // GET /user: usado por checkSession() no frontend para validar a sessão
 // junto ao backend. Precisa estar autenticado, mas não precisa ser admin.
@@ -75,3 +77,4 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::put('/ouvintes/{id}', [OuvinteController::class, 'update']);
     Route::delete('/ouvintes/{id}', [OuvinteController::class, 'destroy']);
 });
+?>

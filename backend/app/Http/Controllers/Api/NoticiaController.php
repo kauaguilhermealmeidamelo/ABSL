@@ -88,15 +88,15 @@ class NoticiaController extends Controller
         return response()->noContent();
     }
 
-    private function storeImagem($file): string
+    private function storeImagem(\Illuminate\Http\UploadedFile $file): string
     {
         $path = $file->store('noticias', 'public');
 
         /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
         $disk = Storage::disk('public');
-        Cache::forget('noticias.index');
         return $disk->url($path);
     }
+    
 
     private function deleteImagemAntiga(?string $url): void
     {

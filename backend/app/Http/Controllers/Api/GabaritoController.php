@@ -8,15 +8,18 @@ use App\Models\Gabarito;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Cache;
 
 class GabaritoController extends Controller
 {
     public function index()
-    {
-        return GabaritoResource::collection(
-            Gabarito::where('ativo', true)->orderBy('data_prova', 'desc')->get()
-        );
-    }
+{
+    return GabaritoResource::collection(
+        Cache::remember('gabarito.index', 300, function () {
+            return Gabarito::where('ativo', true)->orderBy('data_prova', 'desc')->get();
+        })
+    );
+}
 
     public function show(string $id)
     {
@@ -40,7 +43,7 @@ class GabaritoController extends Controller
 
         $data['publicado_por'] = $request->user()->id;
         $data['documento_url'] = $this->storeArquivo($request->file('arquivo'));
-
+        Cache::forget('gabarito.index');
         return new GabaritoResource(Gabarito::create($data));
     }
 
@@ -70,7 +73,7 @@ class GabaritoController extends Controller
         }
 
         $gabarito->update($data);
-
+        Cache::forget('gabarito.index');
         return new GabaritoResource($gabarito);
     }
 
@@ -79,7 +82,7 @@ class GabaritoController extends Controller
         $gabarito = Gabarito::findOrFail($id);
         $this->deleteArquivoAntigo($gabarito->documento_url);
         $gabarito->delete();
-
+        Cache::forget('gabarito.index');
         return response()->noContent();
     }
 
