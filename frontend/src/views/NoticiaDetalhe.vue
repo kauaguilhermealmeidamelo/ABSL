@@ -11,7 +11,7 @@ const { getById, fetchNoticias } = useNoticias()
 const noticia = computed(() => getById(route.params.id))
 
 onMounted(async () => {
-  await fetchNoticias(true)
+  await fetchNoticias()
 })
 
 function voltar() {

@@ -1,19 +1,6 @@
 import { createRouter, createWebHistory, type RouteLocationNormalized } from 'vue-router'
 import MainLayout from '@/MainLayout.vue'
-import inicio from '@/views/inicio.vue'
 import { user } from '@/stores/auth'
-
-import Horario from '@/views/Horario.vue'
-import Noticias from '@/views/Noticias.vue'
-import NoticiaDetalhe from '@/views/NoticiaDetalhe.vue'
-import Projetos from '@/views/Projetos.vue'
-import Gabarito from '@/views/Gabarito.vue'
-import Transparencia from '@/views/Transparencia.vue'
-import Cardapio from '@/views/Cardapio.vue'
-import Ouvintes from '@/views/Ouvintes.vue'
-import Mapa from '@/views/Mapa.vue'
-import Usuarios from '@/views/Usuarios.vue'
-import ProjetoDetalhes from '@/views/ProjetoDetalhes.vue'
 
 const routes = [
   {
@@ -21,18 +8,18 @@ const routes = [
     component: MainLayout,
     redirect: '/inicio',
     children: [
-      { path: 'inicio', name: 'inicio', component: inicio, meta: { public: true } },
-      { path: 'horario', name: 'horario', component: Horario, meta: { public: true } },
-      { path: 'noticias', name: 'noticias', component: Noticias, meta: { public: true } },
-      { path: 'noticias/:id', name: 'noticia-detalhe', component: NoticiaDetalhe, meta: { public: true } },
-      { path: 'projetos', name: 'projetos', component: Projetos, meta: { public: true } },
-      { path: 'projetos/:id', name: 'projeto-detalhes', component: ProjetoDetalhes, meta: { public: true } },
-      { path: 'gabarito', name: 'gabarito', component: Gabarito, meta: { public: true } },
-      { path: 'transparencia', name: 'transparencia', component: Transparencia, meta: { public: true } },
-      { path: 'cardapio', name: 'cardapio', component: Cardapio, meta: { public: true } },
-      { path: 'ouvintes', name: 'ouvintes', component: Ouvintes, meta: { public: true } },
-      { path: 'mapa', name: 'mapa', component: Mapa, meta: { public: true } },
-      { path: 'usuarios', name: 'usuarios', component: Usuarios }, // não é público
+      { path: 'inicio', name: 'inicio', component: () => import('@/views/inicio.vue'), meta: { public: true } },
+      { path: 'horario', name: 'horario', component: () => import('@/views/Horario.vue'), meta: { public: true } },
+      { path: 'noticias', name: 'noticias', component: () => import('@/views/Noticias.vue'), meta: { public: true } },
+      { path: 'noticias/:id', name: 'noticia-detalhe', component: () => import('@/views/NoticiaDetalhe.vue'), meta: { public: true } },
+      { path: 'projetos', name: 'projetos', component: () => import('@/views/Projetos.vue'), meta: { public: true } },
+      { path: 'projetos/:id', name: 'projeto-detalhes', component: () => import('@/views/ProjetoDetalhes.vue'), meta: { public: true } },
+      { path: 'gabarito', name: 'gabarito', component: () => import('@/views/Gabarito.vue'), meta: { public: true } },
+      { path: 'transparencia', name: 'transparencia', component: () => import('@/views/Transparencia.vue'), meta: { public: true } },
+      { path: 'cardapio', name: 'cardapio', component: () => import('@/views/Cardapio.vue'), meta: { public: true } },
+      { path: 'ouvintes', name: 'ouvintes', component: () => import('@/views/Ouvintes.vue'), meta: { public: true } },
+      { path: 'mapa', name: 'mapa', component: () => import('@/views/Mapa.vue'), meta: { public: true } },
+      { path: 'usuarios', name: 'usuarios', component: () => import('@/views/Usuarios.vue') }, // não é público
       { path: ':pathMatch(.*)*', name: 'not-found', component: () => import('@/views/NotFound.vue'), meta: { public: true } },
     ]
   },

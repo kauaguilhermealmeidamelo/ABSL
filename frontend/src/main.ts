@@ -23,20 +23,12 @@ import 'vuetify/styles'
 
 import '@/assets/theme.css'
 
-//Bootstrap
-import { createBootstrap } from 'bootstrap-vue-next'
-import 'bootstrap/dist/css/bootstrap.css'
-import 'bootstrap-vue-next/dist/bootstrap-vue-next.css'
 
-// Se qualquer chamada à API vier com 401/419, encerra a sessão local — o
-// admin volta a ser tratado como usuário comum automaticamente, sem
-// precisar recarregar a página.
 setupAuthInterceptor(clearSession)
 
 async function bootstrap() {
 	const app = createApp(App)
 	registerPlugins(app)
-	app.use(createBootstrap())
 	app.use(router)
 
 	// initialize app data from backend (non-fatal)

@@ -15,7 +15,7 @@ const { getById, fetchProjetos, atualizar, remover, error } = useProjetos()
 const projeto = computed(() => getById(route.params.id))
 
 onMounted(async () => {
-  await fetchProjetos(true)
+  await fetchProjetos()
 })
 
 function voltar() {

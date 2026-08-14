@@ -95,11 +95,6 @@ function onNavigate() {
       <!-- Rodapé: login/logout -->
       <div class="footer-actions">
         <AdminCard />
-
-        <div class="footer-text">
-          <span>Grêmio Estudantil Athos Bulcão · ABSL</span>
-          <span>Brasília, DF</span>
-        </div>
       </div>
     </div>
   </v-navigation-drawer>
@@ -252,14 +247,19 @@ function onNavigate() {
   font-weight: 700;
   font-size: 15px;
 }
-
-.footer-text {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  color: #6B7C93;
-  font-size: 11px;
-  line-height: 1.4;
+.drawer-content {
+   height: 100%;
+   display: flex;
+   flex-direction: column;
+   gap: 8px;
+   padding-top: 16px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
+
+.drawer-content::-webkit-scrollbar {
+  display: none;  
+ }
+
 </style>

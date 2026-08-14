@@ -8,8 +8,11 @@ use App\Http\Controllers\Api\{
     DiretoriaController, InicioMediaController, AuthController
 };
 
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/register', [AuthController::class, 'register']);
+// Rotas públicas de autenticação — throttle aqui, que é onde a requisição
+// de fato chega (sem sessão). O grupo 'auth:sanctum' abaixo era dead code:
+// exigia estar autenticado para acessar login/register, o que nunca acontece.
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:6,1');
+Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:6,1');
 
 Route::get('/noticias', [NoticiaController::class, 'index']);
 Route::get('/noticias/{id}', [NoticiaController::class, 'show']);
@@ -27,12 +30,10 @@ Route::get('/inicio-media', [InicioMediaController::class, 'index']);
 Route::get('/transparencia', [TransparenciaController::class, 'index']);
 Route::get('/transparencia/{id}', [TransparenciaController::class, 'show']);
 
-
-Route::middleware('auth:sanctum')->group(function () {
-Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:6,1');
-Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:6,1');
-
-
+// GET /user: usado por checkSession() no frontend para validar a sessão
+// junto ao backend. Precisa estar autenticado, mas não precisa ser admin.
+Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+    return $request->user();
 });
 
 Route::middleware(['auth:sanctum', 'admin'])->group(function () {
@@ -69,13 +70,8 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
     Route::post('/inicio-media', [InicioMediaController::class, 'store']);
 
-
     Route::get('/ouvintes', [OuvinteController::class, 'index']);
     Route::get('/ouvintes/{id}', [OuvinteController::class, 'show']);
     Route::put('/ouvintes/{id}', [OuvinteController::class, 'update']);
     Route::delete('/ouvintes/{id}', [OuvinteController::class, 'destroy']);
 });
-
-    Route::get('/ouvintes', [OuvinteController::class, 'index']);
-    Route::put('/ouvintes/{id}', [OuvinteController::class, 'update']);
-    Route::delete('/ouvintes/{id}', [OuvinteController::class, 'destroy']);

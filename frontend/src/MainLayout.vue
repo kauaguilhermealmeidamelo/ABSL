@@ -1,6 +1,7 @@
 <script setup>
 import menuLateral from '@/components/menuLateral.vue'
 import BottomNav from '@/components/BottomNav.vue'
+import Rodape from '@/components/common/Rodape.vue'
 import { useDisplay } from 'vuetify'
 
 const { mobile } = useDisplay()
@@ -23,6 +24,7 @@ const dividerItems = Array.from({ length: 36 }, (_, i) => i % 4)
         </div>
       </div>
       <router-view />
+      <Rodape />
     </v-main>
 
     <BottomNav v-if="mobile" />
@@ -64,26 +66,22 @@ const dividerItems = Array.from({ length: 36 }, (_, i) => i % 4)
   flex-shrink: 0;
 }
 
-/* círculo - azul */
 .divider-item-0 {
   border-radius: 50%;
   background: rgba(26, 63, 143, 0.55);
 }
 
-/* quadrado - azul escuro */
 .divider-item-1 {
   border-radius: 2px;
   background: rgba(13, 31, 60, 0.55);
 }
 
-/* diamante - amarelo */
 .divider-item-2 {
   transform: rotate(45deg);
   background: rgba(245, 197, 24, 0.7);
   border-radius: 2px;
 }
 
-/* semicírculo - ciano */
 .divider-item-3 {
   border-radius: 50% 50% 0 0;
   background: rgba(56, 189, 248, 0.6);
