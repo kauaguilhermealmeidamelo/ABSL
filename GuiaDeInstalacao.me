@@ -1,0 +1,209 @@
+# ABSL — Grêmio Athos Bulcão
+
+Sistema web do Grêmio Estudantil Athos Bulcão (ABSL): Notícias, Projetos, Transparência, Ouvidoria, Cardápio, Gabarito e Horário.
+
+**Stack:**
+- Backend: Laravel 13 + Laravel Sanctum (autenticação via cookie/sessão) + MySQL
+- Frontend: Vue 3 (Composition API) + TypeScript + Vuetify + Vue Router + Axios
+
+---
+
+## 1. Pré-requisitos
+
+Instale antes de começar:
+
+- **PHP** >= 8.3 (com extensões `pdo_mysql`, `mbstring`, `openssl`, `tokenizer`, `ctype`, `fileinfo`)
+- **Composer** >= 2
+- **Node.js** ^22.18.0 ou >= 24.12.0 (e `npm`)
+- **MySQL** >= 8 (ou MariaDB compatível)
+- **Git**
+
+Para checar as versões:
+```bash
+php -v
+composer -V
+node -v
+npm -v
+mysql --version
+```
+
+---
+
+## 2. Clonando o repositório
+
+```bash
+git clone <url-do-repositorio>
+cd <pasta-do-projeto>
+```
+
+O projeto tem duas pastas principais:
+```
+backend/   -> API Laravel + Sanctum
+frontend/  -> SPA Vue 3 + Vuetify
+```
+
+---
+
+## 3. Configurando o Backend (Laravel)
+
+### 3.1 Instalar dependências
+```bash
+cd backend
+composer install
+```
+
+### 3.2 Criar o arquivo de ambiente
+```bash
+cp .env.example .env
+```
+
+### 3.3 Editar o `.env`
+
+Abra `backend/.env` e ajuste os seguintes campos:
+
+```env
+APP_NAME="ABSL"
+APP_ENV=local
+APP_DEBUG=true
+APP_URL=http://localhost:8000
+
+# Banco de dados MySQL (o projeto usa MySQL, não SQLite)
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=absl
+DB_USERNAME=root
+DB_PASSWORD=
+
+# Sessão (Sanctum usa cookie de sessão, não Bearer token)
+SESSION_DRIVER=database
+SESSION_DOMAIN=null
+
+# Domínios que recebem cookie de autenticação stateful do Sanctum.
+# Inclua a porta que o frontend Vite estiver usando (padrão 5173).
+SANCTUM_STATEFUL_DOMAINS=localhost:5173,127.0.0.1:5173,localhost:8000,127.0.0.1:8000
+
+# Senha do usuário admin criado pelo seeder (opcional; se não definida,
+# uma senha aleatória é gerada e exibida no terminal ao rodar o seeder)
+SEED_ADMIN_PASSWORD=troque-esta-senha
+```
+
+> **Importante:** se o frontend rodar em uma porta ou domínio diferente de `localhost:5173`, atualize também `backend/config/cors.php` (`allowed_origins`) para incluir essa URL — caso contrário as requisições do navegador serão bloqueadas por CORS.
+
+### 3.4 Criar o banco de dados
+
+No MySQL, crie o schema informado em `DB_DATABASE`:
+```sql
+CREATE DATABASE absl CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+### 3.5 Gerar a chave da aplicação
+```bash
+php artisan key:generate
+```
+
+### 3.6 Rodar as migrations
+```bash
+php artisan migrate
+```
+
+### 3.7 Rodar o seeder (cria o usuário administrador)
+```bash
+php artisan db:seed
+```
+Isso cria o admin com e-mail `admin@absl.local` e a senha definida em `SEED_ADMIN_PASSWORD` (ou uma senha aleatória, exibida no terminal, se a variável não for definida).
+
+### 3.8 Criar o link de storage (necessário para upload de imagens/PDFs/vídeos)
+```bash
+php artisan storage:link
+```
+
+### 3.9 Subir o servidor do backend
+```bash
+php artisan serve
+```
+A API ficará disponível em `http://localhost:8000`.
+
+---
+
+## 4. Configurando o Frontend (Vue)
+
+Em outro terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+O Vite sobe o frontend em `http://localhost:5173` e já está configurado (`vite.config.ts`) para fazer proxy de `/api`, `/sanctum` e `/storage` para `http://localhost:8000` — ou seja, com o backend rodando na porta padrão, não é preciso configurar nada a mais no frontend.
+
+Acesse **http://localhost:5173** no navegador.
+
+---
+
+## 5. Rodando o projeto completo
+
+Você precisa de **dois terminais abertos simultaneamente**:
+
+| Terminal | Comando | Pasta |
+|---|---|---|
+| 1 | `php artisan serve` | `backend/` |
+| 2 | `npm run dev` | `frontend/` |
+
+---
+
+## 6. Login administrativo
+
+Após rodar o seeder (passo 3.7), use no botão "Login administrativo" do site:
+
+- **E-mail:** `admin@absl.local`
+- **Senha:** a que você definiu em `SEED_ADMIN_PASSWORD`, ou a senha aleatória impressa no terminal ao rodar `php artisan db:seed`.
+
+---
+
+## 7. Build de produção
+
+### Frontend
+```bash
+cd frontend
+npm run build
+```
+Isso gera a pasta `frontend/dist`.
+
+### Publicar o build dentro do backend
+Copie o conteúdo de `frontend/dist/*` para `backend/public/`. O Laravel (`routes/web.php`) já está configurado para servir esse `index.html` como fallback de SPA.
+
+### Backend
+```bash
+cd backend
+composer install --no-dev --optimize-autoloader
+php artisan config:cache
+php artisan route:cache
+php artisan migrate --force
+```
+
+Em produção, lembre-se de atualizar no `.env`:
+- `APP_ENV=production`
+- `APP_DEBUG=false`
+- `APP_URL` com o domínio real
+- `SANCTUM_STATEFUL_DOMAINS` com o domínio real
+- `SESSION_DOMAIN` e `SESSION_SECURE_COOKIE=true` se estiver em HTTPS
+
+E em `backend/config/cors.php`, adicionar o domínio de produção em `allowed_origins`.
+
+---
+
+## 8. Problemas comuns
+
+**Erro de CORS / cookie de sessão não é salvo**
+Confira se a porta do frontend está em `SANCTUM_STATEFUL_DOMAINS` (`.env`) e em `allowed_origins` (`backend/config/cors.php`).
+
+**Imagens/PDFs enviados não aparecem (404 em `/storage/...`)**
+Rode `php artisan storage:link` dentro de `backend/`.
+
+**`npm install` falha dentro de `backend/`**
+Normal — o `backend/.npmrc` tem `ignore-scripts=true`, usado apenas para o build do Vite da landing page padrão do Laravel. O frontend real (pasta `frontend/`) tem seu próprio `package.json` e deve ser instalado separadamente, como no passo 4.
+
+**Erro de conexão com o banco**
+Confirme que o MySQL está rodando e que `DB_DATABASE`, `DB_USERNAME` e `DB_PASSWORD` no `.env` batem com as credenciais do seu MySQL local.
