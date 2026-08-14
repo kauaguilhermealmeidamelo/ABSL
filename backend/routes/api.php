@@ -27,14 +27,12 @@ Route::get('/inicio-media', [InicioMediaController::class, 'index']);
 Route::get('/transparencia', [TransparenciaController::class, 'index']);
 Route::get('/transparencia/{id}', [TransparenciaController::class, 'show']);
 
-Route::post('/ouvintes', [OuvinteController::class, 'store']);
-// TODO (Etapa 1, ainda pendente): mover para o grupo autenticado — hoje
-// expõe nome/e-mail de quem enviou a mensagem publicamente.
-Route::get('/ouvintes/{id}', [OuvinteController::class, 'show']);
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout']);
-    Route::get('/user', fn (Request $request) => $request->user());
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:6,1');
+Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:6,1');
+
+
 });
 
 Route::middleware(['auth:sanctum', 'admin'])->group(function () {
@@ -71,7 +69,13 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
     Route::post('/inicio-media', [InicioMediaController::class, 'store']);
 
+
     Route::get('/ouvintes', [OuvinteController::class, 'index']);
+    Route::get('/ouvintes/{id}', [OuvinteController::class, 'show']);
     Route::put('/ouvintes/{id}', [OuvinteController::class, 'update']);
     Route::delete('/ouvintes/{id}', [OuvinteController::class, 'destroy']);
 });
+
+    Route::get('/ouvintes', [OuvinteController::class, 'index']);
+    Route::put('/ouvintes/{id}', [OuvinteController::class, 'update']);
+    Route::delete('/ouvintes/{id}', [OuvinteController::class, 'destroy']);

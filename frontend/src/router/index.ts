@@ -21,32 +21,27 @@ const routes = [
     component: MainLayout,
     redirect: '/inicio',
     children: [
-      { path: 'inicio', name: 'inicio', component: inicio },
-      { path: 'horario', name: 'horario', component: Horario },
-      { path: 'noticias', name: 'noticias', component: Noticias },
-      { path: 'noticias/:id', name: 'noticia-detalhe', component: NoticiaDetalhe },
-      { path: 'projetos', name: 'projetos', component: Projetos } ,
-      {path: 'projetos/:id', name: 'projeto-detalhes', component: ProjetoDetalhes },
-      { path: 'gabarito', name: 'gabarito', component: Gabarito },
-      { path: 'transparencia', name: 'transparencia', component: Transparencia },
-      { path: 'cardapio', name: 'cardapio', component: Cardapio },
-      { path: 'ouvintes', name: 'ouvintes', component: Ouvintes },
-      { path: 'mapa', name: 'mapa', component: Mapa },
-      { path: 'usuarios', name: 'usuarios', component: Usuarios },
+      { path: 'inicio', name: 'inicio', component: inicio, meta: { public: true } },
+      { path: 'horario', name: 'horario', component: Horario, meta: { public: true } },
+      { path: 'noticias', name: 'noticias', component: Noticias, meta: { public: true } },
+      { path: 'noticias/:id', name: 'noticia-detalhe', component: NoticiaDetalhe, meta: { public: true } },
+      { path: 'projetos', name: 'projetos', component: Projetos, meta: { public: true } },
+      { path: 'projetos/:id', name: 'projeto-detalhes', component: ProjetoDetalhes, meta: { public: true } },
+      { path: 'gabarito', name: 'gabarito', component: Gabarito, meta: { public: true } },
+      { path: 'transparencia', name: 'transparencia', component: Transparencia, meta: { public: true } },
+      { path: 'cardapio', name: 'cardapio', component: Cardapio, meta: { public: true } },
+      { path: 'ouvintes', name: 'ouvintes', component: Ouvintes, meta: { public: true } },
+      { path: 'mapa', name: 'mapa', component: Mapa, meta: { public: true } },
+      { path: 'usuarios', name: 'usuarios', component: Usuarios }, // não é público
+      { path: ':pathMatch(.*)*', name: 'not-found', component: () => import('@/views/NotFound.vue'), meta: { public: true } },
     ]
   },
 ]
 
-const router = createRouter({
-  history: createWebHistory(),
-  routes
-})
+const router = createRouter({ history: createWebHistory(), routes })
 
 router.beforeEach((to: RouteLocationNormalized) => {
-    const publicPrefixes = ['/', '/inicio', '/horario', '/noticias', '/projetos', '/gabarito', '/transparencia', '/cardapio', '/ouvintes', '/mapa']
-    const authRequired = !publicPrefixes.some((p) => to.path === p || to.path.startsWith(`${p}/`))
-    if (authRequired && !user.value) return '/'
-    return true
+  if (!to.meta.public && !user.value) return '/'
+  return true
 })
-
 export default router

@@ -2,34 +2,35 @@
 
 namespace Database\Seeders;
 
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use App\Models\User;
+use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
 {
+    /**
+     * Seed the application's database.
+     */
     public function run(): void
     {
-        // Criar ou atualizar usuário admin
+        $adminPassword = env('SEED_ADMIN_PASSWORD');
+
+        if (! $adminPassword) {
+            $adminPassword = Str::random(16);
+
+            $this->command?->warn(
+                "SEED_ADMIN_PASSWORD não definida — senha gerada para admin@absl.local: {$adminPassword}"
+            );
+        }
+
         User::updateOrCreate(
             ['email' => 'admin@absl.local'],
             [
                 'name' => 'Admin ABSL',
-                'password' => Hash::make('senha_super_segura_123'),
+                'password' => Hash::make($adminPassword),
                 'role' => 'admin',
                 'is_admin' => true,
-            ]
-        );
-
-        // Criar ou atualizar usuário comum
-        User::updateOrCreate(
-            ['email' => 'usuario@absl.local'],
-            [
-                'name' => 'Usuário Teste',
-                'password' => Hash::make('senha_123'),
-                'role' => 'user',
-                'is_admin' => false,
-                'turma' => '1A',
             ]
         );
     }
