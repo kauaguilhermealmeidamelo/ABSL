@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\InicioMedia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-
+    
 class InicioMediaController extends Controller
 {
     public function index()
@@ -24,7 +24,13 @@ class InicioMediaController extends Controller
         $path = $file->store('public/inicio_media');
         $url = Storage::url($path);
 
-        // mark previous as inactive
+        // Apaga o(s) vídeo(s) anteriores do disco antes de marcá-los como
+        // inativos — antes ficavam órfãos em storage/app/public para sempre,
+        // e vídeo é o tipo de arquivo mais pesado do sistema.
+        $anteriores = InicioMedia::where('ativo', true)->get();
+        foreach ($anteriores as $antigo) {
+            $this->deleteArquivo($antigo->url);
+        }
         InicioMedia::where('ativo', true)->update(['ativo' => false]);
 
         $media = InicioMedia::create([
@@ -35,5 +41,18 @@ class InicioMediaController extends Controller
         ]);
 
         return response()->json($media, 201);
+    }
+
+    private function deleteArquivo(?string $url): void
+    {
+        if (! $url) {
+            return;
+        }
+
+        $path = preg_replace('#^.*/storage/#', '', $url);
+
+        if ($path && Storage::disk('public')->exists($path)) {
+            Storage::disk('public')->delete($path);
+        }
     }
 }

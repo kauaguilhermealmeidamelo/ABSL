@@ -18,73 +18,56 @@ class TransparenciaController extends Controller
         );
     }
 
-    public function show(string $id)
-    {
-        return new TransparenciaResource(Transparencia::findOrFail($id));
+   public function update(Request $request, string $id)
+{
+    $transparencia = Transparencia::findOrFail($id);
+
+    $data = $request->validate([
+        'titulo' => 'sometimes|required|string|max:255',
+        'descricao' => 'sometimes|required|string',
+        'categoria' => 'sometimes|required|string|max:100',
+        'arquivo_url' => 'nullable|string',
+        'file' => 'nullable|file|mimetypes:application/pdf,application/x-pdf',
+        'tipo_documento' => 'sometimes|required|string|max:100',
+        'data_documento' => 'sometimes|required|date',
+        'ativo' => 'boolean',
+    ]);
+
+    $data = Arr::only($data, [
+        'titulo', 'descricao', 'categoria', 'arquivo_url',
+        'tipo_documento', 'data_documento', 'ativo',
+    ]);
+
+    if ($request->hasFile('file')) {
+        $this->deleteArquivoAntigo($transparencia->arquivo_url);
+        $path = $request->file('file')->store('public/transparencia');
+        $data['arquivo_url'] = Storage::url($path);
     }
 
-    public function store(Request $request)
-    {
-        $data = $request->validate([
-            'titulo' => 'required|string|max:255',
-            'descricao' => 'required|string',
-            'categoria' => 'required|string|max:100',
-            'arquivo_url' => 'nullable|string',
-            'file' => 'nullable|file|mimetypes:application/pdf,application/x-pdf',
-            'tipo_documento' => 'required|string|max:100',
-            'data_documento' => 'required|date',
-            'ativo' => 'boolean',
-        ]);
+    $transparencia->update($data);
 
-        $data = Arr::only($data, [
-            'titulo', 'descricao', 'categoria', 'arquivo_url',
-            'tipo_documento', 'data_documento', 'ativo',
-        ]);
+    return new TransparenciaResource($transparencia);
+}
 
-        if ($request->hasFile('file')) {
-            $path = $request->file('file')->store('public/transparencia');
-            $data['arquivo_url'] = Storage::url($path);
-        }
+public function destroy(string $id)
+{
+    $transparencia = Transparencia::findOrFail($id);
+    $this->deleteArquivoAntigo($transparencia->arquivo_url);
+    $transparencia->delete();
 
-        $data['publicado_por'] = $request->user()->id;
+    return response()->noContent();
+}
 
-        return new TransparenciaResource(Transparencia::create($data));
+private function deleteArquivoAntigo(?string $url): void
+{
+    if (! $url) {
+        return;
     }
 
-    public function update(Request $request, string $id)
-    {
-        $transparencia = Transparencia::findOrFail($id);
+    $path = preg_replace('#^.*/storage/#', '', $url);
 
-        $data = $request->validate([
-            'titulo' => 'sometimes|required|string|max:255',
-            'descricao' => 'sometimes|required|string',
-            'categoria' => 'sometimes|required|string|max:100',
-            'arquivo_url' => 'nullable|string',
-            'file' => 'nullable|file|mimetypes:application/pdf,application/x-pdf',
-            'tipo_documento' => 'sometimes|required|string|max:100',
-            'data_documento' => 'sometimes|required|date',
-            'ativo' => 'boolean',
-        ]);
-
-        $data = Arr::only($data, [
-            'titulo', 'descricao', 'categoria', 'arquivo_url',
-            'tipo_documento', 'data_documento', 'ativo',
-        ]);
-
-        if ($request->hasFile('file')) {
-            $path = $request->file('file')->store('public/transparencia');
-            $data['arquivo_url'] = Storage::url($path);
-        }
-
-        $transparencia->update($data);
-
-        return new TransparenciaResource($transparencia);
+    if ($path && Storage::disk('public')->exists($path)) {
+        Storage::disk('public')->delete($path);
     }
-
-    public function destroy(string $id)
-    {
-        Transparencia::findOrFail($id)->delete();
-
-        return response()->noContent();
-    }
+}
 }

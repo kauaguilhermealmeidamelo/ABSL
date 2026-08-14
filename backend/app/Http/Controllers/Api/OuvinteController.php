@@ -13,7 +13,10 @@ class OuvinteController extends Controller
      */
     public function index()
     {
-        return Ouvinte::orderBy('created_at', 'desc')->get();
+        // Sem paginação real ainda (mudaria o formato da resposta e quebraria
+        // o front hoje, que espera um array puro). Como stopgap, ordena e
+        // limita — ver README para o plano de paginação completa.
+        return Ouvinte::orderBy('created_at', 'desc')->limit(200)->get();
     }
 
     /**

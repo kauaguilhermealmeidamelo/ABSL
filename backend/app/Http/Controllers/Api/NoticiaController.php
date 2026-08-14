@@ -8,16 +8,18 @@ use App\Models\Noticia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Cache;   
 
 class NoticiaController extends Controller
 {
     public function index()
-    {
-        return NoticiaResource::collection(
-            Noticia::where('ativo', true)->orderBy('data_publicacao', 'desc')->get()
-        );
-    }
+{
+    $noticias = Cache::remember('noticias.index', 300, function () {
+        return Noticia::where('ativo', true)->orderBy('data_publicacao', 'desc')->get();
+    });
 
+    return NoticiaResource::collection($noticias);
+}
     public function show(string $id)
     {
         return new NoticiaResource(Noticia::findOrFail($id));
@@ -43,7 +45,7 @@ class NoticiaController extends Controller
         if ($request->hasFile('imagem')) {
             $data['imagem_url'] = $this->storeImagem($request->file('imagem'));
         }
-
+        Cache::forget('noticias.index');
         $data['autor_id'] = $request->user()->id;
 
         return new NoticiaResource(Noticia::create($data));
@@ -73,7 +75,7 @@ class NoticiaController extends Controller
         }
 
         $noticia->update($data);
-
+        Cache::forget('noticias.index');
         return new NoticiaResource($noticia);
     }
 
@@ -82,18 +84,17 @@ class NoticiaController extends Controller
         $noticia = Noticia::findOrFail($id);
         $this->deleteImagemAntiga($noticia->imagem_url);
         $noticia->delete();
-
+        Cache::forget('noticias.index');
         return response()->noContent();
     }
 
     private function storeImagem($file): string
     {
-        
         $path = $file->store('noticias', 'public');
 
         /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
         $disk = Storage::disk('public');
-
+        Cache::forget('noticias.index');
         return $disk->url($path);
     }
 
