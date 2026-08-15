@@ -11,18 +11,15 @@ use Illuminate\Support\Facades\Cache;
 class CardapioController extends Controller
 {
     public function index()
-    {
-        return CardapioResource::collection(
-            Cache::remember('cardapio.index', 300, function () {
-                return Cardapio::where('ativo', true)->orderBy('data', 'asc')->get();
-            })
-        );
-    }
-
-    public function show(string $id)
-    {
-        return new CardapioResource(Cardapio::findOrFail($id));
-    }
+{
+    $rows = Cache::remember('cardapio.index', 300, fn () =>
+        Cardapio::where('ativo', true)
+            ->orderBy('data', 'asc')
+            ->get()
+            ->toArray()
+    );
+    return CardapioResource::collection(Cardapio::hydrate($rows));
+}
 
     public function store(Request $request)
     {

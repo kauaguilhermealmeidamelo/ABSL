@@ -22,6 +22,7 @@ import { setupAuthInterceptor } from '@/services/api'
 import 'vuetify/styles'
 
 import '@/assets/theme.css'
+bootstrap()
 
 
 setupAuthInterceptor(clearSession)
@@ -47,5 +48,3 @@ async function bootstrap() {
 
 	app.mount('#app')
 }
-
-bootstrap()

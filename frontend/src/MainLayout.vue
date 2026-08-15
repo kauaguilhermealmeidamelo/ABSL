@@ -13,7 +13,7 @@ const dividerItems = Array.from({ length: 36 }, (_, i) => i % 4)
   <v-app>
     <menuLateral v-if="!mobile" :model-value="true" :mobile="false" />
 
-    <v-main :class="{ 'has-bottom-nav': mobile }">
+    <v-main class="app-main" :class="{ 'has-bottom-nav': mobile }">
       <div class="geo-divider" role="presentation" aria-hidden="true">
         <div class="divider-strip">
           <span
@@ -23,17 +23,32 @@ const dividerItems = Array.from({ length: 36 }, (_, i) => i % 4)
           />
         </div>
       </div>
-      <router-view />
-      <Rodape />
+
+      <div class="main-content">
+        <router-view />
+      </div>
     </v-main>
+
+    <Rodape />
 
     <BottomNav v-if="mobile" />
   </v-app>
 </template>
 
 <style scoped>
+
+.app-main {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.main-content {
+  flex: 1 0 auto;
+}
+
 .has-bottom-nav {
-  padding-bottom: calc(64px + env(safe-area-inset-bottom, 0));
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
 }
 
 .geo-divider {
@@ -42,7 +57,7 @@ const dividerItems = Array.from({ length: 36 }, (_, i) => i % 4)
   background-color: rgba(238, 241, 246, 0.75);
   border-bottom: 1px solid rgba(15, 32, 56, 0.06);
   overflow-x: auto;
-  overflow-y: hidden;
+  overflow-y: hidden; 
   scrollbar-width: none;
 }
 
