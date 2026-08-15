@@ -8,18 +8,18 @@ use App\Models\Noticia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Cache;   
+use Illuminate\Support\Facades\Cache;
 
 class NoticiaController extends Controller
 {
     public function index()
-{
-    $noticias = Cache::remember('noticias.index', 300, function () {
-        return Noticia::where('ativo', true)->orderBy('data_publicacao', 'desc')->get();
-    });
+    {
+        $rows = Cache::remember('noticias.index', 300, function () {
+            return Noticia::where('ativo', true)->orderBy('data_publicacao', 'desc')->get()->toArray();
+        });
 
-    return NoticiaResource::collection($noticias);
-}
+        return NoticiaResource::collection(Noticia::hydrate($rows));
+    }
     public function show(string $id)
     {
         return new NoticiaResource(Noticia::findOrFail($id));
@@ -35,7 +35,7 @@ class NoticiaController extends Controller
             'imagem_url' => 'nullable|string',
             // Upload real da capa. Se vier, tem prioridade sobre 'imagem_url'.
             'imagem' => 'nullable|file|mimetypes:image/jpeg,image/png,image/webp,image/gif|max:5120',
-            'data_publicacao' => 'nullable|date',
+            'data_publicacao' => 'required|date',
             'destaque' => 'boolean',
             'ativo' => 'boolean',
         ]);
@@ -96,7 +96,7 @@ class NoticiaController extends Controller
         $disk = Storage::disk('public');
         return $disk->url($path);
     }
-    
+
 
     private function deleteImagemAntiga(?string $url): void
     {

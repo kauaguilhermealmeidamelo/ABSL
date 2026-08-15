@@ -14,17 +14,13 @@ class TransparenciaController extends Controller
 {
     public function index()
     {
-        return TransparenciaResource::collection(
-            Cache::remember('transparencia.index', 300, function () {
-                return Transparencia::where('ativo', true)->orderBy('data_documento', 'desc')->get();
-            })
-        );
+        $rows = Cache::remember('transparencia.index', 300, function () {
+            return Transparencia::where('ativo', true)->orderBy('data_documento', 'desc')->get()->toArray();
+        });
+
+        return TransparenciaResource::collection(Transparencia::hydrate($rows));
     }
 
-    /**
-     * Rota que faltava: POST /transparencia (registrada em routes/api.php,
-     * mas sem implementação — toda tentativa de cadastro quebrava com 500).
-     */
     public function store(Request $request)
     {
         $data = $request->validate([
@@ -39,8 +35,13 @@ class TransparenciaController extends Controller
         ]);
 
         $data = Arr::only($data, [
-            'titulo', 'descricao', 'categoria', 'arquivo_url',
-            'tipo_documento', 'data_documento', 'ativo',
+            'titulo',
+            'descricao',
+            'categoria',
+            'arquivo_url',
+            'tipo_documento',
+            'data_documento',
+            'ativo',
         ]);
 
         if ($request->hasFile('file')) {
@@ -71,8 +72,13 @@ class TransparenciaController extends Controller
         ]);
 
         $data = Arr::only($data, [
-            'titulo', 'descricao', 'categoria', 'arquivo_url',
-            'tipo_documento', 'data_documento', 'ativo',
+            'titulo',
+            'descricao',
+            'categoria',
+            'arquivo_url',
+            'tipo_documento',
+            'data_documento',
+            'ativo',
         ]);
 
         if ($request->hasFile('file')) {

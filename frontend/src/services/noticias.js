@@ -3,10 +3,25 @@ import { createResourceService } from './resource'
 
 const base = createResourceService('/noticias')
 
+// Formata sem passar por new Date(string), que interpreta "aaaa-mm-dd" como
+// UTC meia-noite e pode voltar um dia ao converter pro fuso local (ex:
+// Brasília, UTC-3). Extrai os componentes direto da string, evitando
+// qualquer conversão de fuso.
+function formatarData(iso) {
+  if (!iso) return ''
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso)
+  if (!match) return ''
+  const [, year, month, day] = match
+  return `${day}/${month}/${year}`
+}
+
 // O backend guarda o corpo da notícia em 'descricao'; os componentes
 // (NoticiaCard, NoticiaFormModal, NoticiaDetalhe) usam 'texto'.
+// 'data_publicacao' também é reformatada aqui (de ISO para dd/mm/aaaa) —
+// assim os componentes recebem a data já pronta pra exibir, sem duplicar
+// lógica de formatação em cada tela.
 function fromApi(n) {
-  return { ...n, texto: n.descricao }
+  return { ...n, texto: n.descricao, data_publicacao: formatarData(n.data_publicacao) }
 }
 
 // 'imagem' é um File (upload novo). Quando presente, manda multipart e o

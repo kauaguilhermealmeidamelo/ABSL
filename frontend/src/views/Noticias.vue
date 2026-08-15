@@ -15,6 +15,7 @@ const { noticias, loading, error, fetchNoticias, adicionar, atualizar, remover }
 const activeTab = ref('gremio')
 const showModal = ref(false)
 const editing = ref(null)
+const erroServidorModal = ref('')
 
 onMounted(() => fetchNoticias(true))
 
@@ -24,15 +25,18 @@ function abrirNoticia(n) {
 
 function onAdd() {
   editing.value = null
+  erroServidorModal.value = ''
   showModal.value = true
 }
 
 function onEdit(n) {
   editing.value = { ...n }
+  erroServidorModal.value = ''
   showModal.value = true
 }
 
 async function onSave(payload) {
+  erroServidorModal.value = ''
   try {
     const body = {
       ...payload,
@@ -46,9 +50,14 @@ async function onSave(payload) {
       await adicionar(body)
     }
 
+    // Só fecha o modal em caso de sucesso — se o backend rejeitar (ex: 422
+    // por data_publicacao ausente), o modal continua aberto com o erro.
     showModal.value = false
   } catch (err) {
-    error.value = err?.response?.data?.message || 'Erro ao salvar notícia.' 
+    erroServidorModal.value =
+      err?.response?.data?.errors?.data_publicacao?.[0] ||
+      err?.response?.data?.message ||
+      'Erro ao salvar notícia.'
   }
 }
 
@@ -85,7 +94,13 @@ async function onDelete(id) {
       <div v-if="!noticias.length" class="empty">Nenhuma notícia encontrada</div>
     </div>
 
-    <NoticiaFormModal :modelValue="showModal" @update:modelValue="val => (showModal = val)" :noticia="editing" @salvar="onSave" />
+    <NoticiaFormModal
+      :modelValue="showModal"
+      @update:modelValue="val => (showModal = val)"
+      :noticia="editing"
+      :erro-servidor="erroServidorModal"
+      @salvar="onSave"
+    />
   </div>
 </template>
 

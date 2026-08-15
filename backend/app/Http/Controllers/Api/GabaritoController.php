@@ -13,14 +13,13 @@ use Illuminate\Support\Facades\Cache;
 class GabaritoController extends Controller
 {
     public function index()
-{
-    return GabaritoResource::collection(
-        Cache::remember('gabarito.index', 300, function () {
-            return Gabarito::where('ativo', true)->orderBy('data_prova', 'desc')->get();
-        })
-    );
-}
+    {
+        $rows = Cache::remember('gabarito.index', 300, function () {
+            return Gabarito::where('ativo', true)->orderBy('data_prova', 'desc')->get()->toArray();
+        });
 
+        return GabaritoResource::collection(Gabarito::hydrate($rows));
+    }
     public function show(string $id)
     {
         return new GabaritoResource(Gabarito::findOrFail($id));

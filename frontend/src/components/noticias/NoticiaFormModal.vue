@@ -4,6 +4,7 @@ import { ref, watch, computed } from 'vue'
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
   noticia: { type: Object, default: null },
+  erroServidor: { type: String, default: '' }, // erro vindo do backend (ex: 422), se houver
 })
 
 const emit = defineEmits(['update:modelValue', 'salvar'])
@@ -11,13 +12,45 @@ const emit = defineEmits(['update:modelValue', 'salvar'])
 const form = ref({ titulo: '', data_publicacao: '', texto: '', imagem_url: '' })
 const imagemFile = ref(null)
 const imagemPreview = ref('')
+const erroData = ref('')
+
+// Converte qualquer data que o backend mande (ex: "2026-08-12T00:00:00.000000Z")
+// para o formato yyyy-mm-dd exigido pelo <input type="date">. Sem isso, o
+// input não reconhece o valor, mostra vazio visualmente, mas o form
+// continua com uma string não-vazia — a validação de obrigatoriedade nunca
+// dispara mesmo o campo "parecendo" vazio pro usuário.
+function formatDateForInput(d) {
+  if (!d) return ''
+
+  // Já vem como dd/mm/aaaa (formato exibido pelo service)
+  const brMatch = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(d)
+  if (brMatch) {
+    const [, day, month, year] = brMatch
+    return `${year}-${month}-${day}`
+  }
+
+  // Vem como aaaa-mm-dd (ou aaaa-mm-ddTHH:mm:ss...) — extrai direto sem
+  // passar por new Date(), que interpretaria como UTC e poderia voltar um
+  // dia ao converter pro fuso local.
+  const isoMatch = /^(\d{4})-(\d{2})-(\d{2})/.exec(d)
+  if (isoMatch) {
+    const [, year, month, day] = isoMatch
+    return `${year}-${month}-${day}`
+  }
+
+  return ''
+}
 
 watch(
   () => [props.modelValue, props.noticia],
   () => {
     if (props.modelValue) {
+      erroData.value = ''
       if (props.noticia) {
-        form.value = { ...props.noticia }
+        form.value = {
+          ...props.noticia,
+          data_publicacao: formatDateForInput(props.noticia.data_publicacao),
+        }
         imagemPreview.value = props.noticia.imagem_url || ''
         imagemFile.value = null
       } else {
@@ -44,16 +77,6 @@ function onFileChange(e) {
   imagemPreview.value = URL.createObjectURL(f)
 }
 
-function formatDateForInput(d) {
-  if (!d) return ''
-  const dt = new Date(d)
-  if (Number.isNaN(dt.getTime())) return ''
-  const y = dt.getFullYear()
-  const m = String(dt.getMonth() + 1).padStart(2, '0')
-  const day = String(dt.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
-}
-
 const imagemPreviewName = computed(() => {
   if (imagemFile.value) return imagemFile.value.name
   if (form.value.imagem_url) return String(form.value.imagem_url).split('/').pop()
@@ -61,11 +84,22 @@ const imagemPreviewName = computed(() => {
 })
 
 function salvar() {
+  erroData.value = ''
+
   if (!form.value.titulo.trim()) return
+
+  // Validação local: barra antes de chamar a API, evitando o 500/422 por
+  // 'data_publicacao' nula direto na constraint do banco. Agora funciona
+  // igual em criação e edição, já que o form sempre guarda yyyy-mm-dd ou
+  // vazio — nunca mais uma string ISO "fantasma" que engana o check.
+  if (!form.value.data_publicacao) {
+    erroData.value = 'Data de Publicação Obrigatória'
+    return
+  }
 
   const payload = {
     titulo: form.value.titulo,
-    data_publicacao: formatDateForInput(form.value.data_publicacao) || '',
+    data_publicacao: form.value.data_publicacao,
     texto: form.value.texto,
   }
 
@@ -79,7 +113,9 @@ function salvar() {
   }
 
   emit('salvar', payload)
-  close()
+  // Não fecha o modal aqui — quem decide fechar é o componente pai
+  // (Noticias.vue), e só em caso de sucesso. Assim, se o backend rejeitar
+  // (ex: 422), o modal continua aberto mostrando o erro do servidor.
 }
 </script>
 
@@ -104,7 +140,9 @@ function salvar() {
         <input v-model="form.titulo" type="text" class="field-input" placeholder="Título da notícia" />
 
         <label class="field-label">Data de publicação</label>
-        <input v-model="form.data_publicacao" type="date" class="field-input" />
+        <input v-model="form.data_publicacao" type="date" class="field-input"
+          :class="{ 'field-input-erro': erroData || erroServidor }" />
+        <span v-if="erroData || erroServidor" class="field-erro">{{ erroData || erroServidor }}</span>
 
         <label class="field-label">Resumo / texto</label>
         <textarea v-model="form.texto" rows="4" class="field-textarea" placeholder="Descrição breve da notícia" />
@@ -171,6 +209,17 @@ function salvar() {
   border-color: #1a3f8f;
 }
 
+.field-input-erro {
+  border-color: #dc2626 !important;
+}
+
+.field-erro {
+  display: block;
+  color: #dc2626;
+  font-size: 11px;
+  margin-top: 4px;
+}
+
 .upload-box {
   display: flex;
   align-items: center;
@@ -223,6 +272,7 @@ function salvar() {
   background: #1a3f8f;
   color: #ffffff;
 }
+
 .btn-salvar:hover {
   background: #0d1f3c;
 }
