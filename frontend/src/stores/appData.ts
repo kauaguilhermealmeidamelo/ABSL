@@ -101,8 +101,8 @@ export async function removeTurma(turno: string, ano: string, codigo: string): P
 // é opção de formulário, não dado exibido como se fosse real.
 export const SUBJECTS = [
   'Matemática', 'Português', 'Física', 'Química', 'Biologia', 'História',
-  'Geografia', 'Arte', 'Ed. Física', 'Filosofia', 'Sociologia', 'Literatura',
-  'Inglês', 'Redação',
+  'Geografia', 'Arte', 'Ed. Física', 'Filosofia', 'Sociologia', 'Trilhas',
+  'Inglês', 'Espanhol', 'Redação',
 ]
 export const DAYS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta']
 
