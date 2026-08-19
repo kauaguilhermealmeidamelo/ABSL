@@ -1,0 +1,85 @@
+name: Deploy para Hostgator (SSH)
+
+on:
+  push:
+    branches:
+      - main   # troque para 'master' se essa for sua branch principal
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      # ── Backend (Laravel) ──────────────────────────────────────
+      - name: Configurar PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+
+      - name: Instalar dependências do Composer
+        working-directory: backend
+        run: composer install --no-dev --optimize-autoloader
+
+      # ── Frontend (Vue) ─────────────────────────────────────────
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Instalar dependências do npm
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build do frontend
+        working-directory: frontend
+        run: npm run build
+
+      # ── Copiar build do frontend para dentro do public/ do Laravel ──
+      - name: Copiar frontend/dist para backend/public
+        run: cp -r frontend/dist/* backend/public/
+
+      # ── Configurar chave SSH ─────────────────────────────────────
+      - name: Configurar SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p ${{ secrets.SSH_PORT }} -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      # ── Sincronizar arquivos via rsync ────────────────────────────
+      - name: Enviar arquivos via rsync
+        run: |
+          rsync -avz --delete \
+            -e "ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa" \
+            --exclude='.git*' \
+            --exclude='.env' \
+            --exclude='storage/logs/*' \
+            --exclude='storage/framework/cache/*' \
+            --exclude='storage/framework/sessions/*' \
+            --exclude='storage/framework/views/*' \
+            --exclude='node_modules' \
+            --exclude='tests' \
+            backend/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.REMOTE_PATH }}
+
+      # ── Rodar migrations e limpar cache no servidor ───────────────
+      # OBS: usamos o caminho completo do PHP 8.4 (/opt/cpanel/ea-php84/...)
+      # em vez de apenas "php", porque sessões SSH não-interativas (como a
+      # que o GitHub Actions usa aqui) não carregam o ~/.bashrc do servidor,
+      # então o "php" do PATH cairia na versão padrão do sistema (8.3),
+      # incompatível com as dependências do composer.json (>= 8.4.1).
+      # Se o caminho do seu PHP 8.4 na Hostgator for diferente, ajuste as
+      # 5 linhas abaixo (confirme rodando via SSH manual:
+      # "ls /opt/cpanel/ea-php84/root/usr/bin/php" ou "which php84").
+      - name: Rodar comandos pós-deploy via SSH
+        run: |
+          ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+            cd ${{ secrets.REMOTE_PATH }} &&
+            /opt/cpanel/ea-php84/root/usr/bin/php artisan migrate --force &&
+            /opt/cpanel/ea-php84/root/usr/bin/php artisan config:cache &&
+            /opt/cpanel/ea-php84/root/usr/bin/php artisan route:cache &&
+            /opt/cpanel/ea-php84/root/usr/bin/php artisan view:cache &&
+            /opt/cpanel/ea-php84/root/usr/bin/php artisan storage:link || true
+          "
