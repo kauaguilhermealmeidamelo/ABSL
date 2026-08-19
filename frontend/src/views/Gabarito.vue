@@ -6,7 +6,6 @@ import GabaritoSecao from '@/components/gabarito/Gabaritosecao.vue'
 import { useAdmin } from '@/composables/useAdmin'
 import { gabaritoService } from '@/services/gabarito'
 
-
 const { isAdmin } = useAdmin()
 
 const documentos = ref([])
@@ -54,6 +53,7 @@ async function onSubstituir(id, file, done) {
   }
 }
 
+// ── Excluir um documento individual ───────────────────────────────────────
 async function onExcluir(id) {
   try {
     await gabaritoService.remove(id)
@@ -63,6 +63,7 @@ async function onExcluir(id) {
   }
 }
 
+// ── Excluir uma seção inteira (grupo por tipo_prova) ──────────────────────
 async function onExcluirSecao(ids) {
   try {
     await Promise.all(ids.map((id) => gabaritoService.remove(id)))
@@ -122,10 +123,13 @@ async function salvarNovo() {
 
 <template>
   <div class="gabarito-page">
-    <PageHeader label="ABSL" title="Gabarito" subtitle="Gabaritos e provas para consulta, organizados por turma." />
+    <PageHeader
+      label="ABSL"
+      title="Gabarito"
+      subtitle="Gabaritos e provas para consulta, organizados por turma."
+    />
 
-    <AdminBanner v-if="isAdmin"
-      message="Modo administrador ativo — você pode substituir o PDF de qualquer documento." />
+    <AdminBanner v-if="isAdmin" message="Modo administrador ativo — você pode substituir ou excluir documentos e seções inteiras." />
 
     <div v-if="isAdmin" class="admin-add">
       <button type="button" class="btn-novo" @click="formAberto = !formAberto">
@@ -158,8 +162,14 @@ async function salvarNovo() {
     <p v-else-if="error" class="status-msg status-erro">{{ error }}</p>
 
     <template v-else>
-      <GabaritoSecao title="Gabaritos" :grupos="grupos" :is-admin="isAdmin" @substituir="onSubstituir"
-        @excluir="onExcluir" @excluir-secao="onExcluirSecao" />
+      <GabaritoSecao
+        title="Gabaritos"
+        :grupos="grupos"
+        :is-admin="isAdmin"
+        @substituir="onSubstituir"
+        @excluir="onExcluir"
+        @excluir-secao="onExcluirSecao"
+      />
       <p v-if="!grupos.length" class="status-msg">Nenhum gabarito publicado ainda.</p>
     </template>
   </div>

@@ -13,16 +13,11 @@ class OuvinteController extends Controller
      */
     public function index()
     {
-        // Sem paginação real ainda (mudaria o formato da resposta e quebraria
-        // o front hoje, que espera um array puro). Como stopgap, ordena e
-        // limita — ver README para o plano de paginação completa.
         return Ouvinte::orderBy('created_at', 'desc')->limit(200)->get();
     }
 
     /**
      * Envia uma nova mensagem (rota pública — formulário da Ouvidoria).
-     * Quando 'anonimo' é true, nome/email não devem ser enviados pelo
-     * frontend mesmo que os campos aceitem null.
      */
     public function store(Request $request)
     {
@@ -47,12 +42,6 @@ class OuvinteController extends Controller
 
     /**
      * Exibe uma mensagem específica.
-     *
-     * Atenção: esta rota é pública em routes/api.php. Como mensagens não
-     * anônimas guardam nome/email, expor '/ouvintes/{id}' publicamente
-     * permite que qualquer pessoa com o id leia dados pessoais de quem
-     * enviou. Considerar mover esta rota para o grupo 'auth:sanctum'
-     * (mantendo apenas 'store' pública) caso isso não seja intencional.
      */
     public function show(string $id)
     {
@@ -87,6 +76,21 @@ class OuvinteController extends Controller
         return $ouvinte;
     }
 
+    /**
+     * Remove uma mensagem. Protegido por 'auth:sanctum'.
+     */
+    public function destroy(string $id)
+    {
+        Ouvinte::findOrFail($id)->delete();
+
+        return response()->noContent();
+    }
+
+    /**
+     * Consulta pública por protocolo (o próprio id da mensagem). Usada pelo
+     * usuário comum para acompanhar a resposta da mensagem que ele mesmo
+     * enviou, sem precisar de login admin.
+     */
     public function consultarProtocolo(string $id)
     {
         $ouvinte = Ouvinte::findOrFail($id);
@@ -102,12 +106,28 @@ class OuvinteController extends Controller
     }
 
     /**
-     * Remove uma mensagem. Protegido por 'auth:sanctum'.
+     * Lista pública das mensagens já respondidas, para servir como um
+     * "central de suporte" — qualquer visitante pode ver perguntas e
+     * respostas anteriores, sem precisar ter enviado nada. Nome e e-mail
+     * NUNCA são retornados aqui, mesmo quando a mensagem original não era
+     * anônima, porque a listagem é pública.
      */
-    public function destroy(string $id)
+    public function respondidas()
     {
-        Ouvinte::findOrFail($id)->delete();
+        $mensagens = Ouvinte::where('status', 'respondido')
+            ->whereNotNull('resposta')
+            ->orderBy('data_resposta', 'desc')
+            ->limit(100)
+            ->get(['id', 'mensagem', 'turma', 'tipo', 'resposta', 'data_resposta', 'created_at']);
 
-        return response()->noContent();
+        return $mensagens->map(fn ($m) => [
+            'id' => $m->id,
+            'texto' => $m->mensagem,
+            'turma' => $m->turma,
+            'tipo' => $m->tipo,
+            'resposta' => $m->resposta,
+            'data_resposta' => $m->data_resposta,
+            'data_envio' => $m->created_at,
+        ]);
     }
 }

@@ -1,21 +1,20 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import PageHeader from '@/components/common/PageHeader.vue'
+import OuvintesTabs from '@/components/ouvintes/OuvintesTabs.vue'
 import OuvintesFormulario from '@/components/ouvintes/OuvintesFormulario.vue'
-import OuvintesLista from '@/components/ouvintes/OuvintesLista.vue'
 import OuvintesMeusProtocolos from '@/components/ouvintes/OuvintesMeusProtocolos.vue'
+import OuvintesRespondidasLista from '@/components/ouvintes/OuvintesRespondidasLista.vue'
+import OuvintesLista from '@/components/ouvintes/OuvintesLista.vue'
 import { useAdmin } from '@/composables/useAdmin'
 import { ouvintesService } from '@/services/ouvintes'
 
-
 const { isAdmin } = useAdmin()
 
-const mensagens = ref([])
-const loading = ref(false)
-const error = ref('')
+const abaAtiva = ref('enviar') // 'enviar' | 'respondidas' | 'gerenciar'
 
-const STORAGE_KEY = 'absl_meus_protocolos'
 const meusProtocolosRef = ref(null)
+const STORAGE_KEY = 'absl_meus_protocolos'
 
 function salvarProtocoloLocal(id) {
   try {
@@ -23,10 +22,58 @@ function salvarProtocoloLocal(id) {
     const ids = raw ? JSON.parse(raw) : []
     const lista = Array.isArray(ids) ? ids : []
     if (!lista.includes(id)) lista.push(id)
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(lista.slice(-20))) // guarda só as últimas 20
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(lista.slice(-20)))
   } catch {
     // localStorage indisponível — segue sem persistir
   }
+}
+
+// ── Aba pública: mensagens respondidas (central de suporte) ───────────────
+const respondidas = ref([])
+const loadingRespondidas = ref(false)
+const errorRespondidas = ref('')
+const respondidasCarregadas = ref(false)
+
+async function carregarRespondidas(force = false) {
+  if (respondidasCarregadas.value && !force) return
+  loadingRespondidas.value = true
+  errorRespondidas.value = ''
+  try {
+    respondidas.value = await ouvintesService.listRespondidas()
+    respondidasCarregadas.value = true
+  } catch {
+    errorRespondidas.value = 'Não foi possível carregar as mensagens respondidas.'
+  } finally {
+    loadingRespondidas.value = false
+  }
+}
+
+// ── Aba admin: gerenciar todas as mensagens ────────────────────────────────
+const mensagens = ref([])
+const loading = ref(false)
+const error = ref('')
+
+async function carregar() {
+  if (!isAdmin.value) return
+  loading.value = true
+  error.value = ''
+  try {
+    mensagens.value = await ouvintesService.list()
+  } catch {
+    error.value = 'Não foi possível carregar as mensagens.'
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  carregarRespondidas()
+  carregar()
+})
+
+function onMudarAba(aba) {
+  abaAtiva.value = aba
+  if (aba === 'respondidas') carregarRespondidas()
 }
 
 async function adicionarMensagem(payload) {
@@ -42,26 +89,6 @@ async function adicionarMensagem(payload) {
   }
 }
 
-async function carregar() {
-  // GET /ouvintes (listagem completa) exige token de admin — não faz
-  // sentido chamar se o visitante não estiver logado como admin.
-  if (!isAdmin.value) return
-
-  loading.value = true
-  error.value = ''
-  try {
-    mensagens.value = await ouvintesService.list()
-  } catch {
-    error.value = 'Não foi possível carregar as mensagens.'
-  } finally {
-    loading.value = false
-  }
-}
-
-onMounted(carregar)
-
-
-
 async function excluirMensagem(id) {
   try {
     await ouvintesService.remove(id)
@@ -75,6 +102,10 @@ async function responderMensagem({ id, resposta }) {
   try {
     const atualizada = await ouvintesService.update(id, { resposta })
     mensagens.value = mensagens.value.map((m) => (m.id === id ? atualizada : m))
+    // A resposta acabou de ser publicada — força a atualização da aba
+    // pública na próxima vez que ela for aberta, para não ficar
+    // desatualizada.
+    respondidasCarregadas.value = false
   } catch {
     error.value = 'Não foi possível salvar a resposta.'
   }
@@ -83,19 +114,40 @@ async function responderMensagem({ id, resposta }) {
 
 <template>
   <div class="ouvintes-page">
-    <PageHeader label="ABSL" title="Ouvidoria"
-      subtitle="Ouvidoria do Grêmio Athos Bulcão — envie sugestões, críticas ou opiniões. Sua voz importa." />
+    <PageHeader
+      label="ABSL"
+      title="Ouvidoria"
+      subtitle="Ouvidoria do Grêmio Athos Bulcão — envie sugestões, críticas ou opiniões. Sua voz importa."
+    />
 
-    <div class="form-wrapper">
-      <OuvintesFormulario @enviar="adicionarMensagem" />
+    <OuvintesTabs :model-value="abaAtiva" :mostrar-gerenciar="isAdmin" @update:model-value="onMudarAba" />
+
+    <div v-show="abaAtiva === 'enviar'" class="aba-conteudo">
+      <div class="form-wrapper">
+        <OuvintesFormulario @enviar="adicionarMensagem" />
+      </div>
+
+      <OuvintesMeusProtocolos ref="meusProtocolosRef" />
     </div>
 
-    <OuvintesMeusProtocolos ref="meusProtocolosRef" />
-    <template v-if="isAdmin">
+    <div v-show="abaAtiva === 'respondidas'" class="aba-conteudo">
+      <OuvintesRespondidasLista
+        :mensagens="respondidas"
+        :loading="loadingRespondidas"
+        :error="errorRespondidas"
+      />
+    </div>
+
+    <div v-if="isAdmin" v-show="abaAtiva === 'gerenciar'" class="aba-conteudo">
       <p v-if="loading" class="status-msg">Carregando mensagens...</p>
       <p v-else-if="error" class="status-msg status-erro">{{ error }}</p>
-      <OuvintesLista v-else :mensagens="mensagens" @excluir="excluirMensagem" @responder="responderMensagem" />
-    </template>
+      <OuvintesLista
+        v-else
+        :mensagens="mensagens"
+        @excluir="excluirMensagem"
+        @responder="responderMensagem"
+      />
+    </div>
   </div>
 </template>
 
@@ -109,6 +161,10 @@ async function responderMensagem({ id, resposta }) {
   .ouvintes-page {
     padding: 16px;
   }
+}
+
+.aba-conteudo {
+  max-width: 720px;
 }
 
 .form-wrapper {

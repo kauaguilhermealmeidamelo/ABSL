@@ -1,7 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { TURNO_ANOS, turmasState, addTurma, removeTurma } from '@/stores/appData'
-import api from '@/services/api'
 
 const novoTurno = ref('matutino')
 const novoAno = ref(TURNO_ANOS.matutino[0])
@@ -9,14 +8,46 @@ const novaLetra = ref('')
 
 const anosDisponiveis = computed(() => TURNO_ANOS[novoTurno.value])
 
+// Feedback de sucesso/erro ao cadastrar ou remover turma.
+const feedback = ref(null) // { tipo: 'sucesso' | 'erro', mensagem: string }
+let feedbackTimeoutId = null
+
+function mostrarFeedback(tipo, mensagem) {
+  feedback.value = { tipo, mensagem }
+  clearTimeout(feedbackTimeoutId)
+  feedbackTimeoutId = setTimeout(() => {
+    feedback.value = null
+  }, 3500)
+}
+
 function onTurnoChange(event) {
   novoTurno.value = event.target.value
   novoAno.value = TURNO_ANOS[novoTurno.value][0]
 }
 
-function cadastrar() {
-  addTurma(novoTurno.value, novoAno.value, novaLetra.value)
-  novaLetra.value = ''
+async function cadastrar() {
+  if (!novaLetra.value.trim()) {
+    mostrarFeedback('erro', 'Informe a letra da turma.')
+    return
+  }
+
+  const sucesso = await addTurma(novoTurno.value, novoAno.value, novaLetra.value)
+
+  if (sucesso) {
+    mostrarFeedback('sucesso', 'Turma adicionada.')
+    novaLetra.value = ''
+  } else {
+    mostrarFeedback('erro', 'Erro ao adicionar turma.')
+  }
+}
+
+async function excluir(turno, ano, codigo) {
+  try {
+    await removeTurma(turno, ano, codigo)
+    mostrarFeedback('sucesso', 'Turma removida.')
+  } catch {
+    mostrarFeedback('erro', 'Erro ao remover turma.')
+  }
 }
 </script>
 
@@ -46,6 +77,7 @@ function cadastrar() {
             v-model="novaLetra"
             placeholder="Ex: A"
             @input="novaLetra = novaLetra.toUpperCase()"
+            @keydown.enter="cadastrar"
           />
         </div>
       </div>
@@ -53,6 +85,17 @@ function cadastrar() {
         <v-icon size="14">mdi-plus</v-icon>
         Adicionar turma
       </button>
+
+      <transition name="feedback-fade">
+        <p
+          v-if="feedback"
+          class="feedback-msg"
+          :class="feedback.tipo === 'sucesso' ? 'feedback-sucesso' : 'feedback-erro'"
+        >
+          <v-icon size="14">{{ feedback.tipo === 'sucesso' ? 'mdi-check-circle' : 'mdi-alert-circle' }}</v-icon>
+          {{ feedback.mensagem }}
+        </p>
+      </transition>
     </div>
 
     <div v-for="turno in ['matutino', 'vespertino']" :key="turno" class="card">
@@ -62,7 +105,7 @@ function cadastrar() {
         <div class="turma-chips">
           <span v-for="t in turmasState[turno]?.[ano] ?? []" :key="t" class="chip">
             {{ t }}
-            <button type="button" class="chip-remove" @click="removeTurma(turno, ano, t)">
+            <button type="button" class="chip-remove" @click="excluir(turno, ano, t)">
               <v-icon size="11">mdi-close</v-icon>
             </button>
           </span>
@@ -154,6 +197,36 @@ function cadastrar() {
 .btn-add:hover {
   background: #0d1f3c;
 }
+
+.feedback-msg {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 12px 0 0;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 500;
+  width: fit-content;
+}
+.feedback-sucesso {
+  background: #dcfce7;
+  color: #15803d;
+}
+.feedback-erro {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.feedback-fade-enter-active,
+.feedback-fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.feedback-fade-enter-from,
+.feedback-fade-leave-to {
+  opacity: 0;
+}
+
 .ano-block {
   margin-bottom: 16px;
 }

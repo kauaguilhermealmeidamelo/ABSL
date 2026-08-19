@@ -101,6 +101,7 @@ defineExpose({ recarregar: carregarTodos })
   color: #5a6a85;
   margin: 0;
 }
+
 .protocolo-erro {
   color: #dc2626;
 }
@@ -125,14 +126,17 @@ defineExpose({ recarregar: carregarTodos })
   padding: 2px 8px;
   border-radius: 999px;
 }
+
 .badge-pendente {
   background: #fef3c7;
   color: #b45309;
 }
+
 .badge-respondido {
   background: #dcfce7;
   color: #15803d;
 }
+
 .badge-fechado {
   background: #f3f4f6;
   color: #6b7280;

@@ -3,13 +3,16 @@ import { computed } from 'vue'
 import GabaritoDocumento from './GabaritoDocumento.vue'
 
 const props = defineProps({
-  label: { type: String, required: true },
+  label: { type: String, required: true }, // grupo_turma / série
   documentos: { type: Array, required: true },
   isAdmin: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['substituir', 'excluir', 'excluir-secao'])
 
+// Dentro de um grupo de turmas, os documentos ainda se separam por
+// tipo_prova (Provão, 2ª Chamada, etc — texto livre, então agrupamos
+// dinamicamente em vez de assumir rótulos fixos).
 const subgrupos = computed(() => {
   const mapa = new Map()
   for (const doc of props.documentos) {
@@ -19,12 +22,13 @@ const subgrupos = computed(() => {
   }
   return [...mapa.entries()].map(([tipo_prova, docs]) => ({
     tipo_prova,
+    // gabarito sempre listado antes da prova, dentro do mesmo subgrupo
     documentos: [...docs].sort((a) => (a.tipo_documento === 'gabarito' ? -1 : 1)),
   }))
 })
 
 function excluirSecao(sub) {
-  if (!confirm(`Excluir toda a seção "${sub.tipo_prova}" (${sub.documentos.length} documento(s))?`)) return
+  if (!confirm(`Excluir toda a seção "${sub.tipo_prova}" (${sub.documentos.length} documento(s))? Essa ação não pode ser desfeita.`)) return
   emit('excluir-secao', sub.documentos.map((d) => d.id))
 }
 </script>
@@ -62,7 +66,29 @@ function excluirSecao(sub) {
 </template>
 
 <style scoped>
-/* ... estilos existentes mantidos ... */
+.gab-card {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid rgba(13, 31, 60, 0.08);
+  padding: 16px;
+  transition: box-shadow 0.15s ease;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.gab-card:hover {
+  box-shadow: 0 4px 10px rgba(13, 31, 60, 0.1);
+}
+
+.gab-card-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: #1a3f8f;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 12px;
+}
+
 .gab-card-subtitle-row {
   display: flex;
   align-items: center;
@@ -70,6 +96,19 @@ function excluirSecao(sub) {
   gap: 8px;
   margin-bottom: 4px;
 }
+
+.gab-card-subtitle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #5a6a85;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0;
+}
+
 .btn-excluir-secao {
   display: flex;
   align-items: center;
@@ -85,8 +124,20 @@ function excluirSecao(sub) {
   transition: background-color 0.15s ease, color 0.15s ease;
   white-space: nowrap;
 }
+
 .btn-excluir-secao:hover {
   background: #fef2f2;
   color: #dc2626;
+}
+
+.gab-card-divisor {
+  margin: 8px 0;
+  border-top: 1px dashed rgba(13, 31, 60, 0.1);
+}
+
+.gab-card-vazio {
+  color: #94a3b8;
+  font-size: 12px;
+  margin: 4px 0 0;
 }
 </style>

@@ -20,6 +20,7 @@ class NoticiaController extends Controller
 
         return NoticiaResource::collection(Noticia::hydrate($rows));
     }
+
     public function show(string $id)
     {
         return new NoticiaResource(Noticia::findOrFail($id));
@@ -36,8 +37,14 @@ class NoticiaController extends Controller
             // Upload real da capa. Se vier, tem prioridade sobre 'imagem_url'.
             'imagem' => 'nullable|file|mimetypes:image/jpeg,image/png,image/webp,image/gif|max:5120',
             'data_publicacao' => 'required|date',
-            'destaque' => 'boolean',
-            'ativo' => 'boolean',
+            // 'nullable' aqui é essencial: quando o formulário envia via
+            // multipart (upload de imagem) sem marcar esses campos, eles
+            // simplesmente não vêm na requisição. Com 'boolean' puro (sem
+            // nullable), o Laravel rejeitava a criação inteira com "The
+            // ativo field must be true or false." mesmo o campo estando
+            // ausente — o formulário nunca chegava a salvar.
+            'destaque' => 'nullable|boolean',
+            'ativo' => 'nullable|boolean',
         ]);
 
         $data = Arr::except($validated, ['imagem']);
@@ -45,6 +52,12 @@ class NoticiaController extends Controller
         if ($request->hasFile('imagem')) {
             $data['imagem_url'] = $this->storeImagem($request->file('imagem'));
         }
+
+        // Valores padrão para uma notícia nova: publicada e sem destaque,
+        // a menos que o formulário informe o contrário.
+        $data['ativo'] = $data['ativo'] ?? true;
+        $data['destaque'] = $data['destaque'] ?? false;
+
         Cache::forget('noticias.index');
         $data['autor_id'] = $request->user()->id;
 
@@ -63,8 +76,8 @@ class NoticiaController extends Controller
             'imagem_url' => 'nullable|string',
             'imagem' => 'nullable|file|mimetypes:image/jpeg,image/png,image/webp,image/gif|max:5120',
             'data_publicacao' => 'nullable|date',
-            'destaque' => 'boolean',
-            'ativo' => 'boolean',
+            'destaque' => 'nullable|boolean',
+            'ativo' => 'nullable|boolean',
         ]);
 
         $data = Arr::except($validated, ['imagem']);
@@ -96,7 +109,6 @@ class NoticiaController extends Controller
         $disk = Storage::disk('public');
         return $disk->url($path);
     }
-
 
     private function deleteImagemAntiga(?string $url): void
     {

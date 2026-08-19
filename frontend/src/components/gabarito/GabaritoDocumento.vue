@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 
 const props = defineProps({
-  documento: { type: Object, required: true },
+  documento: { type: Object, required: true }, // { id, serie, tipo_prova, tipo_documento, documento_url }
   isAdmin: { type: Boolean, default: false },
 })
 
@@ -64,16 +64,125 @@ function excluir() {
       <button v-if="isAdmin" type="button" class="doc-replace" :disabled="enviando" @click="abrirSeletor">
         {{ enviando ? 'Enviando...' : 'Substituir' }}
       </button>
-      <button v-if="isAdmin" type="button" class="doc-excluir" @click="excluir">
-        <v-icon size="13">mdi-trash-can-outline</v-icon>
+
+      <button v-if="isAdmin" type="button" class="doc-excluir" title="Excluir documento" @click="excluir">
+        <v-icon size="14">mdi-trash-can-outline</v-icon>
       </button>
+
       <input ref="fileInput" type="file" accept="application/pdf" hidden @change="onFileChange" />
     </div>
   </div>
 </template>
 
 <style scoped>
-/* ... estilos existentes mantidos ... */
+.doc-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(13, 31, 60, 0.06);
+}
+
+.doc-row:last-child {
+  border-bottom: none;
+}
+
+.doc-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.doc-icon-gabarito {
+  background: #eef3fb;
+}
+
+.doc-icon-prova {
+  background: #fffbeb;
+}
+
+.doc-info {
+  flex: 1 1 140px;
+  min-width: 0;
+}
+
+.doc-name {
+  color: #0d1f3c;
+  font-size: 12px;
+  font-weight: 500;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.doc-type {
+  color: #5a6a85;
+  font-size: 10px;
+  margin: 2px 0 0;
+}
+
+.doc-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+@media (max-width: 360px) {
+  .doc-actions {
+    margin-left: 44px;
+  }
+}
+
+.doc-download {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #eef3fb;
+  color: #1a3f8f;
+  font-size: 12px;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease;
+}
+
+.doc-download:hover {
+  background: #d6e4ff;
+}
+
+.doc-replace {
+  font-size: 10px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid #fbbf24;
+  background: transparent;
+  color: #b45309;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.doc-replace:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.doc-replace:hover:not(:disabled) {
+  background: #fffbeb;
+}
+
 .doc-excluir {
   display: flex;
   align-items: center;
@@ -88,6 +197,7 @@ function excluir() {
   flex-shrink: 0;
   transition: background-color 0.15s ease, color 0.15s ease;
 }
+
 .doc-excluir:hover {
   background: #fef2f2;
   color: #dc2626;
