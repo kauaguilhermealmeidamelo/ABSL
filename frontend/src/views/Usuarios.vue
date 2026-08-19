@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import PageHeader from '@/components/common/PageHeader.vue'
 import GerenciamentoTabs from '@/components/gerenciamento/GerenciamentoTabs.vue'
 import TurmasManager from '@/components/gerenciamento/TurmasManager.vue'
@@ -7,7 +7,6 @@ import DiretoriasManager from '@/components/gerenciamento/DiretoriasManager.vue'
 import MidiaManager from '@/components/gerenciamento/MidiaManager.vue'
 import VisitasDashboard from '@/components/gerenciamento/VisitasDashboard.vue'
 import UsuariosAdminManager from '@/components/gerenciamento/UsuariosAdminManager.vue'
-
 import { useAdmin } from '@/composables/useAdmin'
 
 const { isAdmin, isSuperAdmin } = useAdmin()
@@ -22,7 +21,6 @@ const tabs = computed(() => [
     : []),
 ])
 const tab = ref('dashboard')
-
 </script>
 
 <template>
