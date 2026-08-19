@@ -5,7 +5,7 @@ import {
   addDiretoria,
   removeDiretoria,
   saveDiretoriaMembers,
-  moveDiretoria
+  moveDiretoria,
 } from '@/stores/appData'
 
 function mover(idx, direcao) {
@@ -16,16 +16,11 @@ const novaDir = ref({
   name: '',
   diretorGeral: '',
   primeiro: '',
-  segundo: ''
+  segundo: '',
 })
 
 function cadastrar() {
-  if (
-    !novaDir.value.name.trim() ||
-    !novaDir.value.diretorGeral.trim()
-  ) {
-    return
-  }
+  if (!novaDir.value.name.trim() || !novaDir.value.diretorGeral.trim()) return
 
   addDiretoria({ ...novaDir.value })
 
@@ -33,7 +28,7 @@ function cadastrar() {
     name: '',
     diretorGeral: '',
     primeiro: '',
-    segundo: ''
+    segundo: '',
   }
 }
 
@@ -47,19 +42,17 @@ function abrir(idx) {
 
 function fechar() {
   expandido.value = null
-  editMembers.value = []
 }
 
 function salvar(idx) {
   saveDiretoriaMembers(idx, editMembers.value)
   expandido.value = null
-  editMembers.value = []
 }
 
 function adicionarIntegrante() {
   editMembers.value.push({
     cargo: '',
-    nome: ''
+    nome: '',
   })
 }
 
@@ -84,11 +77,7 @@ function removerIntegrante(i) {
             Nome da diretoria
           </label>
 
-          <input
-            v-model="novaDir.name"
-            class="field-input"
-            placeholder="Ex: Diretoria de Esporte"
-          />
+          <input v-model="novaDir.name" class="field-input" placeholder="Ex: Diretoria de Esporte" />
         </div>
 
         <div>
@@ -96,11 +85,7 @@ function removerIntegrante(i) {
             Diretor(a)-Geral
           </label>
 
-          <input
-            v-model="novaDir.diretorGeral"
-            class="field-input"
-            placeholder="Nome completo"
-          />
+          <input v-model="novaDir.diretorGeral" class="field-input" placeholder="Nome completo" />
         </div>
 
         <div>
@@ -108,11 +93,7 @@ function removerIntegrante(i) {
             1º(ª) Diretor(a)
           </label>
 
-          <input
-            v-model="novaDir.primeiro"
-            class="field-input"
-            placeholder="Nome completo (opcional)"
-          />
+          <input v-model="novaDir.primeiro" class="field-input" placeholder="Nome completo (opcional)" />
         </div>
 
         <div>
@@ -120,22 +101,12 @@ function removerIntegrante(i) {
             2º(ª) Diretor(a)
           </label>
 
-          <input
-            v-model="novaDir.segundo"
-            class="field-input"
-            placeholder="Nome completo (opcional)"
-          />
+          <input v-model="novaDir.segundo" class="field-input" placeholder="Nome completo (opcional)" />
         </div>
 
-        <button
-          type="button"
-          class="btn-add btn-block"
-          :disabled="
-            !novaDir.name.trim() ||
-            !novaDir.diretorGeral.trim()
-          "
-          @click="cadastrar"
-        >
+        <button type="button" class="btn-add btn-block" :disabled="!novaDir.name.trim() ||
+          !novaDir.diretorGeral.trim()
+          " @click="cadastrar">
           Cadastrar diretoria
         </button>
 
@@ -144,20 +115,9 @@ function removerIntegrante(i) {
 
     <!-- LISTA DE DIRETORIAS -->
     <div class="lista">
-
-      <div
-        v-for="(dir, idx) in team"
-        :key="dir.name"
-        class="card card-dir"
-      >
-
-        <!-- LINHA DA DIRETORIA -->
+      <div v-for="(dir, idx) in team" :key="dir.name" class="card card-dir">
         <div class="dir-row">
-
-          <v-icon
-            size="18"
-            color="#1a3f8f"
-          >
+          <v-icon size="18" color="#1a3f8f">
             {{ dir.icon }}
           </v-icon>
 
@@ -170,142 +130,65 @@ function removerIntegrante(i) {
             integrante{{ dir.members.length !== 1 ? 's' : '' }}
           </span>
 
-          <!-- BOTÕES DE ORDENAR -->
+          <!-- MOVER -->
           <div class="ordem-btns">
-
-            <button
-              type="button"
-              class="icon-btn"
-              :disabled="idx === 0"
-              title="Mover para cima"
-              @click="mover(idx, 'cima')"
-            >
-              <v-icon size="15">
-                mdi-chevron-up
-              </v-icon>
+            <button type="button" class="icon-btn" :disabled="idx === 0" title="Mover para cima"
+              @click="mover(idx, 'cima')">
+              <v-icon size="15">mdi-chevron-up</v-icon>
             </button>
 
-            <button
-              type="button"
-              class="icon-btn"
-              :disabled="idx === team.length - 1"
-              title="Mover para baixo"
-              @click="mover(idx, 'baixo')"
-            >
-              <v-icon size="15">
-                mdi-chevron-down
-              </v-icon>
+            <button type="button" class="icon-btn" :disabled="idx === team.length - 1" title="Mover para baixo"
+              @click="mover(idx, 'baixo')">
+              <v-icon size="15">mdi-chevron-down</v-icon>
             </button>
-
           </div>
 
-          <!-- EXCLUIR -->
-          <button
-            type="button"
-            class="icon-btn icon-btn-danger"
-            title="Excluir diretoria"
-            @click="removeDiretoria(idx)"
-          >
+          <button type="button" class="icon-btn icon-btn-danger" @click="removeDiretoria(idx)">
             <v-icon size="15">
               mdi-trash-can-outline
             </v-icon>
           </button>
 
-          <!-- EDITAR -->
-          <button
-            type="button"
-            class="btn-editar"
-            @click="
-              expandido === idx
-                ? fechar()
-                : abrir(idx)
-            "
-          >
+          <button type="button" class="btn-editar" @click="expandido === idx ? fechar() : abrir(idx)">
             <v-icon size="12">
               mdi-pencil-outline
             </v-icon>
-
             Editar
           </button>
-
         </div>
 
-        <!-- ÁREA DE EDIÇÃO -->
-        <div
-          v-if="expandido === idx"
-          class="dir-edit"
-        >
+        <!-- EDIÇÃO DOS MEMBROS -->
+        <div v-if="expandido === idx" class="dir-edit">
+          <div v-for="(m, mi) in editMembers" :key="mi" class="dir-edit-row">
+            <input v-model="m.cargo" class="field-input field-input-sm" placeholder="Cargo" />
 
-          <!-- INTEGRANTES -->
-          <div
-            v-for="(m, mi) in editMembers"
-            :key="mi"
-            class="dir-edit-row"
-          >
+            <input v-model="m.nome" class="field-input field-input-sm" placeholder="Nome" />
 
-            <input
-              v-model="m.cargo"
-              class="field-input field-input-sm"
-              placeholder="Cargo"
-            />
-
-            <input
-              v-model="m.nome"
-              class="field-input field-input-sm"
-              placeholder="Nome"
-            />
-
-            <button
-              type="button"
-              class="icon-btn icon-btn-danger"
-              title="Remover integrante"
-              @click="removerIntegrante(mi)"
-            >
+            <button type="button" class="icon-btn icon-btn-danger" @click="removerIntegrante(mi)">
               <v-icon size="13">
                 mdi-close
               </v-icon>
             </button>
-
           </div>
 
-          <!-- ADICIONAR INTEGRANTE -->
-          <button
-            type="button"
-            class="btn-link"
-            @click="adicionarIntegrante"
-          >
+          <button type="button" class="btn-link" @click="adicionarIntegrante">
             <v-icon size="12">
               mdi-plus
             </v-icon>
-
             Adicionar integrante
           </button>
 
-          <!-- AÇÕES -->
           <div class="dir-edit-actions">
-
-            <button
-              type="button"
-              class="btn-cancelar"
-              @click="fechar"
-            >
+            <button type="button" class="btn-cancelar" @click="fechar">
               Cancelar
             </button>
 
-            <button
-              type="button"
-              class="btn-salvar"
-              @click="salvar(idx)"
-            >
+            <button type="button" class="btn-salvar" @click="salvar(idx)">
               Salvar
             </button>
-
           </div>
-
         </div>
-
       </div>
-
     </div>
 
   </div>
