@@ -49,7 +49,7 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -p ${{ secrets.SSH_PORT }} -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
-      # ── Sincronizar arquivos via rsync ────────────────────────────
+      # ── Sincronizar arquivos via rsync (Laravel completo, fora de public_html) ──
       - name: Enviar arquivos via rsync
         run: |
           rsync -avz --delete \
@@ -64,15 +64,33 @@ jobs:
             --exclude='tests' \
             backend/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.REMOTE_PATH }}
 
+      # ── Sincronizar assets estáticos do build para dentro de public_html ──
+      # O Document Root do domínio continua sendo public_html (Opção B do
+      # README), então o Apache serve os arquivos estáticos (JS/CSS com hash
+      # do Vite) diretamente de lá, sem passar pelo Laravel. Sem esse passo,
+      # public_html/assets fica com os hashes de um build antigo e quebra
+      # com "Failed to load module script... MIME type text/html".
+      - name: Enviar assets estáticos para public_html
+        run: |
+          rsync -avz --delete \
+            -e "ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa" \
+            backend/public/assets/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:public_html/assets/
+
+      - name: Enviar favicon e outros arquivos estáticos da raiz
+        run: |
+          rsync -avz \
+            -e "ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa" \
+            --exclude='index.php' \
+            --exclude='.htaccess' \
+            --exclude='assets' \
+            backend/public/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:public_html/
+
       # ── Rodar migrations e limpar cache no servidor ───────────────
       # OBS: usamos o caminho completo do PHP 8.4 (/opt/cpanel/ea-php84/...)
       # em vez de apenas "php", porque sessões SSH não-interativas (como a
       # que o GitHub Actions usa aqui) não carregam o ~/.bashrc do servidor,
       # então o "php" do PATH cairia na versão padrão do sistema (8.3),
       # incompatível com as dependências do composer.json (>= 8.4.1).
-      # Se o caminho do seu PHP 8.4 na Hostgator for diferente, ajuste as
-      # 5 linhas abaixo (confirme rodando via SSH manual:
-      # "ls /opt/cpanel/ea-php84/root/usr/bin/php" ou "which php84").
       - name: Rodar comandos pós-deploy via SSH
         run: |
           ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
