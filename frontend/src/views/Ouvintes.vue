@@ -60,14 +60,7 @@ async function carregar() {
 
 onMounted(carregar)
 
-async function adicionarMensagem(payload) {
-  try {
-    await ouvintesService.create(payload)
-    if (isAdmin.value) await carregar()
-  } catch {
-    error.value = 'Não foi possível enviar a mensagem.'
-  }
-}
+
 
 async function excluirMensagem(id) {
   try {
