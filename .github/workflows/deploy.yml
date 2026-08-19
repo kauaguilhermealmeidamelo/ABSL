@@ -53,7 +53,7 @@ jobs:
       - name: Enviar arquivos via rsync
         run: |
           rsync -avz --delete \
-            -e "ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa" \
+            -e "ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa -o IdentitiesOnly=yes" \
             --exclude='.git*' \
             --exclude='.env' \
             --exclude='storage/logs/*' \
@@ -67,7 +67,7 @@ jobs:
       # ── Rodar migrations e limpar cache no servidor ───────────────
       - name: Rodar comandos pós-deploy via SSH
         run: |
-          ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
+          ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa -o IdentitiesOnly=yes ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
             cd ${{ secrets.REMOTE_PATH }} &&
             php artisan migrate --force &&
             php artisan config:cache &&
