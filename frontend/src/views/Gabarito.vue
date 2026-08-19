@@ -4,7 +4,7 @@ import PageHeader from '@/components/common/PageHeader.vue'
 import AdminBanner from '@/components/common/AdminBanner.vue'
 import GabaritoSecao from '@/components/gabarito/Gabaritosecao.vue'
 import { useAdmin } from '@/composables/useAdmin'
-import { gabaritoService } from '@/services/Gabarito'
+import { gabaritoService } from '@/services/gabarito'
 
 const { isAdmin } = useAdmin()
 
