@@ -3,22 +3,13 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\{
-    NoticiaController,
-    ProjetoController,
-    CardapioController,
-    OuvinteController,
-    TransparenciaController,
-    GabaritoController,
-    HorarioController,
-    TurmaController,
-    DiretoriaController,
-    InicioMediaController,
-    AuthController
+    NoticiaController, ProjetoController, CardapioController, OuvinteController,
+    TransparenciaController, GabaritoController, HorarioController, TurmaController,
+    DiretoriaController, InicioMediaController, AuthController
 };
 
 // Rotas públicas de autenticação — throttle aqui, que é onde a requisição
-// de fato chega (sem sessão). O grupo 'auth:sanctum' abaixo era dead code:
-// exigia estar autenticado para acessar login/register, o que nunca acontece.
+// de fato chega (sem sessão).
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:6,1');
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:6,1');
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
@@ -38,7 +29,16 @@ Route::get('/diretorias', [DiretoriaController::class, 'index']);
 Route::get('/inicio-media', [InicioMediaController::class, 'index']);
 Route::get('/transparencia', [TransparenciaController::class, 'index']);
 Route::get('/transparencia/{id}', [TransparenciaController::class, 'show']);
+
+// ── Ouvidoria: rotas públicas ───────────────────────────────────────────
+// IMPORTANTE: '/ouvintes/respondidas' e '/ouvintes/protocolo/{id}' têm que
+// vir ANTES de qualquer rota com '{id}' genérico (inclusive a do grupo
+// admin logo abaixo). O Laravel casa rotas na ordem em que são declaradas
+// neste arquivo — se uma rota '/ouvintes/{id}' vier primeiro, ela "captura"
+// a palavra 'respondidas' como se fosse um id e tenta buscar um registro
+// com esse valor, gerando "No query results for model [Ouvinte] respondidas".
 Route::post('/ouvintes', [OuvinteController::class, 'store']);
+Route::get('/ouvintes/respondidas', [OuvinteController::class, 'respondidas']);
 Route::get('/ouvintes/protocolo/{id}', [OuvinteController::class, 'consultarProtocolo']);
 
 // GET /user: usado por checkSession() no frontend para validar a sessão
@@ -77,17 +77,17 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
     Route::post('/diretorias', [DiretoriaController::class, 'store']);
     Route::put('/diretorias/{id}', [DiretoriaController::class, 'update']);
+    Route::post('/diretorias/reorder', [DiretoriaController::class, 'reorder']);
     Route::delete('/diretorias/{id}', [DiretoriaController::class, 'destroy']);
 
     Route::post('/inicio-media', [InicioMediaController::class, 'store']);
 
+    // Rotas de gerenciamento de ouvintes (admin): index/show/update/destroy
+    // com {id} genérico ficam aqui dentro do grupo protegido, então não
+    // colidem com '/ouvintes/respondidas' nem '/ouvintes/protocolo/{id}',
+    // que já foram resolvidas mais acima (fora deste grupo).
     Route::get('/ouvintes', [OuvinteController::class, 'index']);
     Route::get('/ouvintes/{id}', [OuvinteController::class, 'show']);
     Route::put('/ouvintes/{id}', [OuvinteController::class, 'update']);
     Route::delete('/ouvintes/{id}', [OuvinteController::class, 'destroy']);
-
-    Route::post('/diretorias', [DiretoriaController::class, 'store']);
-    Route::put('/diretorias/{id}', [DiretoriaController::class, 'update']);
-    Route::post('/diretorias/reorder', [DiretoriaController::class, 'reorder']);
-    Route::delete('/diretorias/{id}', [DiretoriaController::class, 'destroy']);
 });
