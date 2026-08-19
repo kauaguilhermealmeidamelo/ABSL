@@ -6,7 +6,7 @@ const props = defineProps({
   isAdmin: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['substituir'])
+const emit = defineEmits(['substituir', 'excluir'])
 
 const fileInput = ref(null)
 const enviando = ref(false)
@@ -19,6 +19,8 @@ const nomeArquivo = computed(() => {
 })
 
 const descricaoTipo = computed(() => (isGabarito.value ? 'Gabarito' : 'Prova para consulta'))
+
+
 
 function abrirSeletor() {
   fileInput.value?.click()
@@ -55,6 +57,10 @@ function onFileChange(event) {
         <v-icon size="12">mdi-download</v-icon>
         Baixar
       </a>
+
+      <button v-if="isAdmin" type="button" class="doc-delete" @click="$emit('excluir', documento.id)">
+        <v-icon size="13">mdi-trash-can-outline</v-icon>
+      </button>
 
       <button v-if="isAdmin" type="button" class="doc-replace" :disabled="enviando" @click="abrirSeletor">
         {{ enviando ? 'Enviando...' : 'Substituir' }}
@@ -107,6 +113,23 @@ function onFileChange(event) {
   gap: 8px;
   flex-shrink: 0;
   margin-left: auto;
+}
+
+.doc-delete {
+  font-size: 10px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid #fca5a5;
+  background: transparent;
+  color: #dc2626;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  transition: background-color 0.15s ease;
+}
+.doc-delete:hover {
+  background: #fef2f2;
 }
 
 @media (max-width: 360px) {

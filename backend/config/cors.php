@@ -20,13 +20,11 @@ return [
     'allowed_methods' => ['*'],
 
     'allowed_origins' => [
-        'http://localhost:5173',  // Dev
-        'http://localhost:3000',  // Caso use outra porta
-        'http://localhost:8000',  // Caso use outra porta
-        'http://127.0.0.1:8000'
-        ],
+        'https://gremioathosbulcao.com',
+        'https://www.gremioathosbulcao.com',
+    ],
 
-    'allowed_origins_patterns' => [],
+    'allowed_origins_patterns' => [],   
 
     'allowed_headers' => ['*'],
 
