@@ -300,7 +300,7 @@ export function clearInicioMedia(): void {
 }
 
 // ── Cardápio ─────────────────────────────────────────────────────────────
-export const CARDAPIO_DIAS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']
+export const CARDAPIO_DIAS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
 
 export const cardapioSemana = ref('')
 
