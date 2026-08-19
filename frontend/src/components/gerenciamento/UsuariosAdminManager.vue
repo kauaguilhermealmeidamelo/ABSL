@@ -7,7 +7,7 @@ const usuarios = ref([])
 const loading = ref(false)
 const error = ref('')
 
-const novo = ref({ name: '', email: '', password: '', password_confirmation: '', is_admin: true })
+const novo = ref({ name: '', email: '', password: '', password_confirmation: '', role: 'imprensa' })
 const criando = ref(false)
 
 const senhaEditando = ref(null) // id do usuário com o form de senha aberto
@@ -57,10 +57,10 @@ async function cadastrar() {
       name: novo.value.name,
       email: novo.value.email,
       password: novo.value.password,
-      is_admin: novo.value.is_admin,
+      role: novo.value.role,
     })
     usuarios.value = [...usuarios.value, criado].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
-    novo.value = { name: '', email: '', password: '', password_confirmation: '', is_admin: true }
+    novo.value = { name: '', email: '', password: '', password_confirmation: '', role: 'imprensa' }
     mostrarFeedback('sucesso', 'Usuário criado com sucesso.')
   } catch (err) {
     mostrarFeedback('erro', err?.response?.data?.message || 'Não foi possível criar o usuário.')
@@ -110,11 +110,17 @@ async function excluir(u) {
 function ehVoceMesmo(u) {
   return usuarioLogado.value?.id === u.id
 }
+
+function roleLabel(u) {
+  if (u.role === 'admin') return 'Administrador'
+  if (u.role === 'imprensa') return 'Imprensa'
+  return 'Usuário'
+}
 </script>
 
 <template>
   <div class="admin-users">
-    <!-- Cadastro de novo administrador/usuário -->
+    <!-- Cadastro de novo usuário -->
     <div class="card">
       <h3 class="card-title">Cadastrar novo usuário</h3>
 
@@ -137,10 +143,11 @@ function ehVoceMesmo(u) {
         </div>
       </div>
 
-      <label class="checkbox-row">
-        <input v-model="novo.is_admin" type="checkbox" />
-        Conceder permissão de administrador
-      </label>
+      <label class="field-label">Tipo de acesso</label>
+      <select v-model="novo.role" class="field-input field-select">
+        <option value="admin">Administrador (acesso total)</option>
+        <option value="imprensa">Imprensa (todas as páginas, exceto Administradores)</option>
+      </select>
 
       <button type="button" class="btn-add" :disabled="criando" @click="cadastrar">
         <v-icon size="14">mdi-account-plus-outline</v-icon>
@@ -172,8 +179,8 @@ function ehVoceMesmo(u) {
             <p class="user-email">{{ u.email }}</p>
           </div>
 
-          <span class="badge-role" :class="u.is_admin ? 'badge-admin' : 'badge-user'">
-            {{ u.is_admin ? 'Administrador' : 'Usuário' }}
+          <span class="badge-role" :class="`badge-${u.role}`">
+            {{ roleLabel(u) }}
           </span>
 
           <div class="user-acoes">
@@ -261,17 +268,14 @@ function ehVoceMesmo(u) {
   box-sizing: border-box;
   font-family: inherit;
 }
+
 .field-input:focus {
   outline: none;
   border-color: #1a3f8f;
 }
 
-.checkbox-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: #0d1f3c;
+.field-select {
+  cursor: pointer;
   margin-bottom: 16px;
 }
 
@@ -372,6 +376,7 @@ function ehVoceMesmo(u) {
   white-space: nowrap;
 }
 .badge-admin { background: #dbeafe; color: #1a3f8f; }
+.badge-imprensa { background: #fef3c7; color: #b45309; }
 .badge-user { background: #f3f4f6; color: #6b7280; }
 
 .user-acoes {

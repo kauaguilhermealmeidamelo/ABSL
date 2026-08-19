@@ -31,4 +31,15 @@ class User extends Authenticatable
             'is_admin' => 'boolean',
         ];
     }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin' || $this->is_admin === true;
+    }
+
+    public function isStaff(): bool
+    {
+        // "staff" = pode gerenciar conteúdo (notícias, projetos, etc.)
+        return $this->isAdmin() || $this->role === 'imprensa';
+    }
 }

@@ -7,27 +7,27 @@ import DiretoriasManager from '@/components/gerenciamento/DiretoriasManager.vue'
 import MidiaManager from '@/components/gerenciamento/MidiaManager.vue'
 import VisitasDashboard from '@/components/gerenciamento/VisitasDashboard.vue'
 import UsuariosAdminManager from '@/components/gerenciamento/UsuariosAdminManager.vue'
+
 import { useAdmin } from '@/composables/useAdmin'
 
-const { isAdmin } = useAdmin()
+const { isAdmin, isSuperAdmin } = useAdmin()
 
-const tabs = [
+const tabs = computed(() => [
   { id: 'dashboard', label: 'Visitas', icon: 'mdi-chart-bar' },
   { id: 'turmas', label: 'Turmas', icon: 'mdi-school-outline' },
   { id: 'diretorias', label: 'Diretorias', icon: 'mdi-domain' },
   { id: 'midia', label: 'Mídia', icon: 'mdi-filmstrip' },
-  { id: 'administradores', label: 'Administradores', icon: 'mdi-shield-account-outline' },
-]
+  ...(isSuperAdmin.value
+    ? [{ id: 'administradores', label: 'Administradores', icon: 'mdi-shield-account-outline' }]
+    : []),
+])
 const tab = ref('dashboard')
+
 </script>
 
 <template>
   <div class="gerenciamento-page">
-    <PageHeader
-      label="Admin"
-      title="Gerenciamento"
-      subtitle="Configurações administrativas do portal ABSL."
-    />
+    <PageHeader label="Admin" title="Gerenciamento" subtitle="Configurações administrativas do portal ABSL." />
 
     <div v-if="!isAdmin" class="sem-acesso">
       <v-icon size="32" color="#5A6A85" style="opacity: 0.35">mdi-lock-outline</v-icon>
@@ -40,7 +40,7 @@ const tab = ref('dashboard')
       <TurmasManager v-else-if="tab === 'turmas'" />
       <DiretoriasManager v-else-if="tab === 'diretorias'" />
       <MidiaManager v-else-if="tab === 'midia'" />
-      <UsuariosAdminManager v-else-if="tab === 'administradores'" />
+      <UsuariosAdminManager v-else-if="tab === 'administradores' && isSuperAdmin" />
     </template>
   </div>
 </template>
@@ -65,6 +65,7 @@ const tab = ref('dashboard')
   border: 1px solid rgba(13, 31, 60, 0.08);
   border-radius: 16px;
 }
+
 .sem-acesso p {
   font-size: 14px;
   margin: 0;

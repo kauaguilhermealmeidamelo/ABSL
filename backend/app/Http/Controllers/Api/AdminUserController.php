@@ -21,13 +21,11 @@ class AdminUserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8',
-            'is_admin' => 'boolean',
+            'role' => 'required|in:admin,imprensa,user',
         ]);
 
-        $data['is_admin'] = $data['is_admin'] ?? false;
-        $data['role'] = $data['is_admin'] ? 'admin' : 'user';
+        $data['is_admin'] = $data['role'] === 'admin';
 
-        // 'password' já é hasheada automaticamente pelo cast 'hashed' em User::casts().
         $user = User::create($data);
 
         return response()->json($user->only(['id', 'name', 'email', 'role', 'is_admin', 'turma', 'created_at']), 201);

@@ -58,7 +58,10 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::middleware(['auth:sanctum', 'admin'])->group(function () {
+// backend/routes/api.php
+// ...tudo que já era 'admin' vira 'staff', exceto /admin/usuarios que fica 'admin'
+
+Route::middleware(['auth:sanctum', 'staff'])->group(function () {
     Route::post('/noticias', [NoticiaController::class, 'store']);
     Route::put('/noticias/{id}', [NoticiaController::class, 'update']);
     Route::delete('/noticias/{id}', [NoticiaController::class, 'destroy']);
@@ -93,17 +96,16 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
 
     Route::post('/inicio-media', [InicioMediaController::class, 'store']);
 
-    // Rotas de gerenciamento de ouvintes (admin): index/show/update/destroy
-    // com {id} genérico ficam aqui dentro do grupo protegido, então não
-    // colidem com '/ouvintes/respondidas' nem '/ouvintes/protocolo/{id}',
-    // que já foram resolvidas mais acima (fora deste grupo).
     Route::get('/ouvintes', [OuvinteController::class, 'index']);
     Route::get('/ouvintes/{id}', [OuvinteController::class, 'show']);
     Route::put('/ouvintes/{id}', [OuvinteController::class, 'update']);
     Route::delete('/ouvintes/{id}', [OuvinteController::class, 'destroy']);
 
     Route::get('/visitas/estatisticas', [VisitaController::class, 'estatisticas']);
+});
 
+// Só administrador de verdade pode gerenciar contas de usuário
+Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::get('/admin/usuarios', [AdminUserController::class, 'index']);
     Route::post('/admin/usuarios', [AdminUserController::class, 'store']);
     Route::put('/admin/usuarios/{id}/senha', [AdminUserController::class, 'updatePassword']);
