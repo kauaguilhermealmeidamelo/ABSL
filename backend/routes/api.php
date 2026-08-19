@@ -3,9 +3,19 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\{
-    NoticiaController, ProjetoController, CardapioController, OuvinteController,
-    TransparenciaController, GabaritoController, HorarioController, TurmaController,
-    DiretoriaController, InicioMediaController, AuthController
+    NoticiaController,
+    ProjetoController,
+    CardapioController,
+    OuvinteController,
+    TransparenciaController,
+    GabaritoController,
+    HorarioController,
+    TurmaController,
+    DiretoriaController,
+    InicioMediaController,
+    AuthController,
+    VisitaController,
+    AdminUserController
 };
 
 // Rotas públicas de autenticação — throttle aqui, que é onde a requisição
@@ -29,6 +39,7 @@ Route::get('/diretorias', [DiretoriaController::class, 'index']);
 Route::get('/inicio-media', [InicioMediaController::class, 'index']);
 Route::get('/transparencia', [TransparenciaController::class, 'index']);
 Route::get('/transparencia/{id}', [TransparenciaController::class, 'show']);
+Route::post('/visitas', [VisitaController::class, 'store'])->middleware('throttle:30,1');
 
 // ── Ouvidoria: rotas públicas ───────────────────────────────────────────
 // IMPORTANTE: '/ouvintes/respondidas' e '/ouvintes/protocolo/{id}' têm que
@@ -90,4 +101,11 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::get('/ouvintes/{id}', [OuvinteController::class, 'show']);
     Route::put('/ouvintes/{id}', [OuvinteController::class, 'update']);
     Route::delete('/ouvintes/{id}', [OuvinteController::class, 'destroy']);
+
+    Route::get('/visitas/estatisticas', [VisitaController::class, 'estatisticas']);
+
+    Route::get('/admin/usuarios', [AdminUserController::class, 'index']);
+    Route::post('/admin/usuarios', [AdminUserController::class, 'store']);
+    Route::put('/admin/usuarios/{id}/senha', [AdminUserController::class, 'updatePassword']);
+    Route::delete('/admin/usuarios/{id}', [AdminUserController::class, 'destroy']);
 });

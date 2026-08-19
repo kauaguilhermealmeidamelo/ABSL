@@ -5,16 +5,20 @@ import GerenciamentoTabs from '@/components/gerenciamento/GerenciamentoTabs.vue'
 import TurmasManager from '@/components/gerenciamento/TurmasManager.vue'
 import DiretoriasManager from '@/components/gerenciamento/DiretoriasManager.vue'
 import MidiaManager from '@/components/gerenciamento/MidiaManager.vue'
+import VisitasDashboard from '@/components/gerenciamento/VisitasDashboard.vue'
+import UsuariosAdminManager from '@/components/gerenciamento/UsuariosAdminManager.vue'
 import { useAdmin } from '@/composables/useAdmin'
 
 const { isAdmin } = useAdmin()
 
 const tabs = [
+  { id: 'dashboard', label: 'Visitas', icon: 'mdi-chart-bar' },
   { id: 'turmas', label: 'Turmas', icon: 'mdi-school-outline' },
   { id: 'diretorias', label: 'Diretorias', icon: 'mdi-domain' },
   { id: 'midia', label: 'Mídia', icon: 'mdi-filmstrip' },
+  { id: 'administradores', label: 'Administradores', icon: 'mdi-shield-account-outline' },
 ]
-const tab = ref('turmas')
+const tab = ref('dashboard')
 </script>
 
 <template>
@@ -32,9 +36,11 @@ const tab = ref('turmas')
 
     <template v-else>
       <GerenciamentoTabs v-model="tab" :tabs="tabs" />
-      <TurmasManager v-if="tab === 'turmas'" />
+      <VisitasDashboard v-if="tab === 'dashboard'" />
+      <TurmasManager v-else-if="tab === 'turmas'" />
       <DiretoriasManager v-else-if="tab === 'diretorias'" />
       <MidiaManager v-else-if="tab === 'midia'" />
+      <UsuariosAdminManager v-else-if="tab === 'administradores'" />
     </template>
   </div>
 </template>

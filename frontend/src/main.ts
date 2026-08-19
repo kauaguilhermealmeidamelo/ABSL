@@ -17,6 +17,7 @@ import router from './router'
 import { initAppData } from '@/stores/appData'
 import { checkSession, clearSession } from '@/stores/auth'
 import { setupAuthInterceptor } from '@/services/api'
+import { visitasService } from '@/services/visitas'
 
 // Styles
 import 'vuetify/styles'
@@ -27,23 +28,27 @@ bootstrap()
 
 setupAuthInterceptor(clearSession)
 
+
+await initAppData().catch(() => { })
+visitasService.registrar() // fire-and-forget, não bloqueia o boot
+
 async function bootstrap() {
 	const app = createApp(App)
 	registerPlugins(app)
 	app.use(router)
 
 	// initialize app data from backend (non-fatal)
-	await initAppData().catch(() => {})
+	await initAppData().catch(() => { })
 
 	// Confirma com o backend se a sessão de admin ainda é válida assim que o
 	// app carrega (cobre o caso da aba ter ficado aberta além do tempo
 	// limite, ou a sessão ter expirado no servidor).
-	await checkSession().catch(() => {})
+	await checkSession().catch(() => { })
 
 	// Revalida periodicamente em segundo plano, para que a expiração
 	// aconteça mesmo se o usuário deixar a aba aberta sem navegar.
 	setInterval(() => {
-		checkSession().catch(() => {})
+		checkSession().catch(() => { })
 	}, 5 * 60 * 1000) // a cada 5 minutos
 
 	app.mount('#app')
