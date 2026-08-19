@@ -253,6 +253,23 @@ export async function saveDiretoriaMembers(index: number, members: Member[]): Pr
   }
 }
 
+export async function moveDiretoria(index: number, direcao: 'cima' | 'baixo'): Promise<void> {
+  const alvoIndex = direcao === 'cima' ? index - 1 : index + 1
+  const atual = team[index]
+  const alvo = team[alvoIndex]
+  if (!atual?.id || !alvo?.id) return
+
+  try {
+    const res = await api.post<Diretoria[]>('/diretorias/reorder', {
+      id_a: atual.id,
+      id_b: alvo.id,
+    })
+    team.splice(0, team.length, ...res.data)
+  } catch (err) {
+    console.error('moveDiretoria failed', err)
+  }
+}
+
 // ── Mídia da tela inicial ───────────────────────────────────────────────────
 export const inicioMedia = reactive({
   file: null as File | null,

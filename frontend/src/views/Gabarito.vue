@@ -6,6 +6,7 @@ import GabaritoSecao from '@/components/gabarito/Gabaritosecao.vue'
 import { useAdmin } from '@/composables/useAdmin'
 import { gabaritoService } from '@/services/gabarito'
 
+
 const { isAdmin } = useAdmin()
 
 const documentos = ref([])
@@ -50,6 +51,24 @@ async function onSubstituir(id, file, done) {
     error.value = 'Não foi possível substituir o arquivo.'
   } finally {
     done?.()
+  }
+}
+
+async function onExcluir(id) {
+  try {
+    await gabaritoService.remove(id)
+    documentos.value = documentos.value.filter((d) => d.id !== id)
+  } catch {
+    error.value = 'Não foi possível excluir o documento.'
+  }
+}
+
+async function onExcluirSecao(ids) {
+  try {
+    await Promise.all(ids.map((id) => gabaritoService.remove(id)))
+    documentos.value = documentos.value.filter((d) => !ids.includes(d.id))
+  } catch {
+    error.value = 'Não foi possível excluir a seção completa.'
   }
 }
 
@@ -103,13 +122,10 @@ async function salvarNovo() {
 
 <template>
   <div class="gabarito-page">
-    <PageHeader
-      label="ABSL"
-      title="Gabarito"
-      subtitle="Gabaritos e provas para consulta, organizados por turma."
-    />
+    <PageHeader label="ABSL" title="Gabarito" subtitle="Gabaritos e provas para consulta, organizados por turma." />
 
-    <AdminBanner v-if="isAdmin" message="Modo administrador ativo — você pode substituir o PDF de qualquer documento." />
+    <AdminBanner v-if="isAdmin"
+      message="Modo administrador ativo — você pode substituir o PDF de qualquer documento." />
 
     <div v-if="isAdmin" class="admin-add">
       <button type="button" class="btn-novo" @click="formAberto = !formAberto">
@@ -142,7 +158,8 @@ async function salvarNovo() {
     <p v-else-if="error" class="status-msg status-erro">{{ error }}</p>
 
     <template v-else>
-      <GabaritoSecao title="Gabaritos" :grupos="grupos" :is-admin="isAdmin" @substituir="onSubstituir" />
+      <GabaritoSecao title="Gabaritos" :grupos="grupos" :is-admin="isAdmin" @substituir="onSubstituir"
+        @excluir="onExcluir" @excluir-secao="onExcluirSecao" />
       <p v-if="!grupos.length" class="status-msg">Nenhum gabarito publicado ainda.</p>
     </template>
   </div>
@@ -172,6 +189,7 @@ async function salvarNovo() {
   cursor: pointer;
   transition: background-color 0.15s ease;
 }
+
 .btn-novo:hover {
   background: #0d1f3c;
 }
@@ -205,6 +223,7 @@ async function salvarNovo() {
   color: #0d1f3c;
   box-sizing: border-box;
 }
+
 .field-input:focus {
   outline: none;
   border-color: #1a3f8f;
@@ -235,10 +254,12 @@ async function salvarNovo() {
   font-weight: 600;
   cursor: pointer;
 }
+
 .btn-salvar:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
+
 .btn-salvar:hover:not(:disabled) {
   background: #0d1f3c;
 }
@@ -248,6 +269,7 @@ async function salvarNovo() {
   font-size: 14px;
   padding: 12px 0;
 }
+
 .status-erro {
   color: #dc2626;
 }

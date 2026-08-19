@@ -87,6 +87,20 @@ class OuvinteController extends Controller
         return $ouvinte;
     }
 
+    public function consultarProtocolo(string $id)
+    {
+        $ouvinte = Ouvinte::findOrFail($id);
+
+        return response()->json([
+            'id' => $ouvinte->id,
+            'texto' => $ouvinte->mensagem,
+            'status' => $ouvinte->status,
+            'resposta' => $ouvinte->resposta,
+            'data_resposta' => $ouvinte->data_resposta,
+            'data_envio' => $ouvinte->created_at,
+        ]);
+    }
+
     /**
      * Remove uma mensagem. Protegido por 'auth:sanctum'.
      */

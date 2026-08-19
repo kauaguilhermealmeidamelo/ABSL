@@ -13,5 +13,5 @@ class Diretoria extends Model
         'members' => 'array',
     ];
 
-    protected $fillable = ['name', 'icon', 'members', 'criado_por', 'ativo'];
+    protected $fillable = ['name', 'icon', 'members', 'ordem', 'criado_por', 'ativo'];
 }

@@ -3,9 +3,17 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\{
-    NoticiaController, ProjetoController, CardapioController, OuvinteController,
-    TransparenciaController, GabaritoController, HorarioController, TurmaController,
-    DiretoriaController, InicioMediaController, AuthController
+    NoticiaController,
+    ProjetoController,
+    CardapioController,
+    OuvinteController,
+    TransparenciaController,
+    GabaritoController,
+    HorarioController,
+    TurmaController,
+    DiretoriaController,
+    InicioMediaController,
+    AuthController
 };
 
 // Rotas públicas de autenticação — throttle aqui, que é onde a requisição
@@ -31,6 +39,7 @@ Route::get('/inicio-media', [InicioMediaController::class, 'index']);
 Route::get('/transparencia', [TransparenciaController::class, 'index']);
 Route::get('/transparencia/{id}', [TransparenciaController::class, 'show']);
 Route::post('/ouvintes', [OuvinteController::class, 'store']);
+Route::get('/ouvintes/protocolo/{id}', [OuvinteController::class, 'consultarProtocolo']);
 
 // GET /user: usado por checkSession() no frontend para validar a sessão
 // junto ao backend. Precisa estar autenticado, mas não precisa ser admin.
@@ -76,5 +85,9 @@ Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::get('/ouvintes/{id}', [OuvinteController::class, 'show']);
     Route::put('/ouvintes/{id}', [OuvinteController::class, 'update']);
     Route::delete('/ouvintes/{id}', [OuvinteController::class, 'destroy']);
+
+    Route::post('/diretorias', [DiretoriaController::class, 'store']);
+    Route::put('/diretorias/{id}', [DiretoriaController::class, 'update']);
+    Route::post('/diretorias/reorder', [DiretoriaController::class, 'reorder']);
+    Route::delete('/diretorias/{id}', [DiretoriaController::class, 'destroy']);
 });
-?>

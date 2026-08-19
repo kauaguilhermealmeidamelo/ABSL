@@ -1,4 +1,5 @@
 import { createResourceService } from './resource'
+import api from './api'
 
 const base = createResourceService('/ouvintes')
 
@@ -7,8 +8,6 @@ function formatarData(iso) {
   return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
-// O backend guarda a mensagem em 'mensagem'; o OuvintesFormulario/
-// OuvintesMensagem usam 'texto'. 'data_envio' é derivado de 'created_at'.
 function fromApi(o) {
   return { ...o, texto: o.mensagem, data_envio: formatarData(o.created_at) }
 }
@@ -28,5 +27,11 @@ export const ouvintesService = {
   },
   async remove(id) {
     return base.remove(id)
+  },
+  // Consulta pública, usada por usuários comuns para ver a resposta da
+  // própria mensagem via protocolo (o id retornado ao enviar).
+  async consultarProtocolo(id) {
+    const { data } = await api.get(`/ouvintes/protocolo/${id}`)
+    return { ...data, data_envio: formatarData(data.data_envio) }
   },
 }
