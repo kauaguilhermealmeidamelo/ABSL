@@ -18,8 +18,8 @@ export const PROJECT_CATS = [
 export const CAT_EMOJI = {
   'Presidência': '👑',
   'Secretaria': '📋',
-  'Tesouraria': '🔥',
-  'Esporte e Lazer': '🌐',
+  'Tesouraria': '💰',
+  'Esporte e Lazer': '⚽',
   'Cultura': '🎭',
   'Políticas Educacionais': '📚',
   'Saúde e Meio Ambiente': '🌱',

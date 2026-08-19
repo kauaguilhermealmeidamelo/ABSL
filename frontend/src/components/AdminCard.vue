@@ -76,7 +76,7 @@ function goUsuarios() {
             <label class="field-label">E-mail</label>
             <v-text-field
               v-model="email"
-              placeholder="admin@absl.local"
+              placeholder="Insira o e-mail"
               type="email"
               density="comfortable"
               hide-details
@@ -89,7 +89,7 @@ function goUsuarios() {
             <label class="field-label field-label-spaced">Senha</label>
             <v-text-field
               v-model="password"
-              placeholder="Digite a senha"
+              placeholder="Insira a senha"
               type="password"
               density="comfortable"
               hide-details
