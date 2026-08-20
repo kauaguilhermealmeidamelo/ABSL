@@ -1,7 +1,7 @@
 <script setup>
 const stats = [
-  { label: 'Turmas', valor: '~60' },
-  { label: 'Alunos', valor: '~1.800' },
+  { label: 'Turmas', valor: '24' },
+  { label: 'Alunos', valor: '~1.500' },
   { label: 'Professores', valor: '~90' },
   { label: 'Turnos', valor: '2' },
 ]
