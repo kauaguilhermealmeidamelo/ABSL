@@ -2,13 +2,20 @@
   <section class="about">
     <h2>Grêmio Athos Bulcão</h2>
     <p>
-      O Grêmio Estudantil Athos Bulcão — ABSL — é a entidade representativa dos
-      estudantes do Colégio Athos Bulcão, em Brasília. Eleito democraticamente, o
-      grêmio atua como canal oficial entre o corpo discente e a direção da escola,
-      levando demandas, propondo projetos e garantindo que a voz de cada aluno seja
-      ouvida. Qualquer estudante pode propor pauta, participar de reuniões e
-      contribuir com a gestão.
-    </p>
+      O Grêmio Estudantil Athos Bulcão é a entidade de representação dos estudantes do CEM Setor Leste. Nosso objetivo é
+      ouvir os alunos, defender seus interesses e promover ações que contribuam para uma escola mais participativa,
+      democrática e acolhedora.</p>
+
+      <p>Em 2026, após o processo eleitoral, a Chapa Marielle Franco foi eleita pelos estudantes para assumir a gestão do
+      Grêmio. Após as eleições, diferentes grupos que participaram do processo decidiram unir forças e construir uma
+      gestão conjunta, colocando as diferenças de lado em busca de um objetivo comum: representar e trabalhar pelos
+      estudantes do Setor Leste.</p>
+
+      <p>Hoje, o Grêmio Athos Bulcão reúne estudantes com diferentes ideias, experiências e perspectivas, trabalhando
+      juntos na realização de projetos, eventos, ações culturais, esportivas e sociais, além da representação dos alunos
+      junto à escola.</p>
+
+      <p>Uma gestão feita por estudantes, para estudantes</p>
   </section>
 
   <section class="pillars">
@@ -35,6 +42,7 @@ const pillars = [
   margin-bottom: 40px;
   font-family: 'DM Sans', sans-serif;
 }
+
 .about h2 {
   font-family: 'Playfair Display', serif;
   font-size: 24px;
@@ -42,6 +50,7 @@ const pillars = [
   color: #0d1f3c;
   margin-bottom: 12px;
 }
+
 .about p {
   color: #5a6a85;
   line-height: 1.7;
@@ -56,6 +65,7 @@ const pillars = [
   margin-bottom: 40px;
   font-family: 'DM Sans', sans-serif;
 }
+
 .pillar {
   background: #ffffff;
   border: 1px solid rgba(13, 31, 60, 0.08);
@@ -63,9 +73,11 @@ const pillars = [
   padding: 24px;
   transition: box-shadow 0.15s ease;
 }
+
 .pillar:hover {
   box-shadow: 0 4px 10px rgba(13, 31, 60, 0.08);
 }
+
 .pillar-bar {
   width: 24px;
   height: 2px;
@@ -73,12 +85,14 @@ const pillars = [
   border-radius: 4px;
   margin-bottom: 12px;
 }
+
 .pillar h3 {
   color: #0d1f3c;
   font-weight: 700;
   font-size: 16px;
   margin: 0 0 8px;
 }
+
 .pillar p {
   color: #5a6a85;
   font-size: 14px;
