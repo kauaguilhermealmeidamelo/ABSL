@@ -30,6 +30,18 @@ jobs:
           coverage: none
 
       # ============================================================
+      # COMPOSER
+      # ============================================================
+
+      - name: Instalar dependências do Laravel
+        working-directory: backend
+        run: |
+          composer install \
+            --no-dev \
+            --optimize-autoloader \
+            --no-interaction
+
+      # ============================================================
       # NODE / VUE
       # ============================================================
 
@@ -86,7 +98,6 @@ jobs:
             --exclude='.github/' \
             --exclude='.env' \
             --exclude='storage/' \
-            --exclude='vendor/' \
             --exclude='node_modules/' \
             --exclude='tests/' \
             backend/ \
@@ -94,9 +105,6 @@ jobs:
 
       # ============================================================
       # ENVIAR FRONTEND PARA /public_html
-      #
-      # index.php e .htaccess existentes no public_html são
-      # preservados porque pertencem à configuração do HostGator.
       # ============================================================
 
       - name: Enviar arquivos públicos para public_html
@@ -131,32 +139,6 @@ jobs:
               echo '======================================'
 
               \$PHP -v
-
-              echo '======================================'
-              echo 'LOCALIZANDO COMPOSER'
-              echo '======================================'
-
-              if command -v composer >/dev/null 2>&1; then
-                COMPOSER=\$(command -v composer)
-              elif [ -x /opt/cpanel/composer/bin/composer ]; then
-                COMPOSER=/opt/cpanel/composer/bin/composer
-              elif [ -x /usr/local/bin/composer ]; then
-                COMPOSER=/usr/local/bin/composer
-              else
-                echo 'ERRO: Composer não encontrado no servidor.'
-                exit 1
-              fi
-
-              echo \"Composer encontrado em: \$COMPOSER\"
-
-              echo '======================================'
-              echo 'COMPOSER INSTALL'
-              echo '======================================'
-
-              \$PHP \$COMPOSER install \
-                --no-dev \
-                --optimize-autoloader \
-                --no-interaction
 
               echo '======================================'
               echo 'STORAGE LINK'
