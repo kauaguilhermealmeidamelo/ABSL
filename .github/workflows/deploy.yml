@@ -1,33 +1,43 @@
-name: Deploy para Hostgator (SSH)
+name: Deploy para HostGator (SSH)
 
 on:
   push:
     branches:
-      - main   # troque para 'master' se essa for sua branch principal
+      - main
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
+      # ============================================================
+      # CHECKOUT
+      # ============================================================
+
       - name: Checkout do código
         uses: actions/checkout@v4
 
-      # ── Backend (Laravel) ──────────────────────────────────────
+      # ============================================================
+      # PHP / LARAVEL
+      # ============================================================
+
       - name: Configurar PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
+          extensions: mbstring, bcmath, pdo_mysql
+          coverage: none
 
-      - name: Instalar dependências do Composer
-        working-directory: backend
-        run: composer install --no-dev --optimize-autoloader
+      # ============================================================
+      # NODE / VUE
+      # ============================================================
 
-      # ── Frontend (Vue) ─────────────────────────────────────────
       - name: Configurar Node
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Instalar dependências do npm
         working-directory: frontend
@@ -37,67 +47,131 @@ jobs:
         working-directory: frontend
         run: npm run build
 
-      # ── Copiar build do frontend para dentro do public/ do Laravel ──
-      - name: Copiar frontend/dist para backend/public
-        run: cp -r frontend/dist/* backend/public/
+      # ============================================================
+      # COPIAR BUILD DO VUE PARA O LARAVEL
+      # ============================================================
 
-      # ── Configurar chave SSH ─────────────────────────────────────
+      - name: Copiar frontend/dist para backend/public
+        run: |
+          rsync -a \
+            --exclude='storage/' \
+            --exclude='.htaccess' \
+            --exclude='robots.txt' \
+            frontend/dist/ backend/public/
+
+      # ============================================================
+      # CONFIGURAR SSH
+      # ============================================================
+
       - name: Configurar SSH
         run: |
           mkdir -p ~/.ssh
+
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -p ${{ secrets.SSH_PORT }} -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
-      # ── Sincronizar arquivos via rsync (Laravel completo, fora de public_html) ──
-      - name: Enviar arquivos via rsync
+          ssh-keyscan \
+            -p "${{ secrets.SSH_PORT }}" \
+            -H "${{ secrets.SSH_HOST }}" \
+            >> ~/.ssh/known_hosts
+
+      # ============================================================
+      # ENVIAR BACKEND PARA O SERVIDOR
+      # ============================================================
+
+      - name: Enviar backend via rsync
         run: |
           rsync -avz --delete \
             -e "ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa" \
-            --exclude='.git*' \
+            --exclude='.git/' \
+            --exclude='.github/' \
             --exclude='.env' \
-            --exclude='storage/logs/*' \
-            --exclude='storage/framework/cache/*' \
-            --exclude='storage/framework/sessions/*' \
-            --exclude='storage/framework/views/*' \
-            --exclude='node_modules' \
-            --exclude='tests' \
-            backend/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.REMOTE_PATH }}
+            --exclude='storage/' \
+            --exclude='vendor/' \
+            --exclude='node_modules/' \
+            --exclude='tests/' \
+            backend/ \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.REMOTE_PATH }}/
 
-      # ── Sincronizar assets estáticos do build para dentro de public_html ──
-      # O Document Root do domínio continua sendo public_html (Opção B do
-      # README), então o Apache serve os arquivos estáticos (JS/CSS com hash
-      # do Vite) diretamente de lá, sem passar pelo Laravel. Sem esse passo,
-      # public_html/assets fica com os hashes de um build antigo e quebra
-      # com "Failed to load module script... MIME type text/html".
+      # ============================================================
+      # ENVIAR ASSETS DO VITE PARA PUBLIC_HTML
+      # ============================================================
+
       - name: Enviar assets estáticos para public_html
         run: |
           rsync -avz --delete \
             -e "ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa" \
-            backend/public/assets/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:public_html/assets/
+            backend/public/assets/ \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:public_html/assets/
 
-      - name: Enviar favicon e outros arquivos estáticos da raiz
+      # ============================================================
+      # ENVIAR ARQUIVOS ESTÁTICOS DA RAIZ DO FRONTEND
+      # ============================================================
+
+      - name: Enviar arquivos estáticos para public_html
         run: |
           rsync -avz \
             -e "ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa" \
             --exclude='index.php' \
             --exclude='.htaccess' \
-            --exclude='assets' \
-            backend/public/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:public_html/
+            --exclude='assets/' \
+            --exclude='storage/' \
+            backend/public/ \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:public_html/
 
-      # ── Rodar migrations e limpar cache no servidor ───────────────
-      # OBS: usamos o caminho completo do PHP 8.4 (/opt/cpanel/ea-php84/...)
-      # em vez de apenas "php", porque sessões SSH não-interativas (como a
-      # que o GitHub Actions usa aqui) não carregam o ~/.bashrc do servidor,
-      # então o "php" do PATH cairia na versão padrão do sistema (8.3),
-      # incompatível com as dependências do composer.json (>= 8.4.1).
-      - name: Rodar comandos pós-deploy via SSH
+      # ============================================================
+      # PÓS-DEPLOY NO SERVIDOR
+      # ============================================================
+
+      - name: Executar comandos pós-deploy
         run: |
-          ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
-            cd ${{ secrets.REMOTE_PATH }} &&
-            /opt/cpanel/ea-php84/root/usr/bin/php artisan migrate --force &&
-            /opt/cpanel/ea-php84/root/usr/bin/php artisan config:cache &&
-            /opt/cpanel/ea-php84/root/usr/bin/php artisan route:cache &&
-            /opt/cpanel/ea-php84/root/usr/bin/php artisan view:cache &&
-            /opt/cpanel/ea-php84/root/usr/bin/php artisan storage:link || true
-          "
+          ssh \
+            -p "${{ secrets.SSH_PORT }}" \
+            -i ~/.ssh/id_rsa \
+            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
+            "
+              set -e
+
+              cd '${{ secrets.REMOTE_PATH }}'
+
+              echo '=== Composer ==='
+
+              /opt/cpanel/ea-php84/root/usr/bin/php \
+                /opt/cpanel/composer/bin/composer \
+                install \
+                --no-dev \
+                --optimize-autoloader \
+                --no-interaction
+
+              echo '=== Storage link ==='
+
+              /opt/cpanel/ea-php84/root/usr/bin/php \
+                artisan storage:link || true
+
+              echo '=== Migrations ==='
+
+              /opt/cpanel/ea-php84/root/usr/bin/php \
+                artisan migrate --force
+
+              echo '=== Limpando cache ==='
+
+              /opt/cpanel/ea-php84/root/usr/bin/php \
+                artisan optimize:clear
+
+              echo '=== Criando cache de configuração ==='
+
+              /opt/cpanel/ea-php84/root/usr/bin/php \
+                artisan config:cache
+
+              echo '=== Criando cache de rotas ==='
+
+              /opt/cpanel/ea-php84/root/usr/bin/php \
+                artisan route:cache
+
+              echo '=== Criando cache de views ==='
+
+              /opt/cpanel/ea-php84/root/usr/bin/php \
+                artisan view:cache
+
+              echo '=== DEPLOY CONCLUÍDO ==='
+            "
