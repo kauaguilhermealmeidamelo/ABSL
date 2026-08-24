@@ -1,103 +1,97 @@
-name: Deploy para Hostgator (SSH)
+#!/usr/bin/env bash
+#
+# scripts/deploy.sh
+#
+# Publica o projeto em produção. Só funciona a partir da branch "main" e
+# com a árvore de trabalho limpa — isso impede publicar acidentalmente
+# alterações que ainda estão sendo testadas em "dev".
+#
+# IMPORTANTE: "storage/app" (uploads de notícias, gabaritos, transparência,
+# mídia da tela inicial etc.) é ignorado pelo git de propósito — esses
+# arquivos só existem no servidor. Por isso este script NUNCA sincroniza
+# nem apaga "storage/app" no servidor remoto, mesmo usando rsync --delete
+# no restante da pasta backend/. Enviar essa pasta a partir da máquina
+# local (onde ela está vazia) apagaria os arquivos reais de produção.
+#
+# Uso local (só gera o build em backend/public):
+#   ./scripts/deploy.sh
+#
+# Uso com envio automático via rsync/ssh, definindo variáveis de ambiente:
+#   DEPLOY_SSH_HOST=SEU_SERVIDOR \
+#   DEPLOY_SSH_USER=SEU_USUARIO \
+#   DEPLOY_SSH_PORT=2222 \
+#   DEPLOY_REMOTE_PATH=/caminho/no/servidor \
+#   ./scripts/deploy.sh
 
-on:
-  push:
-    branches:
-      - main   # troque para 'master' se essa for sua branch principal
+set -euo pipefail
 
-jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
+RAIZ="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$RAIZ"
 
-    steps:
-      - name: Checkout do código
-        uses: actions/checkout@v4
+BRANCH_ATUAL="$(git rev-parse --abbrev-ref HEAD)"
 
-      # ── Backend (Laravel) ──────────────────────────────────────
-      - name: Configurar PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.4'
+if [ "$BRANCH_ATUAL" != "main" ]; then
+  echo "❌ Deploy bloqueado: você está na branch '$BRANCH_ATUAL', não em 'main'."
+  echo "   Finalize e mescle suas alterações em 'main' antes de publicar:"
+  echo ""
+  echo "     git checkout main && git merge dev"
+  echo ""
+  exit 1
+fi
 
-      - name: Instalar dependências do Composer
-        working-directory: backend
-        run: composer install --no-dev --optimize-autoloader
+if [ -n "$(git status --porcelain)" ]; then
+  echo "❌ Deploy bloqueado: existem alterações não commitadas em 'main'."
+  echo ""
+  git status --short
+  echo ""
+  echo "   Commite ou descarte essas alterações antes de publicar."
+  exit 1
+fi
 
-      # ── Frontend (Vue) ─────────────────────────────────────────
-      - name: Configurar Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
+echo "✅ Branch 'main' limpa. Buildando o frontend..."
+cd "$RAIZ/frontend"
+npm ci
+npm run build
+cd "$RAIZ"
 
-      - name: Instalar dependências do npm
-        working-directory: frontend
-        run: npm ci
+echo "✅ Copiando build para backend/public..."
+# Preserva o link simbólico storage/ (aponta para storage/app/public) e
+# outros arquivos que não vêm do build do Vue.
+rsync -a --delete \
+  --exclude='storage' \
+  --exclude='.htaccess' \
+  --exclude='robots.txt' \
+  frontend/dist/ backend/public/
 
-      - name: Build do frontend
-        working-directory: frontend
-        run: npm run build
+echo "✅ Build copiado para backend/public."
 
-      # ── Copiar build do frontend para dentro do public/ do Laravel ──
-      - name: Copiar frontend/dist para backend/public
-        run: cp -r frontend/dist/* backend/public/
+if [ -n "${DEPLOY_SSH_HOST:-}" ] && [ -n "${DEPLOY_SSH_USER:-}" ] && [ -n "${DEPLOY_REMOTE_PATH:-}" ]; then
+  PORTA="${DEPLOY_SSH_PORT:-22}"
+  echo "🚀 Enviando backend/ para ${DEPLOY_SSH_USER}@${DEPLOY_SSH_HOST}:${DEPLOY_REMOTE_PATH} (porta ${PORTA})..."
 
-      # ── Configurar chave SSH ─────────────────────────────────────
-      - name: Configurar SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -p ${{ secrets.SSH_PORT }} -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+  # ATENÇÃO: --exclude aqui protege pastas que só devem existir no
+  # servidor. 'storage/app' NUNCA é excluído por acidente — é sempre
+  # ignorado, mesmo que alguém remova essa linha achando redundante.
+  rsync -avz --delete \
+    -e "ssh -p ${PORTA}" \
+    --exclude='.env' \
+    --exclude='storage/app' \
+    --exclude='storage/framework' \
+    --exclude='storage/logs' \
+    --exclude='node_modules' \
+    --exclude='vendor' \
+    backend/ "${DEPLOY_SSH_USER}@${DEPLOY_SSH_HOST}:${DEPLOY_REMOTE_PATH}"
 
-      # ── Sincronizar arquivos via rsync (Laravel completo, fora de public_html) ──
-      - name: Enviar arquivos via rsync
-        run: |
-          rsync -avz --delete \
-            -e "ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa" \
-            --exclude='.git*' \
-            --exclude='.env' \
-            --exclude='storage/logs/*' \
-            --exclude='storage/framework/cache/*' \
-            --exclude='storage/framework/sessions/*' \
-            --exclude='storage/framework/views/*' \
-            --exclude='node_modules' \
-            --exclude='tests' \
-            backend/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.REMOTE_PATH }}
+  echo "✅ Arquivos enviados. Rode no servidor, se necessário:"
+  echo "     composer install --no-dev --optimize-autoloader"
+  echo "     php artisan migrate --force"
+  echo "     php artisan storage:link   # recria o link se não existir"
+  echo "     php artisan config:cache && php artisan route:cache"
+else
+  echo "ℹ️  Envio remoto não configurado (defina DEPLOY_SSH_HOST, DEPLOY_SSH_USER,"
+  echo "    DEPLOY_REMOTE_PATH e opcionalmente DEPLOY_SSH_PORT para enviar via rsync/ssh)."
+  echo "    Por enquanto, envie backend/ para o servidor manualmente,"
+  echo "    tomando cuidado para NÃO sobrescrever storage/app no servidor."
+fi
 
-      # ── Sincronizar assets estáticos do build para dentro de public_html ──
-      # O Document Root do domínio continua sendo public_html (Opção B do
-      # README), então o Apache serve os arquivos estáticos (JS/CSS com hash
-      # do Vite) diretamente de lá, sem passar pelo Laravel. Sem esse passo,
-      # public_html/assets fica com os hashes de um build antigo e quebra
-      # com "Failed to load module script... MIME type text/html".
-      - name: Enviar assets estáticos para public_html
-        run: |
-          rsync -avz --delete \
-            -e "ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa" \
-            backend/public/assets/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:public_html/assets/
-
-      - name: Enviar favicon e outros arquivos estáticos da raiz
-        run: |
-          rsync -avz \
-            -e "ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa" \
-            --exclude='index.php' \
-            --exclude='.htaccess' \
-            --exclude='assets' \
-            backend/public/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:public_html/
-
-      # ── Rodar migrations e limpar cache no servidor ───────────────
-      # OBS: usamos o caminho completo do PHP 8.4 (/opt/cpanel/ea-php84/...)
-      # em vez de apenas "php", porque sessões SSH não-interativas (como a
-      # que o GitHub Actions usa aqui) não carregam o ~/.bashrc do servidor,
-      # então o "php" do PATH cairia na versão padrão do sistema (8.3),
-      # incompatível com as dependências do composer.json (>= 8.4.1).
-      - name: Rodar comandos pós-deploy via SSH
-        run: |
-          ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "
-            cd ${{ secrets.REMOTE_PATH }} &&
-            /opt/cpanel/ea-php84/root/usr/bin/php artisan migrate --force &&
-            /opt/cpanel/ea-php84/root/usr/bin/php artisan config:cache &&
-            /opt/cpanel/ea-php84/root/usr/bin/php artisan route:cache &&
-            /opt/cpanel/ea-php84/root/usr/bin/php artisan view:cache &&
-            /opt/cpanel/ea-php84/root/usr/bin/php artisan storage:link || true
-          "
+echo "🎉 Deploy finalizado."
