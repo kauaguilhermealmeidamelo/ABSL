@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
       # ============================================================
       # CHECKOUT
       # ============================================================
@@ -39,7 +40,7 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Instalar dependências do npm
+      - name: Instalar dependências do frontend
         working-directory: frontend
         run: npm ci
 
@@ -53,11 +54,9 @@ jobs:
 
       - name: Copiar frontend/dist para backend/public
         run: |
-          rsync -a \
-            --exclude='storage/' \
-            --exclude='.htaccess' \
-            --exclude='robots.txt' \
-            frontend/dist/ backend/public/
+          rsync -av \
+            frontend/dist/ \
+            backend/public/
 
       # ============================================================
       # CONFIGURAR SSH
@@ -76,7 +75,7 @@ jobs:
             >> ~/.ssh/known_hosts
 
       # ============================================================
-      # ENVIAR BACKEND PARA O SERVIDOR
+      # ENVIAR BACKEND PARA /absl
       # ============================================================
 
       - name: Enviar backend via rsync
@@ -94,27 +93,18 @@ jobs:
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.REMOTE_PATH }}/
 
       # ============================================================
-      # ENVIAR ASSETS DO VITE PARA PUBLIC_HTML
+      # ENVIAR FRONTEND PARA /public_html
+      #
+      # index.php e .htaccess existentes no public_html são
+      # preservados porque pertencem à configuração do HostGator.
       # ============================================================
 
-      - name: Enviar assets estáticos para public_html
-        run: |
-          rsync -avz --delete \
-            -e "ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa" \
-            backend/public/assets/ \
-            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:public_html/assets/
-
-      # ============================================================
-      # ENVIAR ARQUIVOS ESTÁTICOS DA RAIZ DO FRONTEND
-      # ============================================================
-
-      - name: Enviar arquivos estáticos para public_html
+      - name: Enviar arquivos públicos para public_html
         run: |
           rsync -avz \
             -e "ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa" \
             --exclude='index.php' \
             --exclude='.htaccess' \
-            --exclude='assets/' \
             --exclude='storage/' \
             backend/public/ \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:public_html/
@@ -134,44 +124,77 @@ jobs:
 
               cd '${{ secrets.REMOTE_PATH }}'
 
-              echo '=== Composer ==='
+              PHP=/opt/cpanel/ea-php84/root/usr/bin/php
 
-              /opt/cpanel/ea-php84/root/usr/bin/php \
-                /opt/cpanel/composer/bin/composer \
-                install \
+              echo '======================================'
+              echo 'PHP'
+              echo '======================================'
+
+              \$PHP -v
+
+              echo '======================================'
+              echo 'LOCALIZANDO COMPOSER'
+              echo '======================================'
+
+              if command -v composer >/dev/null 2>&1; then
+                COMPOSER=\$(command -v composer)
+              elif [ -x /opt/cpanel/composer/bin/composer ]; then
+                COMPOSER=/opt/cpanel/composer/bin/composer
+              elif [ -x /usr/local/bin/composer ]; then
+                COMPOSER=/usr/local/bin/composer
+              else
+                echo 'ERRO: Composer não encontrado no servidor.'
+                exit 1
+              fi
+
+              echo \"Composer encontrado em: \$COMPOSER\"
+
+              echo '======================================'
+              echo 'COMPOSER INSTALL'
+              echo '======================================'
+
+              \$PHP \$COMPOSER install \
                 --no-dev \
                 --optimize-autoloader \
                 --no-interaction
 
-              echo '=== Storage link ==='
+              echo '======================================'
+              echo 'STORAGE LINK'
+              echo '======================================'
 
-              /opt/cpanel/ea-php84/root/usr/bin/php \
-                artisan storage:link || true
+              \$PHP artisan storage:link || true
 
-              echo '=== Migrations ==='
+              echo '======================================'
+              echo 'MIGRATIONS'
+              echo '======================================'
 
-              /opt/cpanel/ea-php84/root/usr/bin/php \
-                artisan migrate --force
+              \$PHP artisan migrate --force
 
-              echo '=== Limpando cache ==='
+              echo '======================================'
+              echo 'LIMPANDO CACHE'
+              echo '======================================'
 
-              /opt/cpanel/ea-php84/root/usr/bin/php \
-                artisan optimize:clear
+              \$PHP artisan optimize:clear
 
-              echo '=== Criando cache de configuração ==='
+              echo '======================================'
+              echo 'CACHE DE CONFIGURAÇÃO'
+              echo '======================================'
 
-              /opt/cpanel/ea-php84/root/usr/bin/php \
-                artisan config:cache
+              \$PHP artisan config:cache
 
-              echo '=== Criando cache de rotas ==='
+              echo '======================================'
+              echo 'CACHE DE ROTAS'
+              echo '======================================'
 
-              /opt/cpanel/ea-php84/root/usr/bin/php \
-                artisan route:cache
+              \$PHP artisan route:cache
 
-              echo '=== Criando cache de views ==='
+              echo '======================================'
+              echo 'CACHE DE VIEWS'
+              echo '======================================'
 
-              /opt/cpanel/ea-php84/root/usr/bin/php \
-                artisan view:cache
+              \$PHP artisan view:cache
 
-              echo '=== DEPLOY CONCLUÍDO ==='
+              echo '======================================'
+              echo 'DEPLOY CONCLUÍDO COM SUCESSO'
+              echo '======================================'
             "
