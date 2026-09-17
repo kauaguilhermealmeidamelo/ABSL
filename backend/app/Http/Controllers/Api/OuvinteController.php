@@ -4,21 +4,16 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Ouvinte;
+use App\Support\Auditoria;
 use Illuminate\Http\Request;
 
 class OuvinteController extends Controller
 {
-    /**
-     * Lista todas as mensagens (visão do admin). Protegido por 'auth:sanctum'.
-     */
     public function index()
     {
         return Ouvinte::orderBy('created_at', 'desc')->limit(200)->get();
     }
 
-    /**
-     * Envia uma nova mensagem (rota pública — formulário da Ouvidoria).
-     */
     public function store(Request $request)
     {
         $data = $request->validate([
@@ -40,18 +35,11 @@ class OuvinteController extends Controller
         return response()->json(Ouvinte::create($data), 201);
     }
 
-    /**
-     * Exibe uma mensagem específica.
-     */
     public function show(string $id)
     {
         return Ouvinte::findOrFail($id);
     }
 
-    /**
-     * Atualiza uma mensagem (ex: registrar resposta do grêmio).
-     * Protegido por 'auth:sanctum'.
-     */
     public function update(Request $request, string $id)
     {
         $ouvinte = Ouvinte::findOrFail($id);
@@ -61,7 +49,9 @@ class OuvinteController extends Controller
             'resposta' => 'nullable|string',
         ]);
 
-        if (array_key_exists('resposta', $data) && $data['resposta']) {
+        $respondeuAgora = array_key_exists('resposta', $data) && $data['resposta'];
+
+        if ($respondeuAgora) {
             $data['data_resposta'] = now();
             $data['respondido_por'] = $request->user()->id;
             $data['status'] = $data['status'] ?? 'respondido';
@@ -73,24 +63,40 @@ class OuvinteController extends Controller
 
         $ouvinte->update($data);
 
+        if ($respondeuAgora) {
+            Auditoria::registrar(
+                'respondeu_ouvidoria',
+                descricao: "Respondeu a mensagem #{$ouvinte->id}",
+                entidade: 'ouvinte',
+                entidadeId: $ouvinte->id
+            );
+        } elseif (isset($data['status'])) {
+            Auditoria::registrar(
+                'atualizou_status_ouvidoria',
+                descricao: "Alterou status da mensagem #{$ouvinte->id} para \"{$data['status']}\"",
+                entidade: 'ouvinte',
+                entidadeId: $ouvinte->id
+            );
+        }
+
         return $ouvinte;
     }
 
-    /**
-     * Remove uma mensagem. Protegido por 'auth:sanctum'.
-     */
     public function destroy(string $id)
     {
-        Ouvinte::findOrFail($id)->delete();
+        $ouvinte = Ouvinte::findOrFail($id);
+        $ouvinte->delete();
+
+        Auditoria::registrar(
+            'excluiu_ouvidoria',
+            descricao: "Excluiu a mensagem #{$id}",
+            entidade: 'ouvinte',
+            entidadeId: (int) $id
+        );
 
         return response()->noContent();
     }
 
-    /**
-     * Consulta pública por protocolo (o próprio id da mensagem). Usada pelo
-     * usuário comum para acompanhar a resposta da mensagem que ele mesmo
-     * enviou, sem precisar de login admin.
-     */
     public function consultarProtocolo(string $id)
     {
         $ouvinte = Ouvinte::findOrFail($id);
@@ -105,13 +111,6 @@ class OuvinteController extends Controller
         ]);
     }
 
-    /**
-     * Lista pública das mensagens já respondidas, para servir como um
-     * "central de suporte" — qualquer visitante pode ver perguntas e
-     * respostas anteriores, sem precisar ter enviado nada. Nome e e-mail
-     * NUNCA são retornados aqui, mesmo quando a mensagem original não era
-     * anônima, porque a listagem é pública.
-     */
     public function respondidas()
     {
         $mensagens = Ouvinte::where('status', 'respondido')

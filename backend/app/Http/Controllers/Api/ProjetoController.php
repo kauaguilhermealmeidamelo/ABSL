@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ProjetoResource;
 use App\Models\Projeto;
+use App\Support\Auditoria;
 use Illuminate\Http\Request;
 
 class ProjetoController extends Controller
@@ -37,7 +38,16 @@ class ProjetoController extends Controller
 
         $data['responsavel_id'] = $request->user()->id;
 
-        return new ProjetoResource(Projeto::create($data));
+        $projeto = Projeto::create($data);
+
+        Auditoria::registrar(
+            'criou_projeto',
+            descricao: "Criou o projeto \"{$projeto->nome}\"",
+            entidade: 'projeto',
+            entidadeId: $projeto->id
+        );
+
+        return new ProjetoResource($projeto);
     }
 
     public function update(Request $request, string $id)
@@ -58,12 +68,28 @@ class ProjetoController extends Controller
 
         $projeto->update($data);
 
+        Auditoria::registrar(
+            'editou_projeto',
+            descricao: "Editou o projeto \"{$projeto->nome}\"",
+            entidade: 'projeto',
+            entidadeId: $projeto->id
+        );
+
         return new ProjetoResource($projeto);
     }
 
     public function destroy(string $id)
     {
-        Projeto::findOrFail($id)->delete();
+        $projeto = Projeto::findOrFail($id);
+        $nome = $projeto->nome;
+        $projeto->delete();
+
+        Auditoria::registrar(
+            'excluiu_projeto',
+            descricao: "Excluiu o projeto \"{$nome}\"",
+            entidade: 'projeto',
+            entidadeId: (int) $id
+        );
 
         return response()->noContent();
     }

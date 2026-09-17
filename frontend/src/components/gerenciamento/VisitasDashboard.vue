@@ -10,8 +10,17 @@ async function carregar() {
   loading.value = true
   error.value = ''
   try {
-    stats.value = await visitasService.estatisticas()
+    const data = await visitasService.estatisticas()
+    // Defesa extra: garante que 'stats' só recebe um objeto válido. Sem
+    // isso, uma resposta vazia/null da API (ou uma corrida entre o
+    // unmount do componente e a resolução da promise) deixava o template
+    // tentar ler 'ultimos_7_dias' de null e quebrava a tela inteira.
+    stats.value = data ?? null
+    if (!stats.value) {
+      error.value = 'Não foi possível carregar as estatísticas de visitas.'
+    }
   } catch {
+    stats.value = null
     error.value = 'Não foi possível carregar as estatísticas de visitas.'
   } finally {
     loading.value = false
@@ -31,9 +40,14 @@ const cards = computed(() => {
   ]
 })
 
+// Computed dedicado para a lista de dias do gráfico — o template nunca
+// deve acessar 'stats.ultimos_7_dias' diretamente, só através daqui, para
+// que um 'stats' nulo nunca derrube a renderização.
+const ultimos7Dias = computed(() => stats.value?.ultimos_7_dias ?? [])
+
 const maxDia = computed(() => {
-  if (!stats.value?.ultimos_7_dias?.length) return 1
-  return Math.max(...stats.value.ultimos_7_dias.map((d) => d.total), 1)
+  if (!ultimos7Dias.value.length) return 1
+  return Math.max(...ultimos7Dias.value.map((d) => d.total), 1)
 })
 
 function formatarDia(dia) {
@@ -45,7 +59,9 @@ function formatarDia(dia) {
 <template>
   <div class="dashboard">
     <p v-if="loading" class="status-msg">Carregando estatísticas...</p>
-    <p v-else-if="error" class="status-msg status-erro">{{ error }}</p>
+    <p v-else-if="error || !stats" class="status-msg status-erro">
+      {{ error || 'Não foi possível carregar as estatísticas de visitas.' }}
+    </p>
 
     <template v-else>
       <div class="cards-grid">
@@ -64,7 +80,7 @@ function formatarDia(dia) {
         <p class="chart-title">Últimos 7 dias</p>
         <div class="chart-bars">
           <div
-            v-for="d in stats.ultimos_7_dias"
+            v-for="d in ultimos7Dias"
             :key="d.dia"
             class="chart-bar-col"
           >
@@ -72,7 +88,7 @@ function formatarDia(dia) {
             <span class="chart-bar-valor">{{ d.total }}</span>
             <span class="chart-bar-label">{{ formatarDia(d.dia) }}</span>
           </div>
-          <p v-if="!stats.ultimos_7_dias.length" class="chart-vazio">Sem visitas registradas nesse período.</p>
+          <p v-if="!ultimos7Dias.length" class="chart-vazio">Sem visitas registradas nesse período.</p>
         </div>
       </div>
     </template>

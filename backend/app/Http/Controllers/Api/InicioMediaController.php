@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\InicioMedia;
+use App\Support\Auditoria;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
     
@@ -24,9 +25,6 @@ class InicioMediaController extends Controller
         $path = $file->store('public/inicio_media');
         $url = Storage::url($path);
 
-        // Apaga o(s) vídeo(s) anteriores do disco antes de marcá-los como
-        // inativos — antes ficavam órfãos em storage/app/public para sempre,
-        // e vídeo é o tipo de arquivo mais pesado do sistema.
         $anteriores = InicioMedia::where('ativo', true)->get();
         foreach ($anteriores as $antigo) {
             $this->deleteArquivo($antigo->url);
@@ -39,6 +37,13 @@ class InicioMediaController extends Controller
             'criado_por' => $request->user() ? $request->user()->id : null,
             'ativo' => true,
         ]);
+
+        Auditoria::registrar(
+            'atualizou_video_inicio',
+            descricao: "Enviou novo vídeo da tela inicial: {$media->file_name}",
+            entidade: 'inicio_media',
+            entidadeId: $media->id
+        );
 
         return response()->json($media, 201);
     }

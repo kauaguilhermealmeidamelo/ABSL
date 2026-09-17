@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\Auditoria;
 use Illuminate\Http\Request;
 
 class AdminUserController extends Controller
@@ -28,6 +29,13 @@ class AdminUserController extends Controller
 
         $user = User::create($data);
 
+        Auditoria::registrar(
+            'criou_usuario',
+            descricao: "Criou o usuário {$user->email} ({$user->role})",
+            entidade: 'usuario',
+            entidadeId: $user->id
+        );
+
         return response()->json($user->only(['id', 'name', 'email', 'role', 'is_admin', 'turma', 'created_at']), 201);
     }
 
@@ -39,6 +47,13 @@ class AdminUserController extends Controller
 
         $user = User::findOrFail($id);
         $user->update(['password' => $data['password']]);
+
+        Auditoria::registrar(
+            'atualizou_senha_usuario',
+            descricao: "Atualizou a senha de {$user->email}",
+            entidade: 'usuario',
+            entidadeId: $user->id
+        );
 
         return response()->json(['message' => 'Senha atualizada com sucesso.']);
     }
@@ -55,7 +70,15 @@ class AdminUserController extends Controller
             abort(422, 'Não é possível excluir o único administrador do sistema.');
         }
 
+        $emailExcluido = $user->email;
         $user->delete();
+
+        Auditoria::registrar(
+            'excluiu_usuario',
+            descricao: "Excluiu o usuário {$emailExcluido}",
+            entidade: 'usuario',
+            entidadeId: (int) $id
+        );
 
         return response()->noContent();
     }

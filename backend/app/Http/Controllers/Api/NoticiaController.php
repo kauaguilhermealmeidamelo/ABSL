@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\NoticiaResource;
 use App\Models\Noticia;
+use App\Support\Auditoria;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
@@ -34,15 +35,8 @@ class NoticiaController extends Controller
             'descricao' => 'required|string',
             'conteudo' => 'nullable|string',
             'imagem_url' => 'nullable|string',
-            // Upload real da capa. Se vier, tem prioridade sobre 'imagem_url'.
             'imagem' => 'nullable|file|mimetypes:image/jpeg,image/png,image/webp,image/gif|max:5120',
             'data_publicacao' => 'required|date',
-            // 'nullable' aqui é essencial: quando o formulário envia via
-            // multipart (upload de imagem) sem marcar esses campos, eles
-            // simplesmente não vêm na requisição. Com 'boolean' puro (sem
-            // nullable), o Laravel rejeitava a criação inteira com "The
-            // ativo field must be true or false." mesmo o campo estando
-            // ausente — o formulário nunca chegava a salvar.
             'destaque' => 'nullable|boolean',
             'ativo' => 'nullable|boolean',
         ]);
@@ -53,15 +47,22 @@ class NoticiaController extends Controller
             $data['imagem_url'] = $this->storeImagem($request->file('imagem'));
         }
 
-        // Valores padrão para uma notícia nova: publicada e sem destaque,
-        // a menos que o formulário informe o contrário.
         $data['ativo'] = $data['ativo'] ?? true;
         $data['destaque'] = $data['destaque'] ?? false;
 
         Cache::forget('noticias.index');
         $data['autor_id'] = $request->user()->id;
 
-        return new NoticiaResource(Noticia::create($data));
+        $noticia = Noticia::create($data);
+
+        Auditoria::registrar(
+            'criou_noticia',
+            descricao: "Criou a notícia \"{$noticia->titulo}\"",
+            entidade: 'noticia',
+            entidadeId: $noticia->id
+        );
+
+        return new NoticiaResource($noticia);
     }
 
     public function update(Request $request, string $id)
@@ -89,15 +90,32 @@ class NoticiaController extends Controller
 
         $noticia->update($data);
         Cache::forget('noticias.index');
+
+        Auditoria::registrar(
+            'editou_noticia',
+            descricao: "Editou a notícia \"{$noticia->titulo}\"",
+            entidade: 'noticia',
+            entidadeId: $noticia->id
+        );
+
         return new NoticiaResource($noticia);
     }
 
     public function destroy(string $id)
     {
         $noticia = Noticia::findOrFail($id);
+        $titulo = $noticia->titulo;
         $this->deleteImagemAntiga($noticia->imagem_url);
         $noticia->delete();
         Cache::forget('noticias.index');
+
+        Auditoria::registrar(
+            'excluiu_noticia',
+            descricao: "Excluiu a notícia \"{$titulo}\"",
+            entidade: 'noticia',
+            entidadeId: (int) $id
+        );
+
         return response()->noContent();
     }
 

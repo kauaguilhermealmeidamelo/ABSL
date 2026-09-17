@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\TransparenciaResource;
 use App\Models\Transparencia;
+use App\Support\Auditoria;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
@@ -35,13 +36,8 @@ class TransparenciaController extends Controller
         ]);
 
         $data = Arr::only($data, [
-            'titulo',
-            'descricao',
-            'categoria',
-            'arquivo_url',
-            'tipo_documento',
-            'data_documento',
-            'ativo',
+            'titulo', 'descricao', 'categoria', 'arquivo_url',
+            'tipo_documento', 'data_documento', 'ativo',
         ]);
 
         if ($request->hasFile('file')) {
@@ -53,7 +49,16 @@ class TransparenciaController extends Controller
 
         Cache::forget('transparencia.index');
 
-        return new TransparenciaResource(Transparencia::create($data));
+        $doc = Transparencia::create($data);
+
+        Auditoria::registrar(
+            'criou_transparencia',
+            descricao: "Publicou \"{$doc->titulo}\" ({$doc->categoria})",
+            entidade: 'transparencia',
+            entidadeId: $doc->id
+        );
+
+        return new TransparenciaResource($doc);
     }
 
     public function update(Request $request, string $id)
@@ -72,13 +77,8 @@ class TransparenciaController extends Controller
         ]);
 
         $data = Arr::only($data, [
-            'titulo',
-            'descricao',
-            'categoria',
-            'arquivo_url',
-            'tipo_documento',
-            'data_documento',
-            'ativo',
+            'titulo', 'descricao', 'categoria', 'arquivo_url',
+            'tipo_documento', 'data_documento', 'ativo',
         ]);
 
         if ($request->hasFile('file')) {
@@ -90,15 +90,30 @@ class TransparenciaController extends Controller
         $transparencia->update($data);
         Cache::forget('transparencia.index');
 
+        Auditoria::registrar(
+            'editou_transparencia',
+            descricao: "Editou \"{$transparencia->titulo}\"",
+            entidade: 'transparencia',
+            entidadeId: $transparencia->id
+        );
+
         return new TransparenciaResource($transparencia);
     }
 
     public function destroy(string $id)
     {
         $transparencia = Transparencia::findOrFail($id);
+        $titulo = $transparencia->titulo;
         $this->deleteArquivoAntigo($transparencia->arquivo_url);
         $transparencia->delete();
         Cache::forget('transparencia.index');
+
+        Auditoria::registrar(
+            'excluiu_transparencia',
+            descricao: "Excluiu \"{$titulo}\"",
+            entidade: 'transparencia',
+            entidadeId: (int) $id
+        );
 
         return response()->noContent();
     }

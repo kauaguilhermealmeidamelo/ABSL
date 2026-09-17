@@ -15,7 +15,8 @@ use App\Http\Controllers\Api\{
     InicioMediaController,
     AuthController,
     VisitaController,
-    AdminUserController
+    AdminUserController,
+    LogController
 };
 
 // Rotas públicas de autenticação — throttle aqui, que é onde a requisição
@@ -104,10 +105,13 @@ Route::middleware(['auth:sanctum', 'staff'])->group(function () {
     Route::get('/visitas/estatisticas', [VisitaController::class, 'estatisticas']);
 });
 
-// Só administrador de verdade pode gerenciar contas de usuário
+// Só administrador de verdade pode gerenciar contas de usuário e ver logs
 Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::get('/admin/usuarios', [AdminUserController::class, 'index']);
     Route::post('/admin/usuarios', [AdminUserController::class, 'store']);
     Route::put('/admin/usuarios/{id}/senha', [AdminUserController::class, 'updatePassword']);
     Route::delete('/admin/usuarios/{id}', [AdminUserController::class, 'destroy']);
+
+    Route::get('/logs', [LogController::class, 'index']);
+    Route::get('/logs/acoes', [LogController::class, 'acoesDisponiveis']);
 });

@@ -7,6 +7,7 @@ import DiretoriasManager from '@/components/gerenciamento/DiretoriasManager.vue'
 import MidiaManager from '@/components/gerenciamento/MidiaManager.vue'
 import VisitasDashboard from '@/components/gerenciamento/VisitasDashboard.vue'
 import UsuariosAdminManager from '@/components/gerenciamento/UsuariosAdminManager.vue'
+import LogsViewer from '@/components/gerenciamento/LogsViewer.vue'
 import { useAdmin } from '@/composables/useAdmin'
 
 const { isAdmin, isSuperAdmin } = useAdmin()
@@ -17,7 +18,10 @@ const tabs = computed(() => [
   { id: 'diretorias', label: 'Diretorias', icon: 'mdi-domain' },
   { id: 'midia', label: 'Mídia', icon: 'mdi-filmstrip' },
   ...(isSuperAdmin.value
-    ? [{ id: 'administradores', label: 'Administradores', icon: 'mdi-shield-account-outline' }]
+    ? [
+        { id: 'administradores', label: 'Administradores', icon: 'mdi-shield-account-outline' },
+        { id: 'logs', label: 'Logs', icon: 'mdi-text-box-search-outline' },
+      ]
     : []),
 ])
 const tab = ref('dashboard')
@@ -39,6 +43,7 @@ const tab = ref('dashboard')
       <DiretoriasManager v-else-if="tab === 'diretorias'" />
       <MidiaManager v-else-if="tab === 'midia'" />
       <UsuariosAdminManager v-else-if="tab === 'administradores' && isSuperAdmin" />
+      <LogsViewer v-else-if="tab === 'logs' && isSuperAdmin" />
     </template>
   </div>
 </template>

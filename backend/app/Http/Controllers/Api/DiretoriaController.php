@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Diretoria;
+use App\Support\Auditoria;
 use Illuminate\Http\Request;
 
 class DiretoriaController extends Controller
@@ -22,10 +23,18 @@ class DiretoriaController extends Controller
         ]);
 
         $data['criado_por'] = $request->user() ? $request->user()->id : null;
-        // Nova diretoria sempre entra no fim da ordem atual.
         $data['ordem'] = (int) Diretoria::max('ordem') + 1;
 
-        return response()->json(Diretoria::create($data), 201);
+        $dir = Diretoria::create($data);
+
+        Auditoria::registrar(
+            'criou_diretoria',
+            descricao: "Criou a diretoria \"{$dir->name}\"",
+            entidade: 'diretoria',
+            entidadeId: $dir->id
+        );
+
+        return response()->json($dir, 201);
     }
 
     public function update(Request $request, string $id)
@@ -39,13 +48,17 @@ class DiretoriaController extends Controller
             'ativo' => 'boolean',
         ]);
         $dir->update($data);
+
+        Auditoria::registrar(
+            'editou_diretoria',
+            descricao: "Editou a diretoria \"{$dir->name}\"",
+            entidade: 'diretoria',
+            entidadeId: $dir->id
+        );
+
         return $dir;
     }
 
-    /**
-     * Troca a posição de duas diretorias (swap de 'ordem'), usado pelos
-     * botões de mover para cima/baixo no painel de gerenciamento.
-     */
     public function reorder(Request $request)
     {
         $data = $request->validate([
@@ -60,12 +73,28 @@ class DiretoriaController extends Controller
         $a->update(['ordem' => $ordemB]);
         $b->update(['ordem' => $ordemA]);
 
+        Auditoria::registrar(
+            'reordenou_diretorias',
+            descricao: "Trocou a ordem entre \"{$a->name}\" e \"{$b->name}\"",
+            entidade: 'diretoria'
+        );
+
         return Diretoria::where('ativo', true)->orderBy('ordem')->orderBy('name')->get();
     }
 
     public function destroy(string $id)
     {
-        Diretoria::findOrFail($id)->delete();
+        $dir = Diretoria::findOrFail($id);
+        $nome = $dir->name;
+        $dir->delete();
+
+        Auditoria::registrar(
+            'excluiu_diretoria',
+            descricao: "Excluiu a diretoria \"{$nome}\"",
+            entidade: 'diretoria',
+            entidadeId: (int) $id
+        );
+
         return response()->noContent();
     }
 }

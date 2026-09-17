@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\HorarioResource;
 use App\Models\Horario;
+use App\Support\Auditoria;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
@@ -55,15 +56,8 @@ class HorarioController extends Controller
         ]);
 
         $data = Arr::only($validated, [
-            'turma',
-            'dia_semana',
-            'horario_inicio',
-            'horario_fim',
-            'disciplina',
-            'professor',
-            'sala',
-            'observacoes',
-            'ativo',
+            'turma', 'dia_semana', 'horario_inicio', 'horario_fim',
+            'disciplina', 'professor', 'sala', 'observacoes', 'ativo',
         ]);
 
         $data['criado_por'] = $request->user()->id;
@@ -78,6 +72,14 @@ class HorarioController extends Controller
         );
         Cache::forget('horario.index');
         Cache::forget("horario.turma.{$data['turma']}");
+
+        Auditoria::registrar(
+            $horario->wasRecentlyCreated ? 'criou_aula' : 'editou_aula',
+            descricao: "{$data['turma']} — {$data['dia_semana']} — {$data['disciplina']}",
+            entidade: 'horario',
+            entidadeId: $horario->id
+        );
+
         return (new HorarioResource($horario))
             ->response()
             ->setStatusCode($horario->wasRecentlyCreated ? 201 : 200);
@@ -109,17 +111,32 @@ class HorarioController extends Controller
             Cache::forget("horario.turma.{$data['turma']}");
         }
 
+        Auditoria::registrar(
+            'editou_aula',
+            descricao: "{$horario->turma} — {$horario->dia_semana} — {$horario->disciplina}",
+            entidade: 'horario',
+            entidadeId: $horario->id
+        );
+
         return new HorarioResource($horario);
     }
 
-    // destroy():
     public function destroy(string $id)
     {
         $horario = Horario::findOrFail($id);
         $turma = $horario->turma;
+        $descricao = "{$horario->turma} — {$horario->dia_semana} — {$horario->disciplina}";
         $horario->delete();
         Cache::forget('horario.index');
         Cache::forget("horario.turma.$turma");
+
+        Auditoria::registrar(
+            'excluiu_aula',
+            descricao: $descricao,
+            entidade: 'horario',
+            entidadeId: (int) $id
+        );
+
         return response()->noContent();
     }
 }

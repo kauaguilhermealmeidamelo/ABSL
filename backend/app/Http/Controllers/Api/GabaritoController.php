@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\GabaritoResource;
 use App\Models\Gabarito;
+use App\Support\Auditoria;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -33,7 +34,6 @@ class GabaritoController extends Controller
             'disciplina' => 'required|string|max:255',
             'serie' => 'nullable|string|max:20',
             'tipo_prova' => 'required|string|max:100',
-            // 'gabarito' (resposta) ou 'prova' (arquivo para consulta).
             'tipo_documento' => 'required|in:gabarito,prova',
             'data_prova' => 'required|date',
             'arquivo' => 'required|file|mimetypes:application/pdf,application/x-pdf|max:10240',
@@ -43,7 +43,17 @@ class GabaritoController extends Controller
         $data['publicado_por'] = $request->user()->id;
         $data['documento_url'] = $this->storeArquivo($request->file('arquivo'));
         Cache::forget('gabarito.index');
-        return new GabaritoResource(Gabarito::create($data));
+
+        $gabarito = Gabarito::create($data);
+
+        Auditoria::registrar(
+            'criou_gabarito',
+            descricao: "Cadastrou {$gabarito->tipo_documento} \"{$gabarito->titulo}\"",
+            entidade: 'gabarito',
+            entidadeId: $gabarito->id
+        );
+
+        return new GabaritoResource($gabarito);
     }
 
     public function update(Request $request, string $id)
@@ -58,39 +68,48 @@ class GabaritoController extends Controller
             'tipo_prova' => 'sometimes|required|string|max:100',
             'tipo_documento' => 'sometimes|required|in:gabarito,prova',
             'data_prova' => 'sometimes|required|date',
-            // Opcional aqui: só manda 'arquivo' quando for SUBSTITUIR o PDF.
             'arquivo' => 'sometimes|file|mimetypes:application/pdf,application/x-pdf|max:10240',
             'ativo' => 'boolean',
         ]);
 
-        if ($request->hasFile('arquivo')) {
+        $substituiuArquivo = $request->hasFile('arquivo');
+
+        if ($substituiuArquivo) {
             $this->deleteArquivoAntigo($gabarito->documento_url);
             $data['documento_url'] = $this->storeArquivo($request->file('arquivo'));
-            // OBS: não sobrescrevemos mais 'tipo_documento' aqui — trocar o
-            // PDF (ex: no botão "Substituir") não deve mudar se o
-            // documento é um gabarito ou uma prova.
         }
 
         $gabarito->update($data);
         Cache::forget('gabarito.index');
+
+        Auditoria::registrar(
+            $substituiuArquivo ? 'substituiu_arquivo_gabarito' : 'editou_gabarito',
+            descricao: ($substituiuArquivo ? 'Substituiu o arquivo de ' : 'Editou ') . "\"{$gabarito->titulo}\"",
+            entidade: 'gabarito',
+            entidadeId: $gabarito->id
+        );
+
         return new GabaritoResource($gabarito);
     }
 
     public function destroy(string $id)
     {
         $gabarito = Gabarito::findOrFail($id);
+        $titulo = $gabarito->titulo;
         $this->deleteArquivoAntigo($gabarito->documento_url);
         $gabarito->delete();
         Cache::forget('gabarito.index');
+
+        Auditoria::registrar(
+            'excluiu_gabarito',
+            descricao: "Excluiu \"{$titulo}\"",
+            entidade: 'gabarito',
+            entidadeId: (int) $id
+        );
+
         return response()->noContent();
     }
 
-    /**
-     * Salva o PDF no disk 'public' (storage/app/public/gabarito) e retorna
-     * a URL pública (/storage/gabarito/xxx.pdf), servida sem download
-     * forçado — o navegador abre o PDF direto, sem precisar de programa
-     * instalado. Para baixar, basta o botão "download" no <a> do frontend.
-     */
     private function storeArquivo(UploadedFile $file): string
     {
         $path = $file->store('gabarito', 'public');
@@ -101,10 +120,6 @@ class GabaritoController extends Controller
         return $disk->url($path);
     }
 
-    /**
-     * Ao substituir/excluir, apaga o PDF antigo do disco para não acumular
-     * lixo em storage/app/public/gabarito.
-     */
     private function deleteArquivoAntigo(?string $url): void
     {
         if (! $url) {
