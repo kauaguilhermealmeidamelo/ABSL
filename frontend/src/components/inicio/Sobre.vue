@@ -2,7 +2,7 @@
   <section class="about">
     <h2>Grêmio Athos Bulcão</h2>
     <p>
-      O Grêmio Estudantil Athos Bulcão é a entidade de representação dos estudantes do CEM Setor Leste. Nosso objetivo é
+      O Grêmio Estudantil Athos Bulcão é a entidade de representação dos estudantes do Centro de Ensino Médio Setor Leste (CEMSL), em Brasília, no Setor Leste. Nosso objetivo é
       ouvir os alunos, defender seus interesses e promover ações que contribuam para uma escola mais participativa,
       democrática e acolhedora.</p>
 
