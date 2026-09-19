@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const site = 'https://gremioathosbulcao.com'
 const instagram = 'https://instagram.com/mello.gk_'
 const linkedin = 'https://linkedin.com/in/kauã-guilherme-15711026b'
 const gmail = 'https://mail.google.com/mail/u/0/?fs=1&to=kauagmelotrabalho%40gmail.com&su=Contato%20pelo%20site&tf=cm'
@@ -9,7 +10,8 @@ const gmail = 'https://mail.google.com/mail/u/0/?fs=1&to=kauagmelotrabalho%40gma
     <div class="footer-content">
       <div class="footer-text">
         <span>Grêmio Estudantil Athos Bulcão · ABSL</span>
-        <span>Brasília, DF</span>
+        <span>CEMSL · Setor Leste · Brasília, DF</span>
+        <a :href="site" target="_blank" rel="noopener noreferrer">gremioathosbulcao.com</a>
       </div>
 
       <div class="footer-creator">
@@ -33,7 +35,6 @@ const gmail = 'https://mail.google.com/mail/u/0/?fs=1&to=kauagmelotrabalho%40gma
   padding: 28px 50px;
   box-sizing: border-box;
 }
-
 .footer-content {
   display: flex;
   flex-wrap: wrap;
@@ -43,7 +44,6 @@ const gmail = 'https://mail.google.com/mail/u/0/?fs=1&to=kauagmelotrabalho%40gma
   max-width: 1180px;
   margin: 0 auto;
 }
-
 .footer-text,
 .footer-creator {
   display: flex;
@@ -54,16 +54,14 @@ const gmail = 'https://mail.google.com/mail/u/0/?fs=1&to=kauagmelotrabalho%40gma
   font-size: 11px;
   line-height: 1.4;
 }
-
-.footer-creator-label {
-  white-space: normal;
+.footer-text a {
+  color: #ffffff;
+  text-decoration: none;
+  margin-top: 4px;
 }
-
-.footer-creator strong {
-  color: #fff;
-  font-weight: 600;
-}
-
+.footer-text a:hover { text-decoration: underline; }
+.footer-creator-label { white-space: normal; }
+.footer-creator strong { color: #fff; font-weight: 600; }
 .footer-socials {
   display: flex;
   align-items: center;
@@ -72,7 +70,6 @@ const gmail = 'https://mail.google.com/mail/u/0/?fs=1&to=kauagmelotrabalho%40gma
   gap: 14px;
   margin-top: 10px;
 }
-
 .footer-socials a {
   display: inline-flex;
   align-items: center;
@@ -84,37 +81,21 @@ const gmail = 'https://mail.google.com/mail/u/0/?fs=1&to=kauagmelotrabalho%40gma
   text-decoration: none;
   transition: color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
 }
-
 .footer-socials a:hover,
 .footer-socials a:focus-visible {
   color: #ffffff;
   background-color: rgba(255, 255, 255, 0.08);
   transform: translateY(-2px);
 }
-
 @media (max-width: 900px) {
-  .footer {
-    padding: 24px 32px;
-  }
-  .footer-content {
-    gap: 32px;
-  }
+  .footer { padding: 24px 32px; }
+  .footer-content { gap: 32px; }
 }
-
 @media (max-width: 600px) {
-  .footer {
-    padding: 20px 20px calc(20px + env(safe-area-inset-bottom, 0));
-  }
-  .footer-content {
-    flex-direction: column;
-    gap: 16px;
-  }
+  .footer { padding: 20px 20px calc(20px + env(safe-area-inset-bottom, 0)); }
+  .footer-content { flex-direction: column; gap: 16px; }
 }
-
 @media (max-width: 360px) {
-  .footer-socials a {
-    width: 36px;
-    height: 36px;
-  }
+  .footer-socials a { width: 36px; height: 36px; }
 }
 </style>
