@@ -14,7 +14,7 @@ defineEmits(['curtir', 'comentar', 'compartilhar'])
         <v-icon size="24">{{ curtido ? 'mdi-heart' : 'mdi-heart-outline' }}</v-icon>
       </button>
       <button type="button" class="acao-btn" @click="$emit('comentar')">
-        <v-icon size="23">mdi-comment-outline</v-icon>
+        <v-icon size="24">mdi-message-outline</v-icon>
       </button>
       <button type="button" class="acao-btn" @click="$emit('compartilhar')">
         <v-icon size="22">mdi-send-variant-outline</v-icon>
