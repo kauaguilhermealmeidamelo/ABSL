@@ -96,6 +96,7 @@ const gmail = 'https://mail.google.com/mail/u/0/?fs=1&to=kauagmelotrabalho%40gma
   .footer {
     padding: 24px 32px;
   }
+
   .footer-content {
     gap: 32px;
   }
@@ -103,8 +104,9 @@ const gmail = 'https://mail.google.com/mail/u/0/?fs=1&to=kauagmelotrabalho%40gma
 
 @media (max-width: 600px) {
   .footer {
-    padding: 20px 20px calc(20px + env(safe-area-inset-bottom, 0));
+    padding: 20px 20px calc(84px + env(safe-area-inset-bottom, 0));
   }
+
   .footer-content {
     flex-direction: column;
     gap: 16px;
