@@ -16,7 +16,9 @@ use App\Http\Controllers\Api\{
     AuthController,
     VisitaController,
     AdminUserController,
-    LogController
+    LogController,
+    NoticiaCurtidaController,
+    NoticiaComentarioController
 };
 
 // Rotas públicas de autenticação — throttle aqui, que é onde a requisição
@@ -27,6 +29,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanc
 
 Route::get('/noticias', [NoticiaController::class, 'index']);
 Route::get('/noticias/{id}', [NoticiaController::class, 'show']);
+Route::get('/noticias/{id}/comentarios', [NoticiaComentarioController::class, 'index']);
 Route::get('/projetos', [ProjetoController::class, 'index']);
 Route::get('/projetos/{id}', [ProjetoController::class, 'show']);
 Route::get('/cardapio', [CardapioController::class, 'index']);
@@ -61,6 +64,11 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 // backend/routes/api.php
 // ...tudo que já era 'admin' vira 'staff', exceto /admin/usuarios que fica 'admin'
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/noticias/{id}/curtir', [NoticiaCurtidaController::class, 'toggle']);
+    Route::post('/noticias/{id}/comentarios', [NoticiaComentarioController::class, 'store']);
+});
 
 Route::middleware(['auth:sanctum', 'staff'])->group(function () {
     Route::post('/noticias', [NoticiaController::class, 'store']);

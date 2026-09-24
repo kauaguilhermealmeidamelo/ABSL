@@ -23,4 +23,14 @@ class Noticia extends Model
         'destaque' => 'boolean',
         'ativo' => 'boolean',
     ];
-}   
+
+    public function curtidas()
+    {
+        return $this->hasMany(NoticiaCurtida::class);
+    }
+
+    public function comentarios()
+    {
+        return $this->hasMany(NoticiaComentario::class);
+    }
+}

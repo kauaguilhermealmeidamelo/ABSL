@@ -1,142 +1,131 @@
 <script setup>
-defineProps({
+import { ref } from 'vue'
+import NoticiaImagem from './NoticiaImagem.vue'
+import NoticiaAcoes from './NoticiaAcoes.vue'
+import NoticiaLegenda from './NoticiaLegenda.vue'
+import NoticiaComentariosDialog from './NoticiaComentariosDialog.vue'
+import { noticiasService } from '@/services/noticias'
+
+const props = defineProps({
   noticia: { type: Object, required: true },
   isAdmin: { type: Boolean, default: false },
 })
 
-defineEmits(['abrir', 'editar', 'excluir'])
+const emit = defineEmits(['abrir', 'editar', 'excluir'])
+
+// Estado local otimista: a UI reage na hora do clique, sem esperar a
+// API. Se a chamada falhar (ex: sessão expirou), desfaz. É isso que faz
+// curtir parecer instantâneo mesmo em conexão mais lenta.
+const curtido = ref(props.noticia.curtido)
+const curtidasCount = ref(props.noticia.curtidas_count ?? 0)
+const comentariosCount = ref(props.noticia.comentarios_count ?? 0)
+
+async function alternarCurtida() {
+  const estadoAnterior = curtido.value
+  const contagemAnterior = curtidasCount.value
+
+  curtido.value = !curtido.value
+  curtidasCount.value += curtido.value ? 1 : -1
+
+  try {
+    const resultado = await noticiasService.curtir(props.noticia.id)
+    curtido.value = resultado.curtido
+    curtidasCount.value = resultado.curtidas_count
+  } catch {
+    curtido.value = estadoAnterior
+    curtidasCount.value = contagemAnterior
+  }
+}
+
+// Double-tap na imagem só curte (nunca descurte) — mesmo padrão do IG.
+function curtirViaImagem() {
+  if (!curtido.value) alternarCurtida()
+}
+
+const comentariosAbertos = ref(false)
+function onComentarioAdicionado() {
+  comentariosCount.value += 1
+}
+
+async function compartilhar() {
+  const url = `${window.location.origin}/noticias/${props.noticia.id}`
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: props.noticia.titulo, url })
+    } catch {
+      // usuário cancelou — não é erro
+    }
+  } else {
+    await navigator.clipboard.writeText(url)
+  }
+}
 </script>
 
 <template>
-  <article class="noticia-card" @click="$emit('abrir', noticia)">
-    <div class="noticia-imagem">
-      <img v-if="noticia.imagem_url" :src="noticia.imagem_url" alt="capa" class="noticia-imagem-img" />
-      <div v-else class="noticia-imagem-textura" />
+  <article class="noticia-card">
+    <div v-if="isAdmin" class="admin-acoes" @click.stop>
+      <button type="button" class="admin-btn" @click="$emit('editar', noticia)">
+        <v-icon size="14">mdi-pencil-outline</v-icon>
+      </button>
+      <button type="button" class="admin-btn admin-btn-excluir" @click="$emit('excluir', noticia.id)">
+        <v-icon size="14">mdi-trash-can-outline</v-icon>
+      </button>
     </div>
 
-    <div class="noticia-corpo">
-      <p class="noticia-data">{{ noticia.data_publicacao }}</p>
-      <h3 class="noticia-titulo">{{ noticia.titulo }}</h3>
-      <p class="noticia-resumo">{{ noticia.texto }}</p>
+    <NoticiaImagem :imagem-url="noticia.imagem_url" :titulo="noticia.titulo" :curtido="curtido"
+      @curtir="curtirViaImagem" @abrir="$emit('abrir', noticia)" />
 
-      <div v-if="isAdmin" class="noticia-acoes" @click.stop>
-        <button type="button" class="btn-editar" @click="$emit('editar', noticia)">
-          <v-icon size="13">mdi-pencil-outline</v-icon>
-          Editar
-        </button>
-        <button type="button" class="btn-excluir" @click="$emit('excluir', noticia.id)">
-          <v-icon size="13">mdi-trash-can-outline</v-icon>
-          Excluir
-        </button>
-      </div>
-    </div>
+    <NoticiaAcoes :curtido="curtido" :curtidas-count="curtidasCount" @curtir="alternarCurtida"
+      @comentar="comentariosAbertos = true" @compartilhar="compartilhar" />
+
+    <NoticiaLegenda :titulo="noticia.titulo" :descricao="noticia.texto" :comentarios-count="comentariosCount"
+      :data-publicacao="noticia.data_publicacao" @abrir="$emit('abrir', noticia)"
+      @ver-comentarios="comentariosAbertos = true" />
+
+    <NoticiaComentariosDialog v-model="comentariosAbertos" :noticia-id="noticia.id"
+      @comentario-adicionado="onComentarioAdicionado" />
   </article>
 </template>
 
 <style scoped>
 .noticia-card {
+  position: relative;
   background: #ffffff;
   border: 1px solid rgba(13, 31, 60, 0.08);
   border-radius: 16px;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  cursor: pointer;
-  transition: box-shadow 0.15s ease;
   font-family: 'DM Sans', sans-serif;
 }
 
-.noticia-card:hover {
-  box-shadow: 0 6px 16px rgba(13, 31, 60, 0.1);
-}
-
-.noticia-imagem {
-  height: 150px;
-  background: linear-gradient(135deg, #1a3f8f, #16509b);
-  position: relative;
-  overflow: hidden;
-}
-
-.noticia-imagem-img { width:100%; height:100%; object-fit:cover }
-
-.noticia-imagem-textura {
+.admin-acoes {
   position: absolute;
-  inset: 0;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.18) 1.5px, transparent 1.5px);
-  background-size: 16px 16px;
-}
-
-.noticia-corpo {
-  padding: 16px 20px 20px;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
   display: flex;
-  flex-direction: column;
   gap: 6px;
-  flex: 1;
 }
 
-.noticia-data {
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
-  color: #5a6a85;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin: 0;
-}
-
-.noticia-titulo {
-  color: #0d1f3c;
-  font-weight: 700;
-  font-size: 15px;
-  line-height: 1.35;
-  margin: 0;
-  transition: color 0.15s ease;
-}
-
-.noticia-card:hover .noticia-titulo {
-  color: #1a3f8f;
-}
-
-.noticia-resumo {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.noticia-acoes {
-  display: flex;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.btn-editar,
-.btn-excluir {
+.admin-btn {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 500;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(13, 31, 60, 0.55);
+  color: #ffffff;
   cursor: pointer;
-  background: transparent;
+  backdrop-filter: blur(2px);
   transition: background-color 0.15s ease;
 }
 
-.btn-editar {
-  border: 1px solid #fbbf24;
-  color: #b45309;
-}
-.btn-editar:hover {
-  background: #fffbeb;
+.admin-btn:hover {
+  background: rgba(13, 31, 60, 0.75);
 }
 
-.btn-excluir {
-  border: 1px solid #fca5a5;
-  color: #dc2626;
-}
-.btn-excluir:hover {
-  background: #fef2f2;
+.admin-btn-excluir:hover {
+  background: #dc2626;
 }
 </style>

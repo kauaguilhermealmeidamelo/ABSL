@@ -3,10 +3,6 @@ import { createResourceService } from './resource'
 
 const base = createResourceService('/noticias')
 
-// Formata sem passar por new Date(string), que interpreta "aaaa-mm-dd" como
-// UTC meia-noite e pode voltar um dia ao converter pro fuso local (ex:
-// Brasília, UTC-3). Extrai os componentes direto da string, evitando
-// qualquer conversão de fuso.
 function formatarData(iso) {
   if (!iso) return ''
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso)
@@ -15,18 +11,10 @@ function formatarData(iso) {
   return `${day}/${month}/${year}`
 }
 
-// O backend guarda o corpo da notícia em 'descricao'; os componentes
-// (NoticiaCard, NoticiaFormModal, NoticiaDetalhe) usam 'texto'.
-// 'data_publicacao' também é reformatada aqui (de ISO para dd/mm/aaaa) —
-// assim os componentes recebem a data já pronta pra exibir, sem duplicar
-// lógica de formatação em cada tela.
 function fromApi(n) {
   return { ...n, texto: n.descricao, data_publicacao: formatarData(n.data_publicacao) }
 }
 
-// 'imagem' é um File (upload novo). Quando presente, manda multipart e o
-// backend salva o arquivo de verdade. Quando ausente, manda JSON normal e
-// mantém a 'imagem_url' que já existia (edição sem trocar a foto).
 function toApi({ texto, imagem, ...rest }) {
   return { ...rest, descricao: texto, imagem }
 }
@@ -35,6 +23,14 @@ function buildFormData(payload) {
   const fd = new FormData()
   Object.entries(payload).forEach(([key, value]) => {
     if (value === undefined || value === null) return
+    // FormData.append() converte qualquer valor não-Blob para string via
+    // toString(). Um booleano true vira a string "true", que a regra
+    // 'boolean' do Laravel rejeita (só aceita "1"/"0"/1/0/true/false).
+    // Convertendo aqui pra '1'/'0' explicitamente, evita esse descompasso.
+    if (typeof value === 'boolean') {
+      fd.append(key, value ? '1' : '0')
+      return
+    }
     fd.append(key, value)
   })
   return fd
@@ -61,7 +57,7 @@ export const noticiasService = {
     const { imagem, ...payload } = toApi(dados)
     if (imagem instanceof File) {
       const fd = buildFormData({ ...payload, imagem })
-      fd.append('_method', 'PUT') // Laravel: multipart não suporta PUT nativo
+      fd.append('_method', 'PUT')
       const { data } = await api.post(`/noticias/${id}`, fd, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
@@ -71,5 +67,17 @@ export const noticiasService = {
   },
   async remove(id) {
     return base.remove(id)
+  },
+  async curtir(id) {
+    const { data } = await api.post(`/noticias/${id}/curtir`)
+    return data
+  },
+  async listarComentarios(id) {
+    const { data } = await api.get(`/noticias/${id}/comentarios`)
+    return data
+  },
+  async comentar(id, texto) {
+    const { data } = await api.post(`/noticias/${id}/comentarios`, { texto })
+    return data
   },
 }

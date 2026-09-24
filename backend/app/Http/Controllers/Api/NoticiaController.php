@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\NoticiaResource;
 use App\Models\Noticia;
+use App\Models\NoticiaCurtida;
+use App\Models\NoticiaComentario;
 use App\Support\Auditoria;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -13,22 +15,51 @@ use Illuminate\Support\Facades\Cache;
 
 class NoticiaController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $rows = Cache::remember('noticias.index', 300, function () {
-            return Noticia::where('ativo', true)->orderBy('data_publicacao', 'desc')->get()->toArray();
+            return Noticia::where('ativo', true)
+                ->orderBy('data_publicacao', 'desc')
+                ->withCount(['curtidas as curtidas_count', 'comentarios as comentarios_count'])
+                ->get()
+                ->toArray();
         });
 
-        return NoticiaResource::collection(Noticia::hydrate($rows));
+        $noticias = Noticia::hydrate($rows);
+
+        // 'curtido' é por usuário e por isso NUNCA entra no cache
+        // compartilhado — buscamos à parte (uma query leve) e mesclamos em
+        // memória. As contagens ficam no cache normal (podem ficar até 5min
+        // desatualizadas; o frontend compensa isso com update otimista).
+        
+        $curtidasDoUsuario = collect();
+        if ($userId = $request->user()?->id) {
+            $curtidasDoUsuario = NoticiaCurtida::where('user_id', $userId)
+                ->whereIn('noticia_id', $noticias->pluck('id'))
+                ->pluck('noticia_id')
+                ->flip();
+        }
+
+        $noticias->each(fn($n) => $n->curtido = $curtidasDoUsuario->has($n->id));
+
+        return NoticiaResource::collection($noticias);
     }
 
-    public function show(string $id)
+    public function show(Request $request, string $id)
     {
-        return new NoticiaResource(Noticia::findOrFail($id));
-    }
+        $userId = $request->user()?->id;
 
+        $noticia = Noticia::withCount(['curtidas as curtidas_count', 'comentarios as comentarios_count'])
+            ->withExists(['curtidas as curtido' => fn($q) => $q->where('user_id', $userId ?? 0)])
+            ->findOrFail($id);
+
+        return new NoticiaResource($noticia);
+    }
     public function store(Request $request)
     {
+        if ($request->has('ativo')) {
+    $request->merge(['ativo' => $request->boolean('ativo')]);
+
         $validated = $request->validate([
             'titulo' => 'required|string|max:255',
             'categoria' => 'required|in:gremio,escola',
@@ -64,9 +95,14 @@ class NoticiaController extends Controller
 
         return new NoticiaResource($noticia);
     }
+}
 
     public function update(Request $request, string $id)
     {
+        if ($request->has('destaque')) {
+    $request->merge(['destaque' => $request->boolean('destaque')]);
+}
+
         $noticia = Noticia::findOrFail($id);
 
         $validated = $request->validate([
