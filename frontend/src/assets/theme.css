@@ -5,7 +5,7 @@
    1. Ordem dos blocos no .vue: <script setup> → <template> → <style scoped>.
    2. Cada tela fica em src/views/*.vue e delega pedaços de UI para
       componentes em src/components/<contexto>/*.vue (um componente por
-      responsabilidade — ex: gerenciamento/, horario/, cardapio/).
+      responsabilidade — ex: gerenciamento/, horario/, cardapio/, noticias/).
    3. Estado que precisa ser compartilhado entre telas (sem backend ainda)
       vive em src/stores/*.js como refs/reactive exportados — nada de
       duplicar dados como turmas, gabarito, cardápio em cada view.
@@ -44,4 +44,7 @@
   /* Raio padrão de cards/botões */
   --radius-card: 16px;
   --radius-pill: 999px;
+
+  /* Sombra padrão de cards elevados (ex: NoticiaCard, feed estilo post) */
+  --shadow-card: 0 1px 4px rgba(15, 32, 56, 0.07), 0 0 0 1px rgba(15, 32, 56, 0.06);
 }

@@ -19,6 +19,10 @@ const erroServidorModal = ref('')
 
 onMounted(() => fetchNoticias(true))
 
+function noticiasDaAba() {
+  return noticias.value.filter((n) => n.categoria === activeTab.value)
+}
+
 function abrirNoticia(n) {
   router.push(`/noticias/${n.id}`)
 }
@@ -68,35 +72,44 @@ async function onDelete(id) {
 </script>
 
 <template>
-  <div class="news-page">
+  <div class="noticias-page">
     <PageHeader label="ABSL" title="Notícias" subtitle="Últimas notícias do Grêmio e da Escola" />
 
     <div class="controls">
       <NoticiaTabs v-model="activeTab" />
-      <div style="margin-left:auto">
-        <button v-if="isAdmin" class="btn-add" @click="onAdd">Nova notícia</button>
-      </div>
+      <button v-if="isAdmin" type="button" class="btn-nova" @click="onAdd">
+        <v-icon size="14">mdi-plus</v-icon>
+        Nova Publicação
+      </button>
     </div>
 
-    <p v-if="loading">Carregando notícias...</p>
-    <p v-else-if="error" class="status-erro">{{ error }}</p>
+    <div v-if="isAdmin" class="admin-banner">
+      <v-icon size="14">mdi-pencil-outline</v-icon>
+      <span>Modo administrador — edite ou exclua publicações diretamente no card.</span>
+    </div>
 
-    <div v-else class="list-grid">
+    <p v-if="loading" class="status-msg">Carregando notícias...</p>
+    <p v-else-if="error" class="status-msg status-erro">{{ error }}</p>
+
+    <div v-else class="feed">
       <NoticiaCard
-        v-for="n in noticias.filter(x => x.categoria === activeTab)"
+        v-for="(n, idx) in noticiasDaAba()"
         :key="n.id"
         :noticia="n"
+        :index="idx"
         :is-admin="isAdmin"
         @abrir="abrirNoticia"
         @editar="() => onEdit(n)"
         @excluir="onDelete"
       />
-      <div v-if="!noticias.length" class="empty">Nenhuma notícia encontrada</div>
+      <p v-if="!noticiasDaAba().length" class="status-msg status-vazio">
+        Nenhuma notícia encontrada nesta categoria.
+      </p>
     </div>
 
     <NoticiaFormModal
       :modelValue="showModal"
-      @update:modelValue="val => (showModal = val)"
+      @update:modelValue="(val) => (showModal = val)"
       :noticia="editing"
       :erro-servidor="erroServidorModal"
       @salvar="onSave"
@@ -105,11 +118,79 @@ async function onDelete(id) {
 </template>
 
 <style scoped>
-.news-page { max-width: 1024px; margin: 0 auto; padding: 32px; }
-.controls { display:flex; gap:12px; align-items:center; margin-bottom:16px }
-.btn-add { background:#1a3f8f; color:#fff; border:none; padding:8px 14px; border-radius:12px }
-.list-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap:16px }
-.empty { color:#5a6a85 }
-@media (max-width: 900px) { .list-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 560px) { .list-grid { grid-template-columns: 1fr; } }
+.noticias-page {
+  font-family: var(--font-body, 'DM Sans', sans-serif);
+  max-width: 1024px;
+  margin: 0 auto;
+  padding: 32px 40px 64px;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.btn-nova {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: var(--color-navy, #0f2038);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 9px 18px;
+  border-radius: var(--radius-pill, 999px);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s ease;
+}
+.btn-nova:hover {
+  background: var(--color-navy-soft, #16509b);
+}
+
+.admin-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  color: #92400e;
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+.status-msg {
+  color: var(--color-text-secondary, #6b7c93);
+  font-size: 14px;
+  padding: 24px 0;
+  text-align: center;
+}
+.status-erro {
+  color: #dc2626;
+}
+.status-vazio {
+  color: var(--color-text-muted, #8a90a8);
+}
+
+.feed {
+  max-width: 468px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+@media (max-width: 720px) {
+  .noticias-page {
+    padding: 20px;
+  }
+}
 </style>

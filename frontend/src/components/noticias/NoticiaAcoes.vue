@@ -27,7 +27,7 @@ defineEmits(['curtir', 'comentar', 'compartilhar'])
 
 <style scoped>
 .acoes-wrap {
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-body, 'DM Sans', sans-serif);
 }
 
 .acoes-row {
@@ -42,7 +42,7 @@ defineEmits(['curtir', 'comentar', 'compartilhar'])
   background: transparent;
   padding: 6px;
   margin-left: -6px;
-  color: #5a6a85;
+  color: var(--color-text-secondary, #6b7c93);
   cursor: pointer;
   display: flex;
   transition: transform 0.1s ease;
@@ -51,14 +51,14 @@ defineEmits(['curtir', 'comentar', 'compartilhar'])
   transform: scale(0.85);
 }
 .acao-btn-ativo {
-  color: #f5a623;
+  color: var(--color-gold, #f5a623);
 }
 
 .curtidas-count {
   padding: 4px 16px 0;
   font-size: 13px;
   font-weight: 700;
-  color: #0d1f3c;
+  color: var(--color-navy, #0f2038);
   margin: 0;
 }
 </style>

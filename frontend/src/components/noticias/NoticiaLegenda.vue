@@ -1,5 +1,7 @@
 <script setup>
-defineProps({
+import { computed, ref } from 'vue'
+
+const props = defineProps({
   titulo: { type: String, required: true },
   descricao: { type: String, required: true },
   comentariosCount: { type: Number, default: 0 },
@@ -7,15 +9,30 @@ defineProps({
 })
 
 defineEmits(['abrir', 'verComentarios'])
+
+const LIMITE = 90
+const expandido = ref(false)
+const isLongo = computed(() => props.descricao.length > 100)
+const textoResumido = computed(() => props.descricao.slice(0, LIMITE))
 </script>
 
 <template>
   <div class="legenda">
-    <p class="legenda-texto" @click="$emit('abrir')">
-      <strong>{{ titulo }}.</strong> {{ descricao }}
+    <p class="legenda-texto">
+      <span class="legenda-titulo" @click="$emit('abrir')">{{ titulo }}.</span>
+      <template v-if="isLongo && !expandido">
+        {{ ' ' }}{{ textoResumido }}…
+        <button type="button" class="btn-mais" @click="expandido = true">mais</button>
+      </template>
+      <template v-else>{{ ' ' }}{{ descricao }}</template>
     </p>
 
-    <button v-if="comentariosCount > 0" type="button" class="ver-comentarios" @click="$emit('verComentarios')">
+    <button
+      v-if="comentariosCount > 0"
+      type="button"
+      class="ver-comentarios"
+      @click="$emit('verComentarios')"
+    >
       Ver {{ comentariosCount === 1 ? 'o comentário' : `todos os ${comentariosCount} comentários` }}
     </button>
 
@@ -26,22 +43,30 @@ defineEmits(['abrir', 'verComentarios'])
 <style scoped>
 .legenda {
   padding: 6px 16px 14px;
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-body, 'DM Sans', sans-serif);
 }
 
 .legenda-texto {
   font-size: 13.5px;
   line-height: 1.5;
-  color: #0d1f3c;
+  color: var(--color-navy, #0f2038);
   margin: 0 0 4px;
-  cursor: pointer;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
 }
-.legenda-texto strong {
+
+.legenda-titulo {
   font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-mais {
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin-left: 2px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--color-text-muted, #8a90a8);
+  cursor: pointer;
 }
 
 .ver-comentarios {
@@ -49,8 +74,8 @@ defineEmits(['abrir', 'verComentarios'])
   border: none;
   background: transparent;
   padding: 0;
-  color: #5a6a85;
-  font-size: 12.5px;
+  color: var(--color-text-muted, #8a90a8);
+  font-size: 13px;
   cursor: pointer;
   margin-bottom: 4px;
 }
@@ -59,9 +84,9 @@ defineEmits(['abrir', 'verComentarios'])
 }
 
 .legenda-data {
-  font-family: 'DM Mono', monospace;
+  font-family: var(--font-mono, 'DM Mono', monospace);
   font-size: 10.5px;
-  color: #8a90a8;
+  color: var(--color-text-muted, #8a90a8);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   margin: 0;
