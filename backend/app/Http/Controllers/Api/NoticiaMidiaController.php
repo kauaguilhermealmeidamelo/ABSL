@@ -54,6 +54,9 @@ class NoticiaMidiaController extends Controller
     public function destroy(string $id, string $midiaId)
     {
         $midia = NoticiaMidia::where('noticia_id', $id)->findOrFail($midiaId);
+        if (NoticiaMidia::where('noticia_id', $id)->count() <= 1) {
+            return response()->json(['message' => 'A notícia precisa ter pelo menos uma foto ou vídeo.'], 422);
+        }
 
         $path = preg_replace('#^.*/storage/#', '', $midia->url);
         if ($path && Storage::disk('public')->exists($path)) {
