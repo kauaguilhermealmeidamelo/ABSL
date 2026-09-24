@@ -6,12 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\NoticiaResource;
 use App\Models\Noticia;
 use App\Models\NoticiaCurtida;
-use App\Models\NoticiaComentario;
+use App\Models\NoticiaMidia;
 use App\Support\Auditoria;
 use Illuminate\Http\Request;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 
 class NoticiaController extends Controller
 {
@@ -26,21 +25,30 @@ class NoticiaController extends Controller
         });
 
         $noticias = Noticia::hydrate($rows);
+        $ids = $noticias->pluck('id');
 
-        // 'curtido' é por usuário e por isso NUNCA entra no cache
-        // compartilhado — buscamos à parte (uma query leve) e mesclamos em
-        // memória. As contagens ficam no cache normal (podem ficar até 5min
-        // desatualizadas; o frontend compensa isso com update otimista).
-        
+        // 'curtido' (por usuário) e 'midias' (relação aninhada) não entram
+        // no blob cacheado: o primeiro varia por pessoa, o segundo não
+        // sobrevive ao ciclo toArray()/hydrate() — vira atributo solto,
+        // não relação carregada. Buscamos os dois à parte e religamos ao
+        // Model já hidratado.
         $curtidasDoUsuario = collect();
         if ($userId = $request->user()?->id) {
             $curtidasDoUsuario = NoticiaCurtida::where('user_id', $userId)
-                ->whereIn('noticia_id', $noticias->pluck('id'))
+                ->whereIn('noticia_id', $ids)
                 ->pluck('noticia_id')
                 ->flip();
         }
 
-        $noticias->each(fn($n) => $n->curtido = $curtidasDoUsuario->has($n->id));
+        $midiasPorNoticia = NoticiaMidia::whereIn('noticia_id', $ids)
+            ->orderBy('ordem')
+            ->get()
+            ->groupBy('noticia_id');
+
+        $noticias->each(function (Noticia $n) use ($curtidasDoUsuario, $midiasPorNoticia) {
+            $n->curtido = $curtidasDoUsuario->has($n->id);
+            $n->setRelation('midias', $midiasPorNoticia->get($n->id, collect()));
+        });
 
         return NoticiaResource::collection($noticias);
     }
@@ -49,42 +57,36 @@ class NoticiaController extends Controller
     {
         $userId = $request->user()?->id;
 
-        $noticia = Noticia::withCount(['curtidas as curtidas_count', 'comentarios as comentarios_count'])
-            ->withExists(['curtidas as curtido' => fn($q) => $q->where('user_id', $userId ?? 0)])
+        $noticia = Noticia::with('midias')
+            ->withCount(['curtidas as curtidas_count', 'comentarios as comentarios_count'])
+            ->withExists(['curtidas as curtido' => fn ($q) => $q->where('user_id', $userId ?? 0)])
             ->findOrFail($id);
 
         return new NoticiaResource($noticia);
     }
+
     public function store(Request $request)
     {
-        if ($request->has('ativo')) {
-    $request->merge(['ativo' => $request->boolean('ativo')]);
-
+        // Não recebe mais upload de imagem aqui — fotos/vídeos são
+        // adicionados via NoticiaMidiaController, depois que a notícia já
+        // tem um id. Isso é JSON puro, sem multipart, o que também evita
+        // o problema de boolean virando string "true" no FormData.
         $validated = $request->validate([
             'titulo' => 'required|string|max:255',
             'categoria' => 'required|in:gremio,escola',
             'descricao' => 'required|string',
             'conteudo' => 'nullable|string',
-            'imagem_url' => 'nullable|string',
-            'imagem' => 'nullable|file|mimetypes:image/jpeg,image/png,image/webp,image/gif|max:5120',
             'data_publicacao' => 'required|date',
             'destaque' => 'nullable|boolean',
             'ativo' => 'nullable|boolean',
         ]);
 
-        $data = Arr::except($validated, ['imagem']);
+        $validated['ativo'] = $validated['ativo'] ?? true;
+        $validated['destaque'] = $validated['destaque'] ?? false;
+        $validated['autor_id'] = $request->user()->id;
 
-        if ($request->hasFile('imagem')) {
-            $data['imagem_url'] = $this->storeImagem($request->file('imagem'));
-        }
-
-        $data['ativo'] = $data['ativo'] ?? true;
-        $data['destaque'] = $data['destaque'] ?? false;
-
+        $noticia = Noticia::create($validated);
         Cache::forget('noticias.index');
-        $data['autor_id'] = $request->user()->id;
-
-        $noticia = Noticia::create($data);
 
         Auditoria::registrar(
             'criou_noticia',
@@ -95,14 +97,9 @@ class NoticiaController extends Controller
 
         return new NoticiaResource($noticia);
     }
-}
 
     public function update(Request $request, string $id)
     {
-        if ($request->has('destaque')) {
-    $request->merge(['destaque' => $request->boolean('destaque')]);
-}
-
         $noticia = Noticia::findOrFail($id);
 
         $validated = $request->validate([
@@ -110,21 +107,12 @@ class NoticiaController extends Controller
             'categoria' => 'sometimes|required|in:gremio,escola',
             'descricao' => 'sometimes|required|string',
             'conteudo' => 'nullable|string',
-            'imagem_url' => 'nullable|string',
-            'imagem' => 'nullable|file|mimetypes:image/jpeg,image/png,image/webp,image/gif|max:5120',
             'data_publicacao' => 'nullable|date',
             'destaque' => 'nullable|boolean',
             'ativo' => 'nullable|boolean',
         ]);
 
-        $data = Arr::except($validated, ['imagem']);
-
-        if ($request->hasFile('imagem')) {
-            $this->deleteImagemAntiga($noticia->imagem_url);
-            $data['imagem_url'] = $this->storeImagem($request->file('imagem'));
-        }
-
-        $noticia->update($data);
+        $noticia->update($validated);
         Cache::forget('noticias.index');
 
         Auditoria::registrar(
@@ -139,10 +127,15 @@ class NoticiaController extends Controller
 
     public function destroy(string $id)
     {
-        $noticia = Noticia::findOrFail($id);
+        $noticia = Noticia::with('midias')->findOrFail($id);
         $titulo = $noticia->titulo;
-        $this->deleteImagemAntiga($noticia->imagem_url);
-        $noticia->delete();
+
+        foreach ($noticia->midias as $midia) {
+            $this->deleteArquivo($midia->url);
+        }
+        $this->deleteArquivo($noticia->imagem_url); // legado
+
+        $noticia->delete(); // cascadeOnDelete cuida das linhas de noticia_midias
         Cache::forget('noticias.index');
 
         Auditoria::registrar(
@@ -155,16 +148,7 @@ class NoticiaController extends Controller
         return response()->noContent();
     }
 
-    private function storeImagem(\Illuminate\Http\UploadedFile $file): string
-    {
-        $path = $file->store('noticias', 'public');
-
-        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
-        $disk = Storage::disk('public');
-        return $disk->url($path);
-    }
-
-    private function deleteImagemAntiga(?string $url): void
+    private function deleteArquivo(?string $url): void
     {
         if (! $url) {
             return;

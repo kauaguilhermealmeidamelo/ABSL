@@ -18,7 +18,8 @@ use App\Http\Controllers\Api\{
     AdminUserController,
     LogController,
     NoticiaCurtidaController,
-    NoticiaComentarioController
+    NoticiaComentarioController,
+    NoticiaMidiaController
 };
 
 // Rotas públicas de autenticação — throttle aqui, que é onde a requisição
@@ -74,6 +75,9 @@ Route::middleware(['auth:sanctum', 'staff'])->group(function () {
     Route::post('/noticias', [NoticiaController::class, 'store']);
     Route::put('/noticias/{id}', [NoticiaController::class, 'update']);
     Route::delete('/noticias/{id}', [NoticiaController::class, 'destroy']);
+    Route::post('/noticias/{id}/midias', [NoticiaMidiaController::class, 'store']);
+    Route::delete('/noticias/{id}/midias/{midiaId}', [NoticiaMidiaController::class, 'destroy']);
+    Route::delete('/noticias/{id}/comentarios/{comentarioId}', [NoticiaComentarioController::class, 'destroy']);
 
     Route::post('/projetos', [ProjetoController::class, 'store']);
     Route::put('/projetos/{id}', [ProjetoController::class, 'update']);

@@ -24,6 +24,11 @@ class Noticia extends Model
         'ativo' => 'boolean',
     ];
 
+    public function midias()
+    {
+        return $this->hasMany(NoticiaMidia::class)->orderBy('ordem');
+    }
+
     public function curtidas()
     {
         return $this->hasMany(NoticiaCurtida::class);

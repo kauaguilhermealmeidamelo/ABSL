@@ -27,13 +27,13 @@ function voltar() {
         Voltar para Notícias
       </button>
 
-      <div class="detalhe-imagem">
-        <img
-          v-if="noticia.imagem_url"
-          :src="noticia.imagem_url"
-          :alt="noticia.titulo"
-          class="detalhe-imagem-img"
-        />
+      <div class="detalhe-midias">
+        <template v-if="noticia.midias?.length">
+          <div v-for="m in noticia.midias" :key="m.id ?? m.url" class="detalhe-midia-item">
+            <video v-if="m.tipo === 'video'" :src="m.url" controls playsinline />
+            <img v-else :src="m.url" :alt="noticia.titulo" />
+          </div>
+        </template>
         <div v-else class="detalhe-imagem-textura" />
       </div>
 
@@ -85,6 +85,7 @@ function voltar() {
   padding: 0;
   margin-bottom: 20px;
 }
+
 .btn-voltar:hover {
   text-decoration: underline;
 }
@@ -97,6 +98,7 @@ function voltar() {
   position: relative;
   margin-bottom: 20px;
 }
+
 .detalhe-imagem-textura {
   position: absolute;
   inset: 0;
@@ -114,10 +116,12 @@ function voltar() {
   border-radius: 999px;
   margin-bottom: 12px;
 }
+
 .badge-gremio {
   background: #dbeafe;
   color: #1a3f8f;
 }
+
 .badge-escola {
   background: #fef3c7;
   color: #b45309;
@@ -148,10 +152,29 @@ function voltar() {
   margin: 0;
 }
 
+.detalhe-midias {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.detalhe-midia-item {
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.detalhe-midia-item img,
+.detalhe-midia-item video {
+  width: 100%;
+  display: block;
+}
+
 @media (max-width: 480px) {
   .detalhe-page {
     padding: 20px;
   }
+
   .detalhe-titulo {
     font-size: 22px;
   }

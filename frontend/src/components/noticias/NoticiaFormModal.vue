@@ -1,97 +1,71 @@
 <script setup>
-import { ref, watch, computed } from 'vue'
+import { ref, watch } from 'vue'
+import { noticiasService } from '@/services/noticias'
+import NoticiaMidiaManager from './NoticiaMidiaManager.vue'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
   noticia: { type: Object, default: null },
-  erroServidor: { type: String, default: '' }, // erro vindo do backend (ex: 422), se houver
+  erroServidor: { type: String, default: '' },
 })
 
-const emit = defineEmits(['update:modelValue', 'salvar'])
+const emit = defineEmits(['update:modelValue', 'criada', 'salvar'])
 
-const form = ref({ titulo: '', data_publicacao: '', texto: '', imagem_url: '' })
-const imagemFile = ref(null)
-const imagemPreview = ref('')
+const form = ref({ titulo: '', data_publicacao: '', texto: '' })
+const idAtual = ref(null)
+const midias = ref([])
 const erroData = ref('')
+const erroLocal = ref('')
+const salvando = ref(false)
 
-// Converte qualquer data que o backend mande (ex: "2026-08-12T00:00:00.000000Z")
-// para o formato yyyy-mm-dd exigido pelo <input type="date">. Sem isso, o
-// input não reconhece o valor, mostra vazio visualmente, mas o form
-// continua com uma string não-vazia — a validação de obrigatoriedade nunca
-// dispara mesmo o campo "parecendo" vazio pro usuário.
 function formatDateForInput(d) {
   if (!d) return ''
-
-  // Já vem como dd/mm/aaaa (formato exibido pelo service)
   const brMatch = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(d)
   if (brMatch) {
     const [, day, month, year] = brMatch
     return `${year}-${month}-${day}`
   }
-
-  // Vem como aaaa-mm-dd (ou aaaa-mm-ddTHH:mm:ss...) — extrai direto sem
-  // passar por new Date(), que interpretaria como UTC e poderia voltar um
-  // dia ao converter pro fuso local.
   const isoMatch = /^(\d{4})-(\d{2})-(\d{2})/.exec(d)
   if (isoMatch) {
     const [, year, month, day] = isoMatch
     return `${year}-${month}-${day}`
   }
-
   return ''
 }
 
-watch(
-  () => [props.modelValue, props.noticia],
-  () => {
-    if (props.modelValue) {
-      erroData.value = ''
-      if (props.noticia) {
-        form.value = {
-          ...props.noticia,
-          data_publicacao: formatDateForInput(props.noticia.data_publicacao),
-        }
-        imagemPreview.value = props.noticia.imagem_url || ''
-        imagemFile.value = null
-      } else {
-        form.value = { titulo: '', data_publicacao: '', texto: '', imagem_url: '' }
-        imagemPreview.value = ''
-        imagemFile.value = null
-      }
+// Só reseta o formulário quando o modal transiciona de fechado pra
+// aberto. Importante porque, ao criar uma notícia, o próprio modal passa
+// a exibir o gerenciador de mídias sem fechar (ver salvar()) — se
+// resetássemos a cada mudança de prop, perderíamos esse estado no meio
+// da tarefa.
+watch(() => props.modelValue, (open) => {
+  if (!open) return
+  erroData.value = ''
+  erroLocal.value = ''
+  if (props.noticia) {
+    form.value = {
+      titulo: props.noticia.titulo,
+      data_publicacao: formatDateForInput(props.noticia.data_publicacao),
+      texto: props.noticia.texto,
     }
-  },
-  { immediate: true }
-)
+    idAtual.value = props.noticia.id
+    midias.value = props.noticia.midias ?? []
+  } else {
+    form.value = { titulo: '', data_publicacao: '', texto: '' }
+    idAtual.value = null
+    midias.value = []
+  }
+}, { immediate: true })
 
-function close() {
+function fechar() {
   emit('update:modelValue', false)
 }
 
-function onFileChange(e) {
-  const f = e.target.files?.[0]
-  if (!f) return
-  imagemFile.value = f
-  // Preview local via blob: só serve para exibir no formulário. Nunca é
-  // enviado ao backend nem salvo como imagem_url — um link blob: só existe
-  // nesta aba/sessão do navegador e quebraria assim que a página recarregasse.
-  imagemPreview.value = URL.createObjectURL(f)
-}
-
-const imagemPreviewName = computed(() => {
-  if (imagemFile.value) return imagemFile.value.name
-  if (form.value.imagem_url) return String(form.value.imagem_url).split('/').pop()
-  return ''
-})
-
-function salvar() {
+async function salvar() {
   erroData.value = ''
+  erroLocal.value = ''
 
   if (!form.value.titulo.trim()) return
-
-  // Validação local: barra antes de chamar a API, evitando o 500/422 por
-  // 'data_publicacao' nula direto na constraint do banco. Agora funciona
-  // igual em criação e edição, já que o form sempre guarda yyyy-mm-dd ou
-  // vazio — nunca mais uma string ISO "fantasma" que engana o check.
   if (!form.value.data_publicacao) {
     erroData.value = 'Data de Publicação Obrigatória'
     return
@@ -101,56 +75,61 @@ function salvar() {
     titulo: form.value.titulo,
     data_publicacao: form.value.data_publicacao,
     texto: form.value.texto,
+    categoria: props.noticia?.categoria ?? 'gremio',
   }
 
-  if (imagemFile.value) {
-    // Imagem nova selecionada: manda o arquivo real; o backend salva no
-    // disco e devolve a URL definitiva.
-    payload.imagem = imagemFile.value
-  } else {
-    // Sem alteração de imagem: mantém a URL que já existia (ou vazio).
-    payload.imagem_url = form.value.imagem_url || ''
+  salvando.value = true
+  try {
+    if (idAtual.value) {
+      emit('salvar', { id: idAtual.value, payload })
+    } else {
+      const criada = await noticiasService.create(payload)
+      idAtual.value = criada.id
+      midias.value = criada.midias ?? []
+      emit('criada', criada)
+    }
+  } catch (err) {
+    erroLocal.value = err?.response?.data?.errors?.data_publicacao?.[0]
+      || err?.response?.data?.message
+      || 'Erro ao salvar notícia.'
+  } finally {
+    salvando.value = false
   }
-
-  emit('salvar', payload)
-  // Não fecha o modal aqui — quem decide fechar é o componente pai
-  // (Noticias.vue), e só em caso de sucesso. Assim, se o backend rejeitar
-  // (ex: 422), o modal continua aberto mostrando o erro do servidor.
 }
 </script>
 
 <template>
-  <v-dialog :model-value="modelValue" @update:model-value="$emit('update:modelValue', $event)" max-width="520">
+  <v-dialog :model-value="modelValue" @update:model-value="$emit('update:modelValue', $event)" max-width="520"
+    persistent>
     <v-card class="noticia-modal">
       <v-card-title class="modal-title">
-        {{ noticia ? 'Editar notícia' : 'Nova notícia' }}
+        {{ idAtual ? 'Editar notícia' : 'Nova notícia' }}
       </v-card-title>
 
       <v-card-text class="modal-body">
-        <label class="field-label">Imagem de capa</label>
-        <label class="upload-box">
-          <v-icon size="20" color="#5a6a85">mdi-image-outline</v-icon>
-          <span>Selecionar imagem</span>
-          <input type="file" accept="image/*" hidden @change="onFileChange" />
-        </label>
-        <span v-if="imagemPreviewName" class="upload-file-name">{{ imagemPreviewName }}</span>
-        <img v-if="imagemPreview" :src="imagemPreview" alt="preview" class="upload-preview" />
-
         <label class="field-label">Título</label>
         <input v-model="form.titulo" type="text" class="field-input" placeholder="Título da notícia" />
 
         <label class="field-label">Data de publicação</label>
         <input v-model="form.data_publicacao" type="date" class="field-input"
-          :class="{ 'field-input-erro': erroData || erroServidor }" />
-        <span v-if="erroData || erroServidor" class="field-erro">{{ erroData || erroServidor }}</span>
+          :class="{ 'field-input-erro': erroData || erroServidor || erroLocal }" />
+        <span v-if="erroData || erroServidor || erroLocal" class="field-erro">{{ erroData || erroServidor || erroLocal
+          }}</span>
 
         <label class="field-label">Resumo / texto</label>
         <textarea v-model="form.texto" rows="4" class="field-textarea" placeholder="Descrição breve da notícia" />
+
+        <NoticiaMidiaManager v-if="idAtual" v-model="midias" :noticia-id="idAtual" />
+        <p v-else class="midia-aviso">Salve os dados da notícia primeiro para poder adicionar fotos e vídeos.</p>
       </v-card-text>
 
       <v-card-actions class="modal-actions">
-        <button type="button" class="btn-cancelar" @click="close">Cancelar</button>
-        <button type="button" class="btn-salvar" @click="salvar">Salvar</button>
+        <button type="button" class="btn-cancelar" @click="fechar">
+          {{ idAtual ? 'Concluir' : 'Cancelar' }}
+        </button>
+        <button type="button" class="btn-salvar" :disabled="salvando" @click="salvar">
+          {{ salvando ? 'Salvando...' : 'Salvar' }}
+        </button>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -220,29 +199,10 @@ function salvar() {
   margin-top: 4px;
 }
 
-.upload-box {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border: 1px dashed rgba(13, 31, 60, 0.25);
-  border-radius: 12px;
-  padding: 12px;
-  background: #eef3fb;
-  color: #5a6a85;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.upload-file-name {
+.midia-aviso {
   font-size: 12px;
-  color: #1a3f8f;
-  margin-top: 4px;
-}
-
-.upload-preview {
-  max-width: 100%;
-  border-radius: 8px;
-  margin-top: 8px;
+  color: #94a3b8;
+  margin: 12px 0 0;
 }
 
 .modal-actions {
@@ -273,7 +233,12 @@ function salvar() {
   color: #ffffff;
 }
 
-.btn-salvar:hover {
+.btn-salvar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-salvar:hover:not(:disabled) {
   background: #0d1f3c;
 }
-</style>
+</style>  

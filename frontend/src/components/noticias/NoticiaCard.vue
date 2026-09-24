@@ -1,21 +1,17 @@
 <script setup>
 import { ref } from 'vue'
-import NoticiaImagem from './NoticiaImagem.vue'
+import NoticiaCarrossel from './NoticiaCarrossel.vue'
 import NoticiaAcoes from './NoticiaAcoes.vue'
 import NoticiaLegenda from './NoticiaLegenda.vue'
-import NoticiaComentariosDialog from './NoticiaComentariosDialog.vue'
 import { noticiasService } from '@/services/noticias'
 
 const props = defineProps({
   noticia: { type: Object, required: true },
   isAdmin: { type: Boolean, default: false },
-  index: { type: Number, default: 0 },
 })
 
 const emit = defineEmits(['abrir', 'editar', 'excluir'])
 
-// Estado local otimista: a UI reage na hora do clique, sem esperar a
-// API. Se a chamada falhar (ex: sessão expirou), desfaz.
 const curtido = ref(props.noticia.curtido)
 const curtidasCount = ref(props.noticia.curtidas_count ?? 0)
 const comentariosCount = ref(props.noticia.comentarios_count ?? 0)
@@ -37,7 +33,6 @@ async function alternarCurtida() {
   }
 }
 
-// Double-tap na imagem só curte (nunca descurte) — mesmo padrão do IG.
 function curtirViaImagem() {
   if (!curtido.value) alternarCurtida()
 }
@@ -63,51 +58,69 @@ async function compartilhar() {
 
 <template>
   <article class="noticia-card">
-    <NoticiaImagem
-      :imagem-url="noticia.imagem_url"
-      :titulo="noticia.titulo"
-      :curtido="curtido"
-      :origem="noticia.categoria"
-      :index="index"
-      :is-admin="isAdmin"
-      @curtir="curtirViaImagem"
-      @abrir="$emit('abrir', noticia)"
-      @editar="$emit('editar', noticia)"
-      @excluir="$emit('excluir', noticia.id)"
-    />
+    <div v-if="isAdmin" class="admin-acoes" @click.stop>
+      <button type="button" class="admin-btn" @click="$emit('editar', noticia)">
+        <v-icon size="14">mdi-pencil-outline</v-icon>
+      </button>
+      <button type="button" class="admin-btn admin-btn-excluir" @click="$emit('excluir', noticia.id)">
+        <v-icon size="14">mdi-trash-can-outline</v-icon>
+      </button>
+    </div>
 
-    <NoticiaAcoes
-      :curtido="curtido"
-      :curtidas-count="curtidasCount"
-      @curtir="alternarCurtida"
-      @comentar="comentariosAbertos = true"
-      @compartilhar="compartilhar"
-    />
+    <NoticiaCarrossel :midias="noticia.midias" :titulo="noticia.titulo" :curtido="curtido" @curtir="curtirViaImagem"
+      @abrir="$emit('abrir', noticia)" />
 
-    <NoticiaLegenda
-      :titulo="noticia.titulo"
-      :descricao="noticia.texto"
-      :comentarios-count="comentariosCount"
-      :data-publicacao="noticia.data_publicacao"
-      @abrir="$emit('abrir', noticia)"
-      @ver-comentarios="comentariosAbertos = true"
-    />
+    <NoticiaAcoes :curtido="curtido" :curtidas-count="curtidasCount" @curtir="alternarCurtida"
+      @comentar="comentariosAbertos = true" @compartilhar="compartilhar" />
 
-    <NoticiaComentariosDialog
-      v-model="comentariosAbertos"
-      :noticia-id="noticia.id"
-      @comentario-adicionado="onComentarioAdicionado"
-    />
+    <NoticiaLegenda :titulo="noticia.titulo" :descricao="noticia.texto" :comentarios-count="comentariosCount"
+      :data-publicacao="noticia.data_publicacao" @abrir="$emit('abrir', noticia)"
+      @ver-comentarios="comentariosAbertos = true" />
+
+    <NoticiaComentariosSheet v-model="comentariosAbertos" :noticia-id="noticia.id" :is-admin="isAdmin"
+      @comentario-adicionado="onComentarioAdicionado" />
   </article>
 </template>
 
 <style scoped>
 .noticia-card {
   position: relative;
-  background: var(--color-surface, #ffffff);
-  border-radius: var(--radius-card, 16px);
+  background: #ffffff;
+  border: 1px solid rgba(13, 31, 60, 0.08);
+  border-radius: 16px;
   overflow: hidden;
-  font-family: var(--font-body, 'DM Sans', sans-serif);
-  box-shadow: var(--shadow-card);
+  font-family: 'DM Sans', sans-serif;
+}
+
+.admin-acoes {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  display: flex;
+  gap: 6px;
+}
+
+.admin-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(13, 31, 60, 0.55);
+  color: #ffffff;
+  cursor: pointer;
+  backdrop-filter: blur(2px);
+  transition: background-color 0.15s ease;
+}
+
+.admin-btn:hover {
+  background: rgba(13, 31, 60, 0.75);
+}
+
+.admin-btn-excluir:hover {
+  background: #dc2626;
 }
 </style>
