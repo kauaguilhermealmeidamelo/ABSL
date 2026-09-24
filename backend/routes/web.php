@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\SitemapController;
 use Illuminate\Support\Facades\Route;
 
 // O frontend é uma SPA Vue separada (pasta /frontend). O fluxo de deploy é:
@@ -10,6 +11,11 @@ use Illuminate\Support\Facades\Route;
 // diretamente (sem passar por aqui) quando rodando via Apache. Esta rota
 // catch-all cobre o caso de "php artisan serve", servindo o index.html
 // copiado do build do Vue como fallback de SPA.
+
+// SEO: sitemap dinâmico gerado pelo Laravel. Deve ficar antes do catch-all
+// para que /sitemap.xml não seja entregue como a SPA Vue.
+Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
+
 Route::get('/{any}', function () {
     $indexPath = public_path('index.html');
 
