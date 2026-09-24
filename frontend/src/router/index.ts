@@ -42,17 +42,6 @@ const routes = [
         }
       },
       {
-        path: 'noticias/:id',
-        name: 'noticia-detalhe',
-        component: () => import('@/views/NoticiaDetalhe.vue'),
-        meta: {
-          public: true,
-          title: 'Notícia | CEMSL - Brasília',
-          description:
-            'Leia esta notícia do CEMSL em Brasília, no Setor Leste, e acompanhe as principais informações e novidades da comunidade escolar.'
-        }
-      },
-      {
         path: 'projetos',
         name: 'projetos',
         component: () => import('@/views/Projetos.vue'),
