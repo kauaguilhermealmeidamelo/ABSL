@@ -8,7 +8,7 @@ const form=ref({titulo:'',data_publicacao:'',texto:''}),idAtual=ref(null),midias
 function formatDateForInput(d){if(!d)return'';const b=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec(d);if(b){const[,day,month,year]=b;return`${year}-${month}-${day}`}const i=/^(\d{4})-(\d{2})-(\d{2})/.exec(d);return i?`${i[1]}-${i[2]}-${i[3]}`:''}
 watch(()=>props.modelValue,open=>{if(!open)return;erroData.value='';erroLocal.value='';if(props.noticia){form.value={titulo:props.noticia.titulo,data_publicacao:formatDateForInput(props.noticia.data_publicacao),texto:props.noticia.texto};idAtual.value=props.noticia.id;midias.value=props.noticia.midias??[]}else{form.value={titulo:'',data_publicacao:'',texto:''};idAtual.value=null;midias.value=[]}},{immediate:true})
 function fechar(){emit('update:modelValue',false)}
-const podeSalvar=computed(()=>!!form.value.titulo.trim()&&!!form.value.data_publicacao&&(idAtual.value||midias.value.length>0))
+const podeSalvar=computed(()=>!!form.value.titulo.trim()&&!!form.value.data_publicacao&&midias.value.length>0)
 async function salvar(){
   erroData.value='';erroLocal.value=''
   if(!form.value.titulo.trim())return
