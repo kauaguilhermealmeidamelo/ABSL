@@ -19,6 +19,7 @@ async function onFilesChange(event){
   finally{enviando.value=false}
 }
 async function remover(midia){
+  if(props.modelValue.length===1){error.value='A notícia precisa ter pelo menos uma foto ou vídeo.';return}
   if(!confirm('Remover esta mídia da publicação?'))return
   if(midia.arquivo){URL.revokeObjectURL(midia.url);emit('update:modelValue',props.modelValue.filter(m=>m.id!==midia.id));return}
   try{await noticiasService.removerMidia(props.noticiaId,midia.id);emit('update:modelValue',props.modelValue.filter(m=>m.id!==midia.id))}
