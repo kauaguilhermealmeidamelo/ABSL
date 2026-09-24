@@ -1,13 +1,11 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import PageHeader from '@/components/common/PageHeader.vue'
 import NoticiaCard from '@/components/noticias/NoticiaCard.vue'
 import NoticiaFormModal from '@/components/noticias/NoticiaFormModal.vue'
 import { useNoticias } from '@/composables/useNoticias'
 import { useAdmin } from '@/composables/useAdmin'
 
-const router = useRouter()
 const { isAdmin } = useAdmin()
 const { noticias, loading, error, fetchNoticias, atualizar, remover } = useNoticias()
 
@@ -16,10 +14,6 @@ const editing = ref(null)
 const erroServidorModal = ref('')
 
 onMounted(() => fetchNoticias(true))
-
-function abrirNoticia(n) {
-  router.push(`/noticias/${n.id}`)
-}
 
 function onAdd() {
   editing.value = null
@@ -65,7 +59,7 @@ async function onDelete(id) {
     <p v-else-if="error" class="status-erro">{{ error }}</p>
 
     <div v-else class="feed">
-      <NoticiaCard v-for="n in noticias" :key="n.id" :noticia="n" :is-admin="isAdmin" @abrir="abrirNoticia"
+      <NoticiaCard v-for="n in noticias" :key="n.id" :noticia="n" :is-admin="isAdmin"
         @editar="() => onEdit(n)" @excluir="onDelete" />
       <p v-if="!noticias.length" class="empty">Nenhuma notícia encontrada</p>
     </div>
