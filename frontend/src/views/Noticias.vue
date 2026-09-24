@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import PageHeader from '@/components/common/PageHeader.vue'
 import NoticiaCard from '@/components/noticias/NoticiaCard.vue'
 import NoticiaFormModal from '@/components/noticias/NoticiaFormModal.vue'
@@ -12,6 +12,18 @@ const { noticias, loading, error, fetchNoticias, atualizar, remover } = useNotic
 const showModal = ref(false)
 const editing = ref(null)
 const erroServidorModal = ref('')
+const pesquisa = ref('')
+
+const noticiasFiltradas = computed(() => {
+  const termo = pesquisa.value.trim().toLocaleLowerCase('pt-BR')
+  if (!termo) return noticias.value
+
+  return noticias.value.filter((noticia) => {
+    const titulo = noticia.titulo || ''
+    const texto = noticia.texto || ''
+    return `${titulo} ${texto}`.toLocaleLowerCase('pt-BR').includes(termo)
+  })
+})
 
 onMounted(() => fetchNoticias(true))
 
@@ -29,7 +41,7 @@ function onEdit(n) {
 
 function onCriada(nova) {
   noticias.value = [nova, ...noticias.value]
-  editing.value = nova // modal permanece aberto, agora em modo "gerenciar mídias"
+  editing.value = nova
 }
 
 async function onSalvarTexto({ id, payload }) {
@@ -52,6 +64,13 @@ async function onDelete(id) {
     <PageHeader label="ABSL" title="Notícias" subtitle="Últimas notícias do Grêmio e da Escola" />
 
     <div class="controls">
+      <div class="search-box">
+        <v-icon size="20">mdi-magnify</v-icon>
+        <input v-model="pesquisa" type="search" placeholder="Pesquisar notícia..." aria-label="Pesquisar notícia" />
+        <button v-if="pesquisa" type="button" class="clear-search" aria-label="Limpar pesquisa" @click="pesquisa = ''">
+          <v-icon size="18">mdi-close</v-icon>
+        </button>
+      </div>
       <button v-if="isAdmin" class="btn-add" @click="onAdd">Nova notícia</button>
     </div>
 
@@ -59,9 +78,11 @@ async function onDelete(id) {
     <p v-else-if="error" class="status-erro">{{ error }}</p>
 
     <div v-else class="feed">
-      <NoticiaCard v-for="n in noticias" :key="n.id" :noticia="n" :is-admin="isAdmin"
+      <NoticiaCard v-for="n in noticiasFiltradas" :key="n.id" :noticia="n" :is-admin="isAdmin"
         @editar="() => onEdit(n)" @excluir="onDelete" />
-      <p v-if="!noticias.length" class="empty">Nenhuma notícia encontrada</p>
+      <p v-if="!noticiasFiltradas.length" class="empty">
+        {{ pesquisa ? 'Nenhuma notícia encontrada para a pesquisa.' : 'Nenhuma notícia encontrada' }}
+      </p>
     </div>
 
     <NoticiaFormModal :modelValue="showModal" @update:modelValue="val => (showModal = val)" :noticia="editing"
@@ -70,43 +91,17 @@ async function onDelete(id) {
 </template>
 
 <style scoped>
-.news-page {
-  max-width: 620px;
-  margin: 0 auto;
-  padding: 24px 16px 48px;
-  font-family: 'DM Sans', sans-serif;
-}
-
-.controls {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 16px;
-}
-
-.btn-add {
-  background: #1a3f8f;
-  color: #fff;
-  border: none;
-  padding: 9px 18px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.status-erro {
-  color: #dc2626;
-}
-
-.feed {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.empty {
-  color: #5a6a85;
-  text-align: center;
-  padding: 32px 0;
-}
+.news-page{max-width:620px;margin:0 auto;padding:24px 16px 48px;font-family:'DM Sans',sans-serif}
+.controls{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.search-box{display:flex;align-items:center;flex:1;min-width:0;height:40px;padding:0 10px;border:1px solid #d8dfeb;border-radius:999px;background:#fff;color:#5a6a85;box-sizing:border-box}
+.search-box:focus-within{border-color:#1a3f8f;box-shadow:0 0 0 3px rgba(26,63,143,.08)}
+.search-box input{width:100%;min-width:0;border:0;outline:0;background:transparent;padding:0 8px;font:inherit;font-size:13px;color:#0d1f3c}
+.search-box input::placeholder{color:#7b879c}
+.clear-search{display:flex;align-items:center;justify-content:center;border:0;background:transparent;color:#64748b;cursor:pointer;padding:3px;border-radius:50%}
+.clear-search:hover{background:#eef2f7}
+.btn-add{flex:none;background:#1a3f8f;color:#fff;border:none;padding:9px 18px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer}
+.status-erro{color:#dc2626}
+.feed{display:flex;flex-direction:column;gap:20px}
+.empty{color:#5a6a85;text-align:center;padding:32px 0}
+@media (max-width:560px){.controls{align-items:stretch;flex-direction:column}.btn-add{width:100%}}
 </style>
