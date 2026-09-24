@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import NoticiaCarrossel from './NoticiaCarrossel.vue'
 import NoticiaAcoes from './NoticiaAcoes.vue'
 import NoticiaLegenda from './NoticiaLegenda.vue'
-import NoticiaComentariosSheet from './NoticiaComentariosSheet.vue'
+import NoticiaComentariosDialog from './NoticiaComentariosDialog.vue'
 import { noticiasService } from '@/services/noticias'
 const props=defineProps({noticia:{type:Object,required:true},isAdmin:{type:Boolean,default:false}})
 const emit=defineEmits(['editar','excluir'])
@@ -22,7 +22,7 @@ async function compartilhar(){const url=window.location.origin+'/noticias';if(na
 <NoticiaCarrossel :midias="noticia.midias" :titulo="noticia.titulo" :curtido="curtido" @curtir="curtirViaImagem"/>
 <NoticiaAcoes :curtido="curtido" :curtidas-count="curtidasCount" @curtir="alternarCurtida" @comentar="comentariosAbertos=true" @compartilhar="compartilhar"/>
 <NoticiaLegenda :titulo="noticia.titulo" :descricao="noticia.texto" :comentarios-count="comentariosCount" :data-publicacao="noticia.data_publicacao" @ver-comentarios="comentariosAbertos=true"/>
-<NoticiaComentariosSheet v-model="comentariosAbertos" :noticia-id="noticia.id" :is-admin="isAdmin" @comentario-adicionado="onComentarioAdicionado"/>
+<NoticiaComentariosDialog v-model="comentariosAbertos" :noticia-id="noticia.id" @comentario-adicionado="onComentarioAdicionado"/>
 </article>
 </template>
 <style scoped>
