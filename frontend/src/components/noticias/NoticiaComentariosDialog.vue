@@ -56,7 +56,7 @@ function fechar() {
 </script>
 
 <template>
-  <v-dialog :model-value="modelValue" @update:model-value="$emit('update:modelValue', $event)" max-width="480">
+  <v-bottom-sheet :model-value="modelValue" @update:model-value="$emit('update:modelValue', $event)" inset>
     <v-card class="comentarios-modal">
       <v-card-title class="modal-title">
         Comentários
@@ -94,7 +94,7 @@ function fechar() {
       </div>
       <p v-if="!user" class="aviso-login">Faça login para comentar.</p>
     </v-card>
-  </v-dialog>
+  </v-bottom-sheet>
 </template>
 
 <style scoped>
@@ -103,6 +103,8 @@ function fechar() {
   font-family: 'DM Sans', sans-serif;
   padding: 4px;
   max-height: 80vh;
+  width: min(100%, 560px);
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
 }
