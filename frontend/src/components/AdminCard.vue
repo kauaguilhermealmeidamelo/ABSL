@@ -1,127 +1,97 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { computed, ref } from 'vue'
 import logoImg from '@/assets/logo.png'
 import { useRouter } from 'vue-router'
-import { login, logout } from '@/services/auth'
+import { logout } from '@/services/auth'
 import { user } from '@/stores/auth'
-
+import { useAdmin } from '@/composables/useAdmin'
+import LoginForm from '@/components/auth/LoginForm.vue'
+import RegisterForm from '@/components/auth/RegisterForm.vue'
+import AccountForm from '@/components/auth/AccountForm.vue'
 const router = useRouter()
+const { isAdmin } = useAdmin()
 const open = ref(false)
-const email = ref('')
-const password = ref('')
-const loading = ref(false)
-const error = ref('')
-
+const modo = ref('login')
+const aba = ref('conta')
 const isLoggedIn = computed(() => !!user.value)
-
-async function submit() {
-  error.value = ''
-
-  if (!email.value || !password.value) {
-    error.value = 'Informe e-mail e senha.'
-    return
-  }
-
-  loading.value = true
-  try {
-    await login(email.value, password.value)
-    email.value = ''
-    password.value = ''
-    open.value = false
-    // no refresh needed; auth store updates reactivity
-  } catch (err) {
-    error.value = err?.response?.data?.message || 'Credenciais inválidas.'
-  } finally {
-    loading.value = false
-  }
-}
-
-async function doLogout() {
-  try {
-    await logout()
-  } finally {
-    router.replace('/')
-  }
-}
-
-function goUsuarios() {
-  router.push('/usuarios')
-}
+const titulo = computed(() => {
+  if (!isLoggedIn.value) return modo.value === 'login' ? 'Entrar' : 'Criar conta'
+  return 'Minha conta'
+})
+function abrir(m) { modo.value = m; aba.value = 'conta'; open.value = true }
+function aoEntrar() { open.value = false; if (isAdmin.value) router.push('/usuarios') }
+async function doLogout() { try { await logout() } finally { open.value = false; router.replace('/') } }
+function goUsuarios() { open.value = false; router.push('/usuarios') }
 </script>
 
 <template>
   <div class="admin-card">
     <div v-if="!isLoggedIn">
-      <v-btn variant="flat" class="login-btn" block @click="open = true">
+      <v-btn variant="flat" class="login-btn" block @click="abrir('login')">
         <v-icon color="#F17100" class="mr-2">mdi-login-variant</v-icon>
-        <span class="login-text">Login administrativo</span>
+        <span class="login-text">Entrar</span>
       </v-btn>
-
       <v-dialog v-model="open" max-width="480" content-class="admin-modal-wrap">
         <v-card class="admin-modal">
           <v-card-title class="popup-title">
             <div class="title-row">
               <v-img :src="logoImg" class="logo-small" contain />
               <div class="title-block">
-                <div class="title">Login Administrativo</div>
+                <div class="title">{{ titulo }}</div>
                 <div class="subtitle">ABSL — Grêmio Athos Bulcão</div>
               </div>
             </div>
-            <v-btn icon variant="text" class="close-btn" @click="open = false">
+            <v-btn icon variant="text" class="close-btn" aria-label="Fechar" @click="open = false">
               <v-icon>mdi-close</v-icon>
             </v-btn>
           </v-card-title>
-
           <v-card-text class="modal-scroll-area">
-            <label class="field-label">E-mail</label>
-            <v-text-field
-              v-model="email"
-              placeholder="Insira o e-mail"
-              type="email"
-              density="comfortable"
-              hide-details
-              variant="solo"
-              flat
-              class="password-field"
-              @keydown.enter="submit"
-            />
-
-            <label class="field-label field-label-spaced">Senha</label>
-            <v-text-field
-              v-model="password"
-              placeholder="Insira a senha"
-              type="password"
-              density="comfortable"
-              hide-details
-              variant="solo"
-              flat
-              class="password-field"
-              @keydown.enter="submit"
-            />
-
-            <div class="actions-row">
-              <v-btn :loading="loading" class="enter-btn" block @click="submit">Entrar</v-btn>
+            <div class="tabs" role="tablist" aria-label="Alternar entre entrar e criar conta">
+              <button type="button" role="tab" :aria-selected="modo === 'login'" class="tab" :class="{ ativo: modo === 'login' }" @click="modo = 'login'">Entrar</button>
+              <button type="button" role="tab" :aria-selected="modo === 'cadastro'" class="tab" :class="{ ativo: modo === 'cadastro' }" @click="modo = 'cadastro'">Criar conta</button>
             </div>
-
-            <div v-if="error" class="error">{{ error }}</div>
+            <LoginForm v-if="modo === 'login'" @logado="aoEntrar" />
+            <RegisterForm v-else @registrado="aoEntrar" />
           </v-card-text>
         </v-card>
       </v-dialog>
     </div>
-
     <div v-else class="admin-options">
-      <v-btn variant="flat" class="login-btn" block @click="goUsuarios">
+      <v-btn variant="flat" class="login-btn" block @click="abrir('conta')">
+        <v-icon color="#F17100" class="mr-2">mdi-account-circle-outline</v-icon>
+        <span class="login-text">Minha conta</span>
+      </v-btn>
+      <v-btn v-if="isAdmin" variant="flat" class="login-btn" block @click="goUsuarios">
         <v-icon color="#F17100" class="mr-2">mdi-account-supervisor</v-icon>
         <span class="login-text">Área administrativa</span>
       </v-btn>
-
       <v-btn variant="flat" class="login-btn" block @click="doLogout">
         <v-icon color="#F17100" class="mr-2">mdi-logout</v-icon>
         <span class="login-text">Sair</span>
       </v-btn>
+      <v-dialog v-model="open" max-width="480" content-class="admin-modal-wrap">
+        <v-card class="admin-modal">
+          <v-card-title class="popup-title">
+            <div class="title-row">
+              <v-img :src="logoImg" class="logo-small" contain />
+              <div class="title-block">
+                <div class="title">Minha conta</div>
+                <div class="subtitle">ABSL — Grêmio Athos Bulcão</div>
+              </div>
+            </div>
+            <v-btn icon variant="text" class="close-btn" aria-label="Fechar" @click="open = false">
+              <v-icon>mdi-close</v-icon>
+            </v-btn>
+          </v-card-title>
+          <v-card-text class="modal-scroll-area">
+            <AccountForm @salvo="open = false" />
+          </v-card-text>
+        </v-card>
+      </v-dialog>
     </div>
   </div>
 </template>
+
 
 <style scoped>
 .admin-card {
@@ -189,6 +159,36 @@ function goUsuarios() {
 .modal-scroll-area {
   overflow-y: auto;
   padding: 8px 20px 4px;
+}
+
+.tabs {
+  display: flex;
+  background: #eef1f6;
+  border-radius: 999px;
+  padding: 3px;
+  margin-bottom: 16px;
+}
+.tab {
+  flex: 1;
+  border: none;
+  background: transparent;
+  border-radius: 999px;
+  padding: 10px 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #5a6a85;
+  cursor: pointer;
+  font-family: inherit;
+  min-height: 44px;
+}
+.tab.ativo {
+  background: #fff;
+  color: #0f2038;
+  box-shadow: 0 1px 4px rgba(13, 31, 60, 0.12);
+}
+.tab:focus-visible {
+  outline: 2px solid #16509b;
+  outline-offset: 1px;
 }
 
 .field-label {

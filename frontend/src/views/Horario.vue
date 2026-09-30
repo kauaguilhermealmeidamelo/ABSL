@@ -1,9 +1,10 @@
-<script setup>
-import { ref, computed } from 'vue'
+<script setup lang="ts">
+import { computed, onMounted, ref, watch } from 'vue'
 import FiltrosHorario from '@/components/horario/FiltrosHorario.vue'
 import TabelaHorario from '@/components/horario/TabelaHorario.vue'
 import AdminBanner from '@/components/common/AdminBanner.vue'
 import { useAdmin } from '@/composables/useAdmin'
+import { user, readTurmaVisitante, saveTurmaVisitante } from '@/stores/auth'
 import {
   TURNO_ANOS, turmasState, DAYS, MAT_SLOTS, VES_SLOTS, SUBJECTS,
   getSchedule, setHorarioOverride,
@@ -15,24 +16,58 @@ const turno = ref('matutino')
 const ano = ref('2º ano')
 const turma = ref('2A')
 
-const anos = computed(() => TURNO_ANOS[turno.value])
+// Turma efetiva: perfil do logado tem prioridade; visitante usa fallback.
+function turmaEfetiva() {
+  if (user.value?.turma) return user.value.turma
+  return readTurmaVisitante() ?? ''
+}
+
+function aplicarTurmaEfetiva() {
+  const codigo = turmaEfetiva()
+  if (!codigo) return
+  // Descobre turno/ano do código nas turmas carregadas.
+  for (const [t, anos] of Object.entries(turmasState)) {
+    for (const [a, codigos] of Object.entries(anos as Record<string, string[]>)) {
+      if ((codigos as string[]).includes(codigo)) {
+        turno.value = t
+        ano.value = a
+        turma.value = codigo
+        return
+      }
+    }
+  }
+}
+
+// Sincroniza quando o login troca o perfil (localStorage nunca sobrescreve).
+watch(() => user.value?.turma, () => aplicarTurmaEfetiva())
+
+onMounted(() => aplicarTurmaEfetiva())
+
+const anos = computed(() => TURNO_ANOS[turno.value] ?? [])
 const turmas = computed(() => turmasState[turno.value]?.[ano.value] ?? [])
 const slots = computed(() => (turno.value === 'matutino' ? MAT_SLOTS : VES_SLOTS))
 const schedule = computed(() => getSchedule(turma.value))
 
-function onTurnoChange(value) {
+function onTurnoChange(value: string) {
   turno.value = value
-  const newAno = TURNO_ANOS[value][0]
+  const newAno: string = TURNO_ANOS[value]?.[0] ?? ano.value
   ano.value = newAno
   turma.value = turmasState[value]?.[newAno]?.[0] ?? ''
+  if (!user.value) saveTurmaVisitante(turma.value || null)
 }
 
-function onAnoChange(value) {
+function onAnoChange(value: string) {
   ano.value = value
   turma.value = turmasState[turno.value]?.[value]?.[0] ?? ''
+  if (!user.value) saveTurmaVisitante(turma.value || null)
 }
 
-function onEditarAula({ day, time, subject }) {
+function onTurmaChange(value: string) {
+  turma.value = value
+  if (!user.value) saveTurmaVisitante(value || null)
+}
+
+function onEditarAula({ day, time, subject }: { day: string; time: string; subject: string }) {
   setHorarioOverride(turma.value, day, time, subject)
 }
 </script>
@@ -58,7 +93,7 @@ function onEditarAula({ day, time, subject }) {
       :turmas="turmas"
       @update:turno="onTurnoChange"
       @update:ano="onAnoChange"
-      @update:turma="(v) => (turma = v)"
+      @update:turma="onTurmaChange"
     />
 
     <TabelaHorario

@@ -16,7 +16,10 @@ use App\Http\Controllers\Api\{
     AuthController,
     VisitaController,
     AdminUserController,
-    LogController
+    LogController,
+    NoticiaCurtidaController,
+    NoticiaComentarioController,
+    NoticiaMidiaController
 };
 
 // Rotas públicas de autenticação — throttle aqui, que é onde a requisição
@@ -25,8 +28,18 @@ Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:6,
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:6,1');
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 
+// Verificação de e-mail oficial do Laravel (MustVerifyEmail).
+// A SPA usa /api/user para saber se email_verified_at já foi preenchido;
+// os links do e-mail apontam para rotas web assinadas abaixo.
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/email/verification-notification', [AuthController::class, 'resendVerification'])
+        ->middleware('throttle:6,1');
+    Route::put('/me', [AuthController::class, 'updateProfile']);
+});
+
 Route::get('/noticias', [NoticiaController::class, 'index']);
 Route::get('/noticias/{id}', [NoticiaController::class, 'show']);
+Route::get('/noticias/{id}/comentarios', [NoticiaComentarioController::class, 'index']);
 Route::get('/projetos', [ProjetoController::class, 'index']);
 Route::get('/projetos/{id}', [ProjetoController::class, 'show']);
 Route::get('/cardapio', [CardapioController::class, 'index']);
@@ -62,10 +75,18 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 // backend/routes/api.php
 // ...tudo que já era 'admin' vira 'staff', exceto /admin/usuarios que fica 'admin'
 
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/noticias/{id}/curtir', [NoticiaCurtidaController::class, 'toggle']);
+    Route::post('/noticias/{id}/comentarios', [NoticiaComentarioController::class, 'store']);
+});
+
 Route::middleware(['auth:sanctum', 'staff'])->group(function () {
     Route::post('/noticias', [NoticiaController::class, 'store']);
     Route::put('/noticias/{id}', [NoticiaController::class, 'update']);
     Route::delete('/noticias/{id}', [NoticiaController::class, 'destroy']);
+    Route::post('/noticias/{id}/midias', [NoticiaMidiaController::class, 'store']);
+    Route::delete('/noticias/{id}/midias/{midiaId}', [NoticiaMidiaController::class, 'destroy']);
+    Route::delete('/noticias/{id}/comentarios/{comentarioId}', [NoticiaComentarioController::class, 'destroy']);
 
     Route::post('/projetos', [ProjetoController::class, 'store']);
     Route::put('/projetos/{id}', [ProjetoController::class, 'update']);

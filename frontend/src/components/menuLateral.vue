@@ -1,28 +1,19 @@
 <script setup>
 import logoImg from "@/assets/logo.png"
+import { useAdmin } from '@/composables/useAdmin'
 import { computed } from 'vue'
 import { user } from '@/stores/auth'
 import { useRoute } from 'vue-router'
 import AdminCard from '@/components/AdminCard.vue'
 
 const route = useRoute()
+const { isAdmin } = useAdmin()
 
 const props = defineProps({
   modelValue: { type: Boolean, default: true },
   mobile: { type: Boolean, default: false },
 })
 const emit = defineEmits(['update:modelValue'])
-
-const isAdmin = computed(() => {
-  const parsedUser = user.value
-  if (!parsedUser) return false
-  try {
-    const role = String(parsedUser.role || parsedUser.tipo || parsedUser.perfil || parsedUser.is_admin || parsedUser.administrador || '').toLowerCase()
-    return role === 'admin' || role === 'administrator' || role === 'administrador' || role === 'super_admin' || role === 'super-admin' || parsedUser.is_admin === true || parsedUser.administrador === true
-  } catch {
-    return String(parsedUser).toLowerCase().includes('admin')
-  }
-})
 
 const isLoggedIn = computed(() => !!user.value)
 

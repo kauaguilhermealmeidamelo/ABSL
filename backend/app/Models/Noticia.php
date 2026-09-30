@@ -23,4 +23,19 @@ class Noticia extends Model
         'destaque' => 'boolean',
         'ativo' => 'boolean',
     ];
-}   
+
+    public function midias()
+    {
+        return $this->hasMany(NoticiaMidia::class)->orderBy('ordem');
+    }
+
+    public function curtidas()
+    {
+        return $this->hasMany(NoticiaCurtida::class);
+    }
+
+    public function comentarios()
+    {
+        return $this->hasMany(NoticiaComentario::class);
+    }
+}

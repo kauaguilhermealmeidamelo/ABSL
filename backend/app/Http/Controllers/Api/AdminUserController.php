@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Support\Auditoria;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class AdminUserController extends Controller
 {
@@ -22,6 +23,7 @@ class AdminUserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8',
+            'turma' => ['nullable', 'string', 'max:10', Rule::exists('turmas', 'codigo')],
             'role' => 'required|in:admin,imprensa,user',
         ]);
 

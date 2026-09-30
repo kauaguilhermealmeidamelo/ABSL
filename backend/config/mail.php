@@ -100,6 +100,25 @@ return [
     ],
 
     /*
+    |------------------------------------------------------------------------
+    | Markdown Mail Settings
+    |------------------------------------------------------------------------
+    |
+    | 'paths' aponta para as views de mail PUBLICADAS no projeto
+    | (resources/views/vendor/mail), que têm prioridade sobre as views do
+    | framework. É assim que passamos a customizar o layout dos e-mails
+    | (header, footer, botão, cores) sem editar o vendor.
+    |
+    */
+
+    'markdown' => [
+        'theme' => 'default',
+        'paths' => [
+            resource_path('views/vendor/mail'),
+        ],
+    ],
+
+    /*
     |--------------------------------------------------------------------------
     | Global "From" Address
     |--------------------------------------------------------------------------
