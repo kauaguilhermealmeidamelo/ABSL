@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\SitemapController;
+use App\Models\User;
+use Illuminate\Auth\Events\Verified;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Support\Facades\Route;
 
@@ -34,7 +36,7 @@ Route::get('/email/verify/{id}/{hash}', function (int $id, string $hash) {
     }
 
     return redirect()->away(
-        rtrim(env('FRONTEND_URL', 'http://localhost:5173'), '/').'/conta?verificado=1'
+        rtrim(config('app.frontend_url'), '/').'/conta?verificado=1'
     );
 })->middleware('signed')->name('verification.verify');
 

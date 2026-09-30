@@ -56,6 +56,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Frontend URL
+    |--------------------------------------------------------------------------
+    | URL pública da SPA Vue. Usada pelo redirect pós-verificação de e-mail
+    | (routes/web.php). Precisa estar em config — env() fora dos arquivos de
+    | config retorna o padrão quando o deploy roda "php artisan config:cache".
+    */
+
+    'frontend_url' => env('FRONTEND_URL', 'http://localhost:5173'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |
