@@ -20,13 +20,23 @@ Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap')
 // Verificação de e-mail (links assinados enviados pelo VerifyEmail).
 // O FRONTEND_URL deve apontar para a SPA (ex: http://localhost:5173) para
 // que o usuário volte ao site após clicar no link do e-mail.
-Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
-    $request->fulfill();
+Route::get('/email/verify/{id}/{hash}', function (int $id, string $hash) {
+    // A URL de verificação é assinada e contém o ID/hash do usuário.
+    // Não exigimos sessão aqui para que o link funcione ao abrir o e-mail
+    // em outro dispositivo ou navegador.
+    $user = User::findOrFail($id);
+
+    abort_unless(hash_equals(sha1($user->getEmailForVerification()), $hash), 403);
+
+    if (! $user->hasVerifiedEmail()) {
+        $user->forceFill(['email_verified_at' => now()])->save();
+        event(new Verified($user));
+    }
 
     return redirect()->away(
         rtrim(env('FRONTEND_URL', 'http://localhost:5173'), '/').'/conta?verificado=1'
     );
-})->middleware(['auth', 'signed'])->name('verification.verify');
+})->middleware('signed')->name('verification.verify');
 
 Route::get('/{any}', function () {
     $indexPath = public_path('index.html');
