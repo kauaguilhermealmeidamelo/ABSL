@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
 
 // Rotas de sessão precisam do grupo 'web' (StartSession); rotas api.php
@@ -47,4 +48,46 @@ class AuthFluxoTest extends TestCase
         $this->assertFalse($v300->fails());
         $this->assertTrue($v301->fails());
     }
+    public function test_email_verification_works_without_session(): void
+    {
+        $user = \App\Models\User::factory()->unverified()->create([
+            'email' => 'verificacao@example.com',
+        ]);
+
+        $url = URL::temporarySignedRoute(
+            'verification.verify',
+            now()->addMinutes(10),
+            [
+                'id' => $user->id,
+                'hash' => sha1($user->getEmailForVerification()),
+            ]
+        );
+
+        $response = $this->get($url);
+
+        $response->assertRedirect('/conta?verificado=1');
+        $this->assertNotNull($user->fresh()->email_verified_at);
+    }
+
+    public function test_email_verification_rejects_invalid_hash(): void
+    {
+        $user = \App\Models\User::factory()->unverified()->create([
+            'email' => 'verificacao-invalida@example.com',
+        ]);
+
+        $url = URL::temporarySignedRoute(
+            'verification.verify',
+            now()->addMinutes(10),
+            [
+                'id' => $user->id,
+                'hash' => sha1('outro-email@example.com'),
+            ]
+        );
+
+        $response = $this->get($url);
+
+        $response->assertForbidden();
+        $this->assertNull($user->fresh()->email_verified_at);
+    }
+
 }
