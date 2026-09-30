@@ -75,6 +75,12 @@ const routes = [
         meta: { public: true, title: 'Localização | CEMSL - Brasília', description: 'Encontre a localização do CEMSL no Setor Leste de Brasília e consulte informações para chegar à instituição.' }
       },
       {
+        path: 'conta',
+        name: 'conta',
+        component: () => import('@/views/MinhaConta.vue'),
+        meta: { title: 'Minha conta | ABSL', description: 'Gerencie seu perfil no portal ABSL.' },
+      },
+      {
         path: 'usuarios',
         name: 'usuarios',
         component: () => import('@/views/Usuarios.vue'),

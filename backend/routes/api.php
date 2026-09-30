@@ -28,6 +28,15 @@ Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:6,
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:6,1');
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 
+// Verificação de e-mail oficial do Laravel (MustVerifyEmail).
+// A SPA usa /api/user para saber se email_verified_at já foi preenchido;
+// os links do e-mail apontam para rotas web assinadas abaixo.
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/email/verification-notification', [AuthController::class, 'resendVerification'])
+        ->middleware('throttle:6,1');
+    Route::put('/me', [AuthController::class, 'updateProfile']);
+});
+
 Route::get('/noticias', [NoticiaController::class, 'index']);
 Route::get('/noticias/{id}', [NoticiaController::class, 'show']);
 Route::get('/noticias/{id}/comentarios', [NoticiaComentarioController::class, 'index']);

@@ -4,24 +4,23 @@ import api from '@/services/api'
 export interface AuthUser {
   id: number
   name: string
+  username?: string | null
   email: string
+  email_verified_at?: string | null
   is_admin?: boolean
   role?: string
   turma?: string | null
 }
 
-interface LoginResponse {
+interface SessionResponse {
   user?: AuthUser
 }
 
-// Tempo máximo (ms) que consideramos uma sessão de admin válida no frontend.
-// Deve ficar igual (ou menor) que SESSION_LIFETIME do backend (em minutos,
-// configurado em backend/.env). Depois desse tempo, o admin é deslogado
-// automaticamente e volta a navegar como usuário comum.
-const SESSION_LIFETIME_MS = 120 * 60 * 1000 // 120 minutos
+// Chave do fallback de turma para visitantes (sem login).
+// Para usuário logado, a fonte de verdade é SEMPRE user.turma (perfil).
+export const TURMA_VISITANTE_KEY = 'turma_visitante'
 
 const USER_KEY = 'usuario'
-const LOGIN_AT_KEY = 'usuario_login_at'
 
 function readStoredUser(): AuthUser | null {
   try {
@@ -32,61 +31,57 @@ function readStoredUser(): AuthUser | null {
   }
 }
 
-function readLoginAt(): number | null {
-  const raw = localStorage.getItem(LOGIN_AT_KEY)
-  const parsed = raw ? Number(raw) : null
-  return parsed && !Number.isNaN(parsed) ? parsed : null
+/**
+ * Turma efetiva: perfil do usuário logado tem prioridade; visitante usa
+ * o fallback de localStorage. localStorage NUNCA sobrescreve o perfil.
+ */
+export function readTurmaVisitante(): string | null {
+  try {
+    return localStorage.getItem(TURMA_VISITANTE_KEY)
+  } catch {
+    return null
+  }
+}
+
+export function saveTurmaVisitante(codigo: string | null): void {
+  try {
+    if (!codigo) localStorage.removeItem(TURMA_VISITANTE_KEY)
+    else localStorage.setItem(TURMA_VISITANTE_KEY, codigo)
+  } catch {
+    // localStorage indisponível — segue sem persistir
+  }
 }
 
 export const user = ref<AuthUser | null>(null)
-let loginAt: number | null = null
 
-export function setSession(data: LoginResponse): void {
+export function setSession(data: SessionResponse): void {
   if (data?.user) {
     user.value = data.user
-    loginAt = Date.now()
     localStorage.setItem(USER_KEY, JSON.stringify(user.value))
-    localStorage.setItem(LOGIN_AT_KEY, String(loginAt))
   }
 }
 
 export function clearSession(): void {
   user.value = null
-  loginAt = null
   localStorage.removeItem(USER_KEY)
-  localStorage.removeItem(LOGIN_AT_KEY)
-}
-
-function isExpiredLocally(): boolean {
-  return !!loginAt && Date.now() - loginAt > SESSION_LIFETIME_MS
 }
 
 export function initSession(): void {
   user.value = readStoredUser()
-  loginAt = readLoginAt()
-
-  // Se já passou do tempo limite desde o último login (ex: aba ficou aberta
-  // de um dia pro outro), desloga na hora, sem esperar uma chamada à API.
-  if (user.value && isExpiredLocally()) {
-    clearSession()
-  }
 }
 
 /**
- * Confirma junto ao backend se a sessão ainda é válida. Cobre o caso do
- * cookie de sessão do Laravel ter expirado (SESSION_LIFETIME) mesmo dentro
- * da janela local — o backend é sempre a fonte da verdade final.
+ * Fonte de verdade é o backend: pergunta se a sessão/cookie ainda é válida
+ * e sincroniza o estado local. Não há mais expiração artificial por
+ * cronômetro no frontend (o "Lembrar de mim" / remember_token do Laravel
+ * continua válido mesmo após SESSION_LIFETIME de inatividade).
  */
 export async function checkSession(): Promise<void> {
   if (!user.value) return
 
-  if (isExpiredLocally()) {
-    clearSession()
-    return
-  }
-
   try {
-    await api.get('/user')
+    const { data } = await api.get<AuthUser>('/user')
+    if (data) setSession({ user: data })
   } catch (err: any) {
     const status = err?.response?.status
     if (status === 401 || status === 419) {

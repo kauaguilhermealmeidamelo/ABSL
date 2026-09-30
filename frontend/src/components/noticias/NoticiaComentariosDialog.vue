@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { noticiasService } from '@/services/noticias'
 import { user } from '@/stores/auth'
 
@@ -15,6 +15,8 @@ const loading = ref(false)
 const error = ref('')
 const texto = ref('')
 const enviando = ref(false)
+const LIMITE = 300
+const restantes = computed(() => LIMITE - texto.value.length)
 
 async function carregar() {
   if (!props.noticiaId) return
@@ -34,17 +36,20 @@ watch(() => [props.modelValue, props.noticiaId], ([open]) => {
 })
 
 async function enviar() {
-  if (!texto.value.trim()) return
+  const valor = texto.value.trim()
+  if (!valor || valor.length > LIMITE) return
   enviando.value = true
   try {
-    const criado = await noticiasService.comentar(props.noticiaId, texto.value)
+    const criado = await noticiasService.comentar(props.noticiaId, valor)
     comentarios.value = [...comentarios.value, criado]
     texto.value = ''
     emit('comentario-adicionado')
   } catch (err) {
     error.value = err?.response?.status === 401
       ? 'Faça login para comentar.'
-      : 'Não foi possível enviar o comentário.'
+      : err?.response?.status === 422
+        ? 'Comentário muito longo. Máximo de 300 caracteres.'
+        : 'Não foi possível enviar o comentário.'
   } finally {
     enviando.value = false
   }
@@ -86,12 +91,15 @@ function fechar() {
           class="comentar-input"
           placeholder="Adicione um comentário..."
           :disabled="!user"
+          :maxlength="LIMITE"
+          aria-label="Escreva seu comentário"
           @keydown.enter="enviar"
         />
-        <button type="button" class="comentar-enviar" :disabled="enviando || !texto.trim() || !user" @click="enviar">
+        <button type="button" class="comentar-enviar" :disabled="enviando || !texto.trim() || texto.trim().length > LIMITE || !user" @click="enviar">
           Enviar
         </button>
       </div>
+      <p class="contador" :class="{ 'contador-estouro': restantes < 0 }">{{ texto.length }} / {{ LIMITE }}</p>
       <p v-if="!user" class="aviso-login">Faça login para comentar.</p>
     </v-card>
   </v-bottom-sheet>
@@ -214,5 +222,16 @@ function fechar() {
   color: #94a3b8;
   padding: 0 20px 12px;
   margin: 0;
+}
+.contador {
+  text-align: right;
+  font-size: 11.5px;
+  color: #94a3b8;
+  padding: 0 20px 12px;
+  margin: 0;
+}
+.contador-estouro {
+  color: #dc2626;
+  font-weight: 700;
 }
 </style>

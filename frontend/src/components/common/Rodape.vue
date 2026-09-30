@@ -6,7 +6,7 @@ const contatos = {
   gremioEmail: 'mailto:gremio.athosbulcao.sl@gmail.com',
   linkedin: 'https://www.linkedin.com/in/kau%C3%A3-guilherme-15711026b/?isSelfProfile=true',
   github: 'https://github.com/kauaguilhermealmeidamelo/',
-  criadorInstagram: 'https://www.instagram.com/mello.gk_/',
+  criadorInstagram: 'https://www.instagram.com/dev.mellogk/',
   criadorEmail: 'mailto:kauagmelotrabalho@gmail.com',
 }
 </script>

@@ -23,16 +23,11 @@ import { visitasService } from '@/services/visitas'
 import 'vuetify/styles'
 
 import '@/assets/theme.css'
-bootstrap()
 
-
-setupAuthInterceptor(clearSession)
-
-
-await initAppData().catch(() => { })
-visitasService.registrar() // fire-and-forget, não bloqueia o boot
 
 async function bootstrap() {
+	setupAuthInterceptor(clearSession)
+
 	const app = createApp(App)
 	registerPlugins(app)
 	app.use(router)
@@ -52,4 +47,8 @@ async function bootstrap() {
 	}, 5 * 60 * 1000) // a cada 5 minutos
 
 	app.mount('#app')
+
+	visitasService.registrar() // fire-and-forget, não bloqueia o boot
 }
+
+bootstrap()

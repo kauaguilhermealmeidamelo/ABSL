@@ -26,7 +26,7 @@ class NoticiaComentarioController extends Controller
     {
         $noticia = Noticia::findOrFail($id);
 
-        $data = $request->validate(['texto' => 'required|string|max:500']);
+        $data = $request->validate(['texto' => 'required|string|max:300']);
 
         $comentario = NoticiaComentario::create([
             'noticia_id' => $noticia->id,
