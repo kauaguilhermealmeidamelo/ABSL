@@ -15,7 +15,7 @@ const { isAdmin, isSuperAdmin } = useAdmin()
     <section class="quick-grid" aria-label="Módulos do painel">
       <router-link to="/admin/o-gremio" class="quick-card"><v-icon>mdi-account-group-outline</v-icon><strong>O Grêmio</strong><span>Informações institucionais.</span></router-link>
       <router-link v-if="isSuperAdmin" to="/admin/usuarios" class="quick-card"><v-icon>mdi-account-supervisor-outline</v-icon><strong>Usuários</strong><span>Contas e acessos do sistema.</span></router-link>
-      <router-link v-if="isAdmin" to="/admin/logs" class="quick-card"><v-icon>mdi-text-box-search-outline</v-icon><strong>Logs</strong><span>Registro das ações administrativas.</span></router-link>
+      <router-link v-if="isSuperAdmin" to="/admin/logs" class="quick-card"><v-icon>mdi-text-box-search-outline</v-icon><strong>Logs</strong><span>Registro das ações administrativas.</span></router-link>
     </section>
   </div>
 </template>
