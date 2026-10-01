@@ -393,11 +393,7 @@ export async function initAppData(): Promise<void> {
         cardapioDias[item.dia_semana] = item.descricao
         cardapioMap[item.dia_semana] = item
       }
-      if (cardRes.data.length) {
-        const first = cardRes.data[0]!.data
-        const last = cardRes.data[cardRes.data.length - 1]!.data
-        cardapioSemana.value = `${first} → ${last}`
-      }
+
     }
 
     const horarioRes = await api.get<HorarioApiItem[]>('/horario').catch(() => ({ data: [] as HorarioApiItem[] }))
