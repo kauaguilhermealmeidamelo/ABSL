@@ -1,13 +1,20 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import OuvintesLista from '@/components/ouvintes/OuvintesLista.vue'
 import OuvintesRespondidasLista from '@/components/ouvintes/OuvintesRespondidasLista.vue'
 import { ouvintesService } from '@/services/ouvintes'
+import GerenciamentoTabs from '@/components/gerenciamento/GerenciamentoTabs.vue'
 
 const pendentes = ref([])
 const respondidas = ref([])
 const loading = ref(false)
 const error = ref('')
+const categoria = ref('pendentes')
+
+const tabs = computed(() => [
+  { id: 'pendentes', label: `Pendentes (${pendentes.value.length})`, icon: 'mdi-clock-outline' },
+  { id: 'respondidas', label: `Respondidas (${respondidas.value.length})`, icon: 'mdi-check-circle-outline' },
+])
 
 async function carregar() {
   loading.value = true
@@ -36,17 +43,19 @@ onMounted(carregar)
       <p>Consulte e acompanhe as manifestações recebidas.</p>
     </div>
 
+    <GerenciamentoTabs v-model="categoria" :tabs="tabs" />
+
     <p v-if="loading" class="state">Carregando...</p>
     <p v-else-if="error" class="state error">{{ error }}</p>
 
     <template v-else>
-      <section>
-        <h3>Pendentes</h3>
+      <section v-if="categoria === 'pendentes'">
+        <h3>Manifestações pendentes</h3>
         <OuvintesLista :mensagens="pendentes" />
       </section>
 
-      <section>
-        <h3>Respondidas</h3>
+      <section v-else>
+        <h3>Manifestações respondidas</h3>
         <OuvintesRespondidasLista :mensagens="respondidas" :loading="false" :error="''" />
       </section>
     </template>
@@ -54,5 +63,5 @@ onMounted(carregar)
 </template>
 
 <style scoped>
-.manager{display:flex;flex-direction:column;gap:22px;font-family:'DM Sans',sans-serif}.manager h2{margin:0;color:#0d1f3c}.manager p{margin:5px 0 0;color:#5a6a85;font-size:13px}.manager h3{margin:0 0 10px;color:#0d1f3c;font-size:15px}.state{padding:28px 0;color:#5a6a85}.error{color:#dc2626}
+.manager{display:flex;flex-direction:column;gap:14px;font-family:'DM Sans',sans-serif}.manager h2{margin:0;color:#0d1f3c}.manager p{margin:5px 0 0;color:#5a6a85;font-size:13px}.manager h3{margin:0 0 10px;color:#0d1f3c;font-size:15px}.state{padding:28px 0;color:#5a6a85}.error{color:#dc2626}
 </style>
