@@ -69,11 +69,15 @@ function irPara(path) {
 function conhecerGremio() {
   router.push('/o-gremio')
 }
+
+function participar() {
+  router.push('/ouvintes')
+}
 </script>
 
 <template>
   <main class="home">
-    <Banner @conhecer-gremio="conhecerGremio" />
+    <Banner @conhecer-gremio="conhecerGremio" @participar="participar" />
 
     <section class="section" aria-labelledby="noticias-title">
       <div class="heading">
