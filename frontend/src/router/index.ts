@@ -15,6 +15,12 @@ const routes = [
         meta: { public: true, title: 'Início | CEMSL - Brasília', description: 'Conheça o CEMSL em Brasília, no Setor Leste. Acesse notícias, projetos, horários e informações da comunidade escolar.' }
       },
       {
+        path: 'o-gremio',
+        name: 'o-gremio',
+        component: () => import('@/views/Ogremio.vue'),
+        meta: { public: true, title: 'O Grêmio | CEMSL - Brasília', description: 'Conheça o Grêmio Estudantil Athos Bulcão, sua organização e as diretorias do CEMSL em Brasília, no Setor Leste.' }
+      },
+      {
         path: 'horario',
         name: 'horario',
         component: () => import('@/views/Horario.vue'),
