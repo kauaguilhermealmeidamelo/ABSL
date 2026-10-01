@@ -15,8 +15,10 @@ function fecharVideo() {
 }
 
 
+const emit = defineEmits(['conhecer-gremio'])
+
 function irParaEquipe() {
-  document.getElementById('equipe')?.scrollIntoView({ behavior: 'smooth' })
+  emit('conhecer-gremio')
 }
 
 </script>
