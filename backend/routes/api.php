@@ -130,6 +130,7 @@ Route::middleware(['auth:sanctum', 'staff'])->group(function () {
 Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::get('/admin/usuarios', [AdminUserController::class, 'index']);
     Route::post('/admin/usuarios', [AdminUserController::class, 'store']);
+    Route::put('/admin/usuarios/{id}', [AdminUserController::class, 'update']);
     Route::put('/admin/usuarios/{id}/senha', [AdminUserController::class, 'updatePassword']);
     Route::delete('/admin/usuarios/{id}', [AdminUserController::class, 'destroy']);
 
