@@ -63,7 +63,7 @@ return [
     | config retorna o padrão quando o deploy roda "php artisan config:cache".
     */
 
-    'frontend_url' => env('FRONTEND_URL', 'http://localhost:5173'),
+    'frontend_url' => env('FRONTEND_URL', env('APP_URL', 'http://localhost:5173')),
 
     /*
     |--------------------------------------------------------------------------
