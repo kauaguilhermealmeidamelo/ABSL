@@ -1,11 +1,11 @@
 <script setup>
 import { computed, ref } from 'vue'
-const props=defineProps({titulo:{type:String,required:true},descricao:{type:String,required:true},comentariosCount:{type:Number,default:0},dataPublicacao:{type:String,default:''}})
+const props=defineProps({titulo:{type:String,required:true},descricao:{type:String,required:true},comentariosCount:{type:Number,default:0},dataPublicacao:{type:String,default:''},categoria:{type:String,default:''}})
 defineEmits(['verComentarios'])
 const LIMITE=90,expandido=ref(false),isLongo=computed(()=>props.descricao.length>100),textoResumido=computed(()=>props.descricao.slice(0,LIMITE))
 </script>
 <template>
-<div class="legenda">
+<div class="legenda"><p v-if="categoria" class="legenda-categoria">{{ categoria }}</p>
 <p class="legenda-texto"><span class="legenda-titulo">{{titulo}}.</span><template v-if="isLongo&&!expandido">{{' '}}{{textoResumido}}… <button type="button" class="btn-mais" @click="expandido=true">mais</button></template><template v-else>{{' '}}{{descricao}}</template></p>
 <button v-if="comentariosCount>0" type="button" class="ver-comentarios" @click="$emit('verComentarios')">Ver {{comentariosCount===1?'o comentário':`todos os ${comentariosCount} comentários`}}</button>
 <p class="legenda-data">{{dataPublicacao}}</p>
