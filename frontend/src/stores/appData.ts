@@ -190,25 +190,10 @@ export async function setHorarioOverride(turma: string, day: string, time: strin
 }
 
 // ── Equipe / Diretorias ─────────────────────────────────────────────────────
-// Fallback exibido só enquanto GET /diretorias ainda não respondeu (ou
-// falhou) — evita a tela "Equipe" aparecer vazia no primeiro load. Assim
-// que a API devolver dados reais, essa lista é substituída (ver
-// initAppData). Se preferir, isso pode virar um seeder no backend em vez de
-// ficar hardcoded no frontend — fica a critério de vocês.
-const TEAM_FALLBACK: Diretoria[] = [
-  { icon: 'mdi-crown', name: 'Presidência', members: [{ cargo: 'Presidente', nome: 'Samuel' }, { cargo: 'Vice-Presidente', nome: 'Bárbara' }, { cargo: '1º Vice-Presidente', nome: 'Jósue' }] },
-  { icon: 'mdi-clipboard-text-outline', name: 'Secretaria', members: [{ cargo: 'Secretário-Geral', nome: 'Marcus Paulo' }, { cargo: '1ª Secretária', nome: 'Giovanna' }, { cargo: '2ª Secretária', nome: 'Brenda' }] },
-  { icon: 'mdi-cash', name: 'Tesouraria', members: [{ cargo: 'Tesoureira-Geral', nome: 'Andressa' }, { cargo: '1º Tesoureiro', nome: 'Rafael' }, { cargo: '2º Tesoureiro', nome: 'Vitor' }] },
-  { icon: 'mdi-run-fast', name: 'Esporte e Lazer', members: [{ cargo: 'Diretor-Geral', nome: 'Igor' }, { cargo: '1ª Diretora', nome: 'Rafaela' }, { cargo: '2º Diretor', nome: 'Artur Araripe' }] },
-  { icon: 'mdi-theater', name: 'Cultura', members: [{ cargo: 'Diretora-Geral', nome: 'Jennyfer' }, { cargo: '1ª Diretora', nome: 'Ludmila' }, { cargo: '2º Diretor', nome: 'Thiago' }] },
-  { icon: 'mdi-school-outline', name: 'Políticas Educacionais', members: [{ cargo: 'Diretor-Geral', nome: 'Enzo' }, { cargo: '1ª Diretora', nome: 'Lorena' }, { cargo: '2ª Diretora', nome: 'Larissa' }] },
-  { icon: 'mdi-leaf', name: 'Saúde e Meio Ambiente', members: [{ cargo: 'Diretora-Geral', nome: 'Ayla' }, { cargo: '1ª Diretora', nome: 'Maryane' }, { cargo: '2ª Diretora', nome: 'Joana' }] },
-  { icon: 'mdi-handshake-outline', name: 'Diretoria Social', members: [{ cargo: 'Diretor-Geral', nome: 'David' }, { cargo: '1ª Diretora', nome: 'Mariana' }, { cargo: '2º Diretor', nome: 'Matheus' }] },
-  { icon: 'mdi-bullhorn-variant-outline', name: 'Imprensa e Comunicação', members: [{ cargo: 'Diretora-Geral', nome: 'Yara' }, { cargo: '1ª Diretora', nome: 'Giulia' }, { cargo: '2ª Diretora', nome: 'Ana Júlia' }] },
-  { icon: 'mdi-laptop', name: 'Tecnologia e Inovação', members: [{ cargo: 'Diretor-Geral', nome: 'Kauan Guilherme' }, { cargo: '1º Diretor', nome: 'Pedro Lucas' }, { cargo: '2º Diretor', nome: 'Maria Eduarda' }] },
-]
-
-export const team = reactive<Diretoria[]>([...TEAM_FALLBACK])
+// A equipe pública usa exclusivamente os registros retornados pelo backend.
+// Não mantemos nomes de pessoas como fallback no frontend: se o banco estiver
+// vazio ou a API estiver indisponível, a página exibe o estado vazio.
+export const team = reactive<Diretoria[]>([])
 
 export async function addDiretoria(payload: { name: string; diretorGeral: string; primeiro?: string; segundo?: string }): Promise<void> {
   const { name, diretorGeral, primeiro, segundo } = payload
@@ -375,11 +360,7 @@ export async function initAppData(): Promise<void> {
       }
     }
 
-    // Só substitui o fallback se a API realmente devolveu diretorias — uma
-    // resposta vazia não deve apagar a lista e deixar "Equipe" em branco.
-    if (Array.isArray(dirsRes.data) && dirsRes.data.length > 0) {
-      team.splice(0, team.length, ...dirsRes.data)
-    }
+    team.splice(0, team.length, ...(Array.isArray(dirsRes.data) ? dirsRes.data : []))
 
     if (mediaRes.data) {
       inicioMedia.file = null
