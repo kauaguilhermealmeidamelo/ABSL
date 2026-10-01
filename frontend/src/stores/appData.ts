@@ -93,6 +93,7 @@ export async function removeTurma(turno: string, ano: string, codigo: string): P
     }
   } catch (err) {
     console.error('removeTurma failed', err)
+    throw err
   }
 }
 
@@ -184,6 +185,7 @@ export async function setHorarioOverride(turma: string, day: string, time: strin
     horarioOverrides[key] = subject
   } catch (err) {
     console.error('setHorarioOverride failed', err)
+    throw err
   }
 }
 
@@ -219,6 +221,7 @@ export async function addDiretoria(payload: { name: string; diretorGeral: string
     team.push(res.data)
   } catch (err) {
     console.error('addDiretoria failed', err)
+    throw err
   }
 }
 
@@ -232,6 +235,7 @@ export async function removeDiretoria(index: number): Promise<void> {
     team.splice(index, 1)
   } catch (err) {
     console.error('removeDiretoria failed', err)
+    throw err
   }
 }
 
@@ -250,6 +254,7 @@ export async function saveDiretoriaMembers(index: number, members: Member[]): Pr
     team[index] = res.data
   } catch (err) {
     console.error('saveDiretoriaMembers failed', err)
+    throw err
   }
 }
 
@@ -267,6 +272,7 @@ export async function moveDiretoria(index: number, direcao: 'cima' | 'baixo'): P
     team.splice(0, team.length, ...res.data)
   } catch (err) {
     console.error('moveDiretoria failed', err)
+    throw err
   }
 }
 
@@ -344,6 +350,7 @@ export async function setCardapioDia(dia: string, valor: string): Promise<void> 
     }
   } catch (err) {
     console.error('setCardapioDia failed', err)
+    throw err
   }
 }
 
