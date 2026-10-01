@@ -158,6 +158,10 @@ function ehVoceMesmo(u) {
   return usuarioLogado.value?.id === u.id
 }
 
+function podeAlterarCargo(u) {
+  return !ehVoceMesmo(u)
+}
+
 function roleLabel(u) {
   if (u.role === 'admin') return 'Administrador'
   if (u.role === 'imprensa') return 'Imprensa'
@@ -229,7 +233,7 @@ function roleLabel(u) {
         <div class="form-grid">
           <div><label class="field-label">Nome completo</label><input v-model="editForm.name" class="field-input" /></div>
           <div><label class="field-label">E-mail</label><input v-model="editForm.email" type="email" class="field-input" /></div>
-          <div><label class="field-label">Cargo</label><select v-model="editForm.role" class="field-input field-select"><option value="admin">Administrador</option><option value="imprensa">Imprensa</option><option value="user">Usuário</option></select></div>
+          <div><label class="field-label">Cargo</label><select v-model="editForm.role" class="field-input field-select" :disabled="!podeAlterarCargo(editando)" :title="!podeAlterarCargo(editando) ? 'Você não pode alterar o próprio cargo' : 'Alterar cargo'"><option value="admin">Administrador</option><option value="imprensa">Imprensa</option><option value="user">Usuário</option></select><small v-if="editando && !podeAlterarCargo(editando)" class="field-help">Seu próprio cargo não pode ser alterado.</small></div>
           <div><label class="field-label">Turma</label><input v-model="editForm.turma" class="field-input" placeholder="Código da turma (opcional)" /></div>
         </div>
         <div class="dialog-actions"><button type="button" class="btn-cancelar" @click="fecharEdicao">Cancelar</button><button type="button" class="btn-salvar" @click="salvarEdicao">Salvar alterações</button></div>
