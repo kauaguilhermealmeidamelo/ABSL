@@ -1,5 +1,10 @@
 <script setup>
 import { ref } from 'vue'
+
+const feedback = ref(null)
+const salvando = ref(false)
+const removendo = ref(null)
+const movendo = ref(null)
 import {
   team,
   addDiretoria,
@@ -8,8 +13,18 @@ import {
   moveDiretoria,
 } from '@/stores/appData'
 
-function mover(idx, direcao) {
-  moveDiretoria(idx, direcao)
+async function mover(idx, direcao) {
+  if (movendo.value !== null) return
+  movendo.value = idx
+  feedback.value = null
+  try {
+    await moveDiretoria(idx, direcao)
+    feedback.value = 'Ordem atualizada.'
+  } catch (err) {
+    feedback.value = err?.response?.data?.message || 'Não foi possível atualizar a ordem.'
+  } finally {
+    movendo.value = null
+  }
 }
 
 const novaDir = ref({
@@ -19,16 +34,23 @@ const novaDir = ref({
   segundo: '',
 })
 
-function cadastrar() {
-  if (!novaDir.value.name.trim() || !novaDir.value.diretorGeral.trim()) return
-
-  addDiretoria({ ...novaDir.value })
-
-  novaDir.value = {
+async function cadastrar() {
+  if (!novaDir.value.name.trim() || !novaDir.value.diretorGeral.trim() || salvando.value) return
+  salvando.value = true
+  feedback.value = null
+  try {
+    await addDiretoria({ ...novaDir.value })
+    novaDir.value = {
     name: '',
     diretorGeral: '',
     primeiro: '',
     segundo: '',
+    }
+    feedback.value = 'Diretoria cadastrada.'
+  } catch (err) {
+    feedback.value = err?.response?.data?.message || 'Não foi possível cadastrar a diretoria.'
+  } finally {
+    salvando.value = false
   }
 }
 
@@ -44,9 +66,34 @@ function fechar() {
   expandido.value = null
 }
 
-function salvar(idx) {
-  saveDiretoriaMembers(idx, editMembers.value)
-  expandido.value = null
+async function salvar(idx) {
+  if (salvando.value) return
+  salvando.value = true
+  feedback.value = null
+  try {
+    await saveDiretoriaMembers(idx, editMembers.value)
+    expandido.value = null
+    feedback.value = 'Integrantes salvos.'
+  } catch (err) {
+    feedback.value = err?.response?.data?.message || 'Não foi possível salvar os integrantes.'
+  } finally {
+    salvando.value = false
+  }
+}
+
+async function excluir(idx) {
+  if (removendo.value !== null) return
+  removendo.value = idx
+  feedback.value = null
+  try {
+    await removeDiretoria(idx)
+    if (expandido.value === idx) expandido.value = null
+    feedback.value = 'Diretoria removida.'
+  } catch (err) {
+    feedback.value = err?.response?.data?.message || 'Não foi possível remover a diretoria.'
+  } finally {
+    removendo.value = null
+  }
 }
 
 function adicionarIntegrante() {
@@ -63,6 +110,7 @@ function removerIntegrante(i) {
 
 <template>
   <div class="dir-manager">
+    <p v-if="feedback" class="feedback">{{ feedback }}</p>
 
     <!-- CADASTRAR NOVA DIRETORIA -->
     <div class="card">
@@ -104,10 +152,8 @@ function removerIntegrante(i) {
           <input v-model="novaDir.segundo" class="field-input" placeholder="Nome completo (opcional)" />
         </div>
 
-        <button type="button" class="btn-add btn-block" :disabled="!novaDir.name.trim() ||
-          !novaDir.diretorGeral.trim()
-          " @click="cadastrar">
-          Cadastrar diretoria
+        <button type="button" class="btn-add btn-block"  :disabled="!novaDir.name.trim() || !novaDir.diretorGeral.trim() || salvando" @click="cadastrar">
+          {{ salvando ? 'Salvando...' : 'Cadastrar diretoria' }}
         </button>
 
       </div>
@@ -132,18 +178,18 @@ function removerIntegrante(i) {
 
           <!-- MOVER -->
           <div class="ordem-btns">
-            <button type="button" class="icon-btn" :disabled="idx === 0" title="Mover para cima"
+            <button type="button" class="icon-btn" :disabled="idx === 0 || movendo !== null" title="Mover para cima"
               @click="mover(idx, 'cima')">
               <v-icon size="15">mdi-chevron-up</v-icon>
             </button>
 
-            <button type="button" class="icon-btn" :disabled="idx === team.length - 1" title="Mover para baixo"
+            <button type="button" class="icon-btn"  :disabled="idx === team.length - 1 || movendo !== null" title="Mover para baixo"
               @click="mover(idx, 'baixo')">
               <v-icon size="15">mdi-chevron-down</v-icon>
             </button>
           </div>
 
-          <button type="button" class="icon-btn icon-btn-danger" @click="removeDiretoria(idx)">
+          <button type="button" class="icon-btn icon-btn-danger" @click="excluir(idx)" :disabled="removendo === idx">
             <v-icon size="15">
               mdi-trash-can-outline
             </v-icon>
@@ -183,8 +229,8 @@ function removerIntegrante(i) {
               Cancelar
             </button>
 
-            <button type="button" class="btn-salvar" @click="salvar(idx)">
-              Salvar
+            <button type="button" class="btn-salvar" @click="salvar(idx)" :disabled="salvando">
+              {{ salvando ? 'Salvando...' : 'Salvar' }}
             </button>
           </div>
         </div>
@@ -202,7 +248,7 @@ function removerIntegrante(i) {
   font-family: 'DM Sans', sans-serif;
 }
 
-.card {
+.feedback{margin:0;padding:10px 14px;border-radius:10px;background:#eef3fb;color:#1a3f8f;font-size:12px}.card {
   background: #ffffff;
   border: 1px solid rgba(13, 31, 60, 0.08);
   border-radius: 16px;
