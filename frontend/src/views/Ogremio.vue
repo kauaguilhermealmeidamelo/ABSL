@@ -20,27 +20,16 @@ function irPara(rota) {
       </p>
     </header>
 
-    <nav class="sumario" aria-label="Tópicos de O Grêmio">
-      <a v-for="numero in 6" :key="numero" :href="'#gremio-topico-' + numero">
-        {{ numero }}
-      </a>
-    </nav>
-
-    <section id="gremio-topico-1" class="section" aria-labelledby="quem-somos-title">
+    <section class="section" aria-labelledby="quem-somos-title">
       <div class="section-heading">
-        <span class="kicker">1 · Quem somos</span>
-        <h2 id="quem-somos-title">Representação e participação estudantil</h2>
+        <h2 id="quem-somos-title">Quem somos</h2>
       </div>
       <Sobre />
     </section>
 
-    <section id="gremio-topico-2" class="section" aria-labelledby="principios-title">
+    <section class="section" aria-labelledby="principios-title">
       <div class="section-heading">
-        <span class="kicker">2 · Missão e princípios</span>
-        <h2 id="principios-title">Princípios institucionais</h2>
-        <p>
-          Esta seção apresenta somente as informações institucionais próprias do Grêmio.
-        </p>
+        <h2 id="principios-title">Missão e princípios</h2>
       </div>
 
       <div class="principios-grid">
@@ -59,42 +48,27 @@ function irPara(rota) {
       </div>
     </section>
 
-    <section id="gremio-topico-3" class="section" aria-labelledby="funciona-title">
+    <section class="section" aria-labelledby="funciona-title">
       <div class="section-heading">
-        <span class="kicker">3 · Como o Grêmio funciona</span>
-        <h2 id="funciona-title">Representação e organização</h2>
+        <h2 id="funciona-title">Como o Grêmio funciona</h2>
       </div>
 
       <div class="empty-state">
         <v-icon size="34" aria-hidden="true">mdi-information-outline</v-icon>
         <p>Conteúdo específico sobre o funcionamento do Grêmio ainda não está cadastrado.</p>
-        <small>
-          A seção fica reservada para informações institucionais próprias do Grêmio, sem duplicar
-          projetos, documentos ou outros conteúdos do portal.
-        </small>
       </div>
     </section>
 
-    <section id="gremio-topico-4" class="section" aria-labelledby="diretoria-title">
+    <section class="section" aria-labelledby="diretoria-title">
       <div class="section-heading">
-        <span class="kicker">4 · Diretoria e mandato</span>
-        <h2 id="diretoria-title">Diretorias e integrantes cadastrados</h2>
-        <p>
-          A estrutura de diretoria é exibida a partir do cadastro existente, sem criar uma segunda
-          fonte de dados.
-        </p>
+        <h2 id="diretoria-title">Diretoria e mandato</h2>
       </div>
       <Equipe />
     </section>
 
-    <section id="gremio-topico-5" class="section" aria-labelledby="participar-title">
+    <section class="section" aria-labelledby="participar-title">
       <div class="section-heading">
-        <span class="kicker">5 · Como participar</span>
-        <h2 id="participar-title">Canais de participação</h2>
-        <p>
-          Os fluxos abaixo apenas direcionam para as páginas próprias do portal. O conteúdo de cada
-          área continua sendo administrado no seu respectivo módulo.
-        </p>
+        <h2 id="participar-title">Como participar</h2>
       </div>
 
       <div class="participar-grid">
@@ -111,11 +85,9 @@ function irPara(rota) {
       </div>
     </section>
 
-    <section id="gremio-topico-6" class="section" aria-labelledby="contato-title">
+    <section class="section" aria-labelledby="contato-title">
       <div class="section-heading">
-        <span class="kicker">6 · Contato</span>
-        <h2 id="contato-title">Canais cadastrados do Grêmio</h2>
-        <p>Somente canais institucionais já cadastrados no portal são apresentados aqui.</p>
+        <h2 id="contato-title">Contato</h2>
       </div>
 
       <div class="contato-card">
@@ -138,11 +110,7 @@ function irPara(rota) {
 .kicker{display:block;margin-bottom:8px;color:#1a3f8f;font-family:'DM Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
 .page-header h1,.section-heading h2{margin:0;color:#0d1f3c;font-family:'Playfair Display',serif;line-height:1.15}
 .page-header h1{font-size:clamp(32px,6vw,52px)}
-.page-header p,.section-heading p{max-width:720px;margin:12px 0 0;color:#5a6a85;line-height:1.6}
-.sumario{display:flex;gap:8px;flex-wrap:wrap;margin:24px 0 8px}
-.sumario a{display:grid;place-items:center;width:31px;height:31px;border-radius:50%;background:#eef3fb;color:#1a3f8f;text-decoration:none;font-size:12px;font-weight:700}
-.sumario a:hover,.sumario a:focus-visible{background:#dfe8f8}
-.sumario a:focus-visible{outline:2px solid #1a3f8f;outline-offset:2px}
+.page-header p{max-width:720px;margin:12px 0 0;color:#5a6a85;line-height:1.6}
 .section{margin-top:48px;scroll-margin-top:24px}
 .section-heading{margin-bottom:20px}
 .section-heading h2{font-size:clamp(25px,4vw,34px)}
@@ -158,7 +126,6 @@ function irPara(rota) {
 .contato-card a:hover{background:#f5f7fb}
 .empty-state{display:flex;flex-direction:column;align-items:center;gap:8px;padding:34px 16px;border:1px dashed rgba(13,31,60,.14);border-radius:12px;color:#5a6a85;text-align:center}
 .empty-state p{margin:0;font-size:14px}
-.empty-state small{max-width:620px;font-size:12px;line-height:1.5;color:#7b879c}
 @media(max-width:800px){.principios-grid,.participar-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:620px){.gremio-page{padding:20px 16px 48px}.page-header{padding-top:24px}.section{margin-top:40px}.principios-grid,.participar-grid{grid-template-columns:1fr}.sumario{gap:6px}.sumario a{width:29px;height:29px}}
+@media(max-width:620px){.gremio-page{padding:20px 16px 48px}.page-header{padding-top:24px}.section{margin-top:40px}.principios-grid,.participar-grid{grid-template-columns:1fr}}
 </style>
