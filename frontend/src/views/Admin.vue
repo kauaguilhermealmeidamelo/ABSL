@@ -1,7 +1,8 @@
 <script setup>
 import PageHeader from '@/components/common/PageHeader.vue'
 import { useAdmin } from '@/composables/useAdmin'
-const { isSuperAdmin } = useAdmin()
+
+const { isAdmin, isSuperAdmin } = useAdmin()
 </script>
 
 <template>
