@@ -283,20 +283,21 @@ export const inicioMedia = reactive({
   videoUrl: '',
 })
 
-export function setInicioMedia(file: File | null): void {
+export async function setInicioMedia(file: File | null): Promise<void> {
   if (!file) return
   const fd = new FormData()
   fd.append('file', file)
-  api
-    .post<InicioMediaApiItem>('/inicio-media', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
-    .then((res) => {
-      inicioMedia.file = null
-      inicioMedia.fileName = res.data.file_name || file.name
-      inicioMedia.videoUrl = res.data.url
+  try {
+    const res = await api.post<InicioMediaApiItem>('/inicio-media', fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
     })
-    .catch((err) => {
-      console.error('upload inicio media failed', err)
-    })
+    inicioMedia.file = null
+    inicioMedia.fileName = res.data.file_name || file.name
+    inicioMedia.videoUrl = res.data.url
+  } catch (err) {
+    console.error('upload inicio media failed', err)
+    throw err
+  }
 }
 
 export async function clearInicioMedia(): Promise<void> {
