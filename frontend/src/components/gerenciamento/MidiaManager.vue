@@ -5,31 +5,39 @@ import { inicioMedia, setInicioMedia, clearInicioMedia } from '@/stores/appData'
 const fileInput = ref(null)
 const error = ref('')
 const removendo = ref(false)
+const enviando = ref(false)
 
 function triggerFileSelect() {
-  if (!removendo.value) fileInput.value?.click()
+  if (!removendo.value && !enviando.value) fileInput.value?.click()
 }
 
-function handleFile(file) {
-  if (!file || removendo.value) return
+async function handleFile(file) {
+  if (!file || removendo.value || enviando.value) return
   if (!file.type.startsWith('video/')) {
     error.value = 'Selecione um arquivo de vídeo válido.'
     return
   }
 
-  setInicioMedia(file)
+  enviando.value = true
   error.value = ''
+  try {
+    await setInicioMedia(file)
+  } catch (err) {
+    error.value = err?.response?.data?.message || 'Não foi possível enviar o vídeo.'
+  } finally {
+    enviando.value = false
+  }
 }
 
-function onFileChange(event) {
+async function onFileChange(event) {
   const file = event.target.files?.[0]
-  handleFile(file)
+  await handleFile(file)
   event.target.value = ''
 }
 
-function handleDrop(event) {
+async function handleDrop(event) {
   const file = event.dataTransfer.files?.[0]
-  handleFile(file)
+  await handleFile(file)
 }
 
 async function removerVideo() {
@@ -68,7 +76,7 @@ async function removerVideo() {
       <div class="upload-content">
         <v-icon size="28">mdi-cloud-upload-outline</v-icon>
         <div>
-          <strong>{{ inicioMedia.fileName || 'Clique para enviar vídeo' }}</strong>
+          <strong>{{ enviando ? 'Enviando vídeo...' : (inicioMedia.fileName || 'Clique para enviar vídeo') }}</strong>
           <span>MP4, MOV, WebM — tamanho livre</span>
         </div>
       </div>
@@ -78,7 +86,7 @@ async function removerVideo() {
       <video class="preview-player" controls :src="inicioMedia.videoUrl"></video>
       <div class="preview-actions">
         <span>{{ inicioMedia.fileName }}</span>
-        <button type="button" class="btn-remove" :disabled="removendo" @click="removerVideo">
+        <button type="button" class="btn-remove"  :disabled="removendo || enviando" @click="removerVideo">
           {{ removendo ? 'Removendo...' : 'Remover vídeo' }}
         </button>
       </div>
@@ -115,6 +123,7 @@ async function removerVideo() {
   max-width: 620px;
 }
 .upload-zone {
+  position: relative;
   border: 2px dashed rgba(26, 63, 143, 0.28);
   border-radius: 20px;
   padding: 32px;
