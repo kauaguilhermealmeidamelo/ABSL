@@ -17,8 +17,12 @@ const projetosDestaque = computed(() => {
   return (destacados.length ? destacados : projetos.value).slice(0, 3)
 })
 
-function primeiraImagem(noticia) {
-  return noticia.midias?.find((midia) => midia.tipo === 'imagem')?.url || ''
+function primeiraMidia(noticia) {
+  return noticia.midias?.find((midia) => midia.url)?.url || ''
+}
+
+function primeiraMidiaTipo(noticia) {
+  return noticia.midias?.find((midia) => midia.url)?.tipo || ''
 }
 
 onMounted(() => {
@@ -58,12 +62,21 @@ function conhecerGremio() {
       <div v-else class="grid">
         <article v-for="noticia in noticiasRecentes" :key="noticia.id" class="card news-card">
           <img
-            v-if="primeiraImagem(noticia)"
-            :src="primeiraImagem(noticia)"
+            v-if="primeiraMidiaTipo(noticia) === 'imagem'"
+            :src="primeiraMidia(noticia)"
             :alt="noticia.titulo"
             class="news-image"
             loading="lazy"
           >
+          <video
+            v-else-if="primeiraMidiaTipo(noticia) === 'video'"
+            :src="primeiraMidia(noticia)"
+            :aria-label="noticia.titulo"
+            class="news-image"
+            controls
+            preload="metadata"
+            playsinline
+          />
           <div v-else class="news-image news-image-placeholder" aria-hidden="true">
             <v-icon size="32">mdi-newspaper-variant-outline</v-icon>
           </div>
