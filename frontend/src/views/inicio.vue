@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import Banner from '@/components/inicio/Banner.vue'
 import { useNoticias } from '@/composables/useNoticias'
