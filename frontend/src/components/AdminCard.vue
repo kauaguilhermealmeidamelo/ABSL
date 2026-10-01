@@ -19,9 +19,9 @@ const titulo = computed(() => {
   return 'Minha conta'
 })
 function abrir(m) { modo.value = m; aba.value = 'conta'; open.value = true }
-function aoEntrar() { open.value = false; if (isAdmin.value) router.push('/usuarios') }
+function aoEntrar() { open.value = false; if (isAdmin.value) router.push('/admin') }
 async function doLogout() { try { await logout() } finally { open.value = false; router.replace('/') } }
-function goUsuarios() { open.value = false; router.push('/usuarios') }
+function goUsuarios() { open.value = false; router.push('/admin') }
 </script>
 
 <template>
