@@ -65,7 +65,7 @@ class AuthFluxoTest extends TestCase
 
         $response = $this->get($url);
 
-        $response->assertRedirect(rtrim(env('FRONTEND_URL', 'http://localhost:5173'), '/').'/conta?verificado=1');
+        $response->assertRedirect(rtrim(config('app.frontend_url'), '/').'/conta?verificado=1');
         $this->assertNotNull($user->fresh()->email_verified_at);
     }
 
