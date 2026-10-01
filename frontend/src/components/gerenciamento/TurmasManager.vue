@@ -45,8 +45,8 @@ async function excluir(turno, ano, codigo) {
   try {
     await removeTurma(turno, ano, codigo)
     mostrarFeedback('sucesso', 'Turma removida.')
-  } catch {
-    mostrarFeedback('erro', 'Erro ao remover turma.')
+  } catch (err) {
+    mostrarFeedback('erro', err?.response?.data?.message || 'Erro ao remover turma.')
   }
 }
 </script>
