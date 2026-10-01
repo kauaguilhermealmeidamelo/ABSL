@@ -342,14 +342,21 @@ export async function setCardapioDia(dia: string, valor: string): Promise<void> 
 
 // ── Bootstrap ────────────────────────────────────────────────────────────
 export async function initAppData(): Promise<void> {
-  try {
-    const [turmasRes, dirsRes, mediaRes] = await Promise.all([
-      api.get<TurmaApiItem[]>('/turmas').catch(() => ({ data: [] as TurmaApiItem[] })),
-      api.get<Diretoria[]>('/diretorias').catch(() => ({ data: [] as Diretoria[] })),
-      api.get<InicioMediaApiItem | null>('/inicio-media').catch(() => ({ data: null })),
-    ])
+  const requests = await Promise.allSettled([
+    api.get<TurmaApiItem[]>('/turmas'),
+    api.get<Diretoria[]>('/diretorias'),
+    api.get<InicioMediaApiItem | null>('/inicio-media'),
+    api.get<CardapioApiItem[]>('/cardapio'),
+    api.get<HorarioApiItem[]>('/horario'),
+  ])
 
-   for (const t of turmasRes.data ?? []) {
+  const [turmasRes, dirsRes, mediaRes, cardRes, horarioRes] = requests
+
+  if (turmasRes.status === 'fulfilled') {
+    turmasState.matutino = {}
+    turmasState.vespertino = {}
+
+    for (const t of turmasRes.value.data ?? []) {
       if (!turmasState[t.turno]) turmasState[t.turno] = {}
       const anoList = turmasState[t.turno]!
       if (!anoList[t.ano]) anoList[t.ano] = []
@@ -359,31 +366,39 @@ export async function initAppData(): Promise<void> {
         codigos.sort()
       }
     }
+  } else {
+    console.error('initAppData: falha ao carregar /turmas', turmasRes.reason)
+  }
 
-    team.splice(0, team.length, ...(Array.isArray(dirsRes.data) ? dirsRes.data : []))
+  if (dirsRes.status === 'fulfilled') {
+    team.splice(0, team.length, ...(Array.isArray(dirsRes.value.data) ? dirsRes.value.data : []))
+  } else {
+    console.error('initAppData: falha ao carregar /diretorias', dirsRes.reason)
+  }
 
-    if (mediaRes.data) {
-      inicioMedia.file = null
-      inicioMedia.fileName = mediaRes.data.file_name ?? ''
-      inicioMedia.videoUrl = mediaRes.data.url ?? ''
+  if (mediaRes.status === 'fulfilled') {
+    inicioMedia.file = null
+    inicioMedia.fileName = mediaRes.value.data?.file_name ?? ''
+    inicioMedia.videoUrl = mediaRes.value.data?.url ?? ''
+  } else {
+    console.error('initAppData: falha ao carregar /inicio-media', mediaRes.reason)
+  }
+
+  if (cardRes.status === 'fulfilled' && Array.isArray(cardRes.value.data)) {
+    for (const item of cardRes.value.data) {
+      cardapioDias[item.dia_semana] = item.descricao
+      cardapioMap[item.dia_semana] = item
     }
+  } else if (cardRes.status === 'rejected') {
+    console.error('initAppData: falha ao carregar /cardapio', cardRes.reason)
+  }
 
-    const cardRes = await api.get<CardapioApiItem[]>('/cardapio').catch(() => ({ data: [] as CardapioApiItem[] }))
-    if (Array.isArray(cardRes.data)) {
-      for (const item of cardRes.data) {
-        cardapioDias[item.dia_semana] = item.descricao
-        cardapioMap[item.dia_semana] = item
-      }
-
-    }
-
-    const horarioRes = await api.get<HorarioApiItem[]>('/horario').catch(() => ({ data: [] as HorarioApiItem[] }))
-    for (const h of horarioRes.data ?? []) {
+  if (horarioRes.status === 'fulfilled') {
+    for (const h of horarioRes.value.data ?? []) {
       const key = scheduleKey(h.turma, h.dia_semana, `${toHHMM(h.horario_inicio)}–${toHHMM(h.horario_fim)}`)
       horarioOverrides[key] = h.disciplina
     }
-      
-  } catch (err) {
-    console.error('initAppData failed', err)
+  } else {
+    console.error('initAppData: falha ao carregar /horario', horarioRes.reason)
   }
 }
