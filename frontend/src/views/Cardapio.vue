@@ -5,16 +5,10 @@ import AdminBanner from '@/components/common/AdminBanner.vue'
 import CardapioSemana from '@/components/cardapio/CardapioSemana.vue'
 import CardapioTabela from '@/components/cardapio/CardapioTabela.vue'
 import { useAdmin } from '@/composables/useAdmin'
-import { CARDAPIO_DIAS, cardapioSemana, cardapioDias, setCardapioSemana, setCardapioDia } from '@/stores/appData'
+import { CARDAPIO_DIAS, cardapioDias, setCardapioDia } from '@/stores/appData'
 
 const { isAdmin } = useAdmin()
 const DIAS_SEMANA = CARDAPIO_DIAS
-const salvando = ref(false)
-const error = ref('')
-
-function updateSemana(valor) {
-  setCardapioSemana(valor)
-}
 async function updateDia({ dia, valor }) {
   if (!isAdmin.value || salvando.value) return
   salvando.value = true
@@ -38,8 +32,7 @@ async function updateDia({ dia, valor }) {
     />
     <p v-if="error" class="state-error" role="alert">{{ error }}</p>
     <p v-if="salvando" class="state-saving" aria-live="polite">Salvando alteração...</p>
-    <CardapioSemana :semana="cardapioSemana" :is-admin="isAdmin" @update="updateSemana" />
-    <CardapioTabela
+        <CardapioTabela
       :dias="DIAS_SEMANA"
       :cardapio="cardapioDias"
       :is-admin="isAdmin"
