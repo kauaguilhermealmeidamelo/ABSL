@@ -66,15 +66,22 @@ function limparFiltros() {
 // Atalhos de data — "hoje" e "ontem" preenchem o campo de data e já
 // aplicam o filtro, evitando o usuário ter que abrir o seletor de datas
 // para os casos mais comuns de auditoria.
+function dataLocalISO(date = new Date()) {
+  const ano = date.getFullYear()
+  const mes = String(date.getMonth() + 1).padStart(2, '0')
+  const dia = String(date.getDate()).padStart(2, '0')
+  return `${ano}-${mes}-${dia}`
+}
+
 function filtrarHoje() {
-  dataSelecionada.value = new Date().toISOString().slice(0, 10)
+  dataSelecionada.value = dataLocalISO()
   aplicarFiltros()
 }
 
 function filtrarOntem() {
   const ontem = new Date()
   ontem.setDate(ontem.getDate() - 1)
-  dataSelecionada.value = ontem.toISOString().slice(0, 10)
+  dataSelecionada.value = dataLocalISO(ontem)
   aplicarFiltros()
 }
 
