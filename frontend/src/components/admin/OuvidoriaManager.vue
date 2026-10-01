@@ -16,6 +16,34 @@ const tabs = computed(() => [
   { id: 'respondidas', label: `Respondidas (${respondidas.value.length})`, icon: 'mdi-check-circle-outline' },
 ])
 
+async function responderMensagem({ id, resposta }) {
+  const texto = String(resposta || '').trim()
+  if (!texto) {
+    error.value = 'Digite uma resposta antes de enviar.'
+    return
+  }
+
+  loading.value = true
+  error.value = ''
+  try {
+    await ouvintesService.update(id, { resposta: texto })
+    await carregar()
+    categoria.value = 'respondidas'
+  } catch (err) {
+    error.value = err?.response?.data?.message || 'Não foi possível salvar a resposta.'
+    loading.value = false
+  }
+}
+
+async function excluirMensagem(id) {
+  try {
+    await ouvintesService.remove(id)
+    await carregar()
+  } catch (err) {
+    error.value = err?.response?.data?.message || 'Não foi possível excluir a mensagem.'
+  }
+}
+
 async function carregar() {
   loading.value = true
   error.value = ''
@@ -51,7 +79,7 @@ onMounted(carregar)
     <template v-else>
       <section v-if="categoria === 'pendentes'">
         <h3>Manifestações pendentes</h3>
-        <OuvintesLista :mensagens="pendentes" />
+        <OuvintesLista :mensagens="pendentes" @responder="responderMensagem" @excluir="excluirMensagem" />
       </section>
 
       <section v-else>
