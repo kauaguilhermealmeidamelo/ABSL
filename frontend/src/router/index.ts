@@ -109,9 +109,9 @@ const routes = [
       },
       {
         path: 'usuarios',
-        name: 'usuarios',
-        component: () => import('@/views/Usuarios.vue'),
-        meta: { title: 'Usuários | ABSL', description: 'Área de gerenciamento de usuários do sistema ABSL.' }
+        name: 'usuarios-legado',
+        redirect: '/admin/usuarios',
+        meta: { requiresAdmin: true, title: 'Usuários | ABSL' }
       },
       {
         path: ':pathMatch(.*)*',
