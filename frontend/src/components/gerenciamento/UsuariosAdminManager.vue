@@ -8,6 +8,11 @@ const loading = ref(false)
 const error = ref('')
 
 const novo = ref({ name: '', email: '', password: '', password_confirmation: '', role: 'imprensa' })
+const editando = ref(null)
+const editForm = ref({ name: '', email: '', role: 'imprensa', turma: '' })
+const dialogCadastro = ref(false)
+const dialogEdicao = ref(false)
+const pesquisa = ref('')
 const categoria = ref('todos')
 const categorias = [
   { id: 'todos', label: 'Todos os cargos', icon: 'mdi-account-group-outline' },
@@ -15,9 +20,14 @@ const categorias = [
   { id: 'imprensa', label: 'Imprensa', icon: 'mdi-newspaper-variant-outline' },
   { id: 'user', label: 'Usuários', icon: 'mdi-account-outline' },
 ]
-const usuariosFiltrados = computed(() => categoria.value === 'todos'
-  ? usuarios.value
-  : usuarios.value.filter((u) => u.role === categoria.value))
+const usuariosFiltrados = computed(() => {
+  const termo = pesquisa.value.trim().toLowerCase()
+  return usuarios.value.filter((u) => {
+    const categoriaOk = categoria.value === 'todos' || u.role === categoria.value
+    const pesquisaOk = !termo || [u.name, u.email, u.turma].some((valor) => String(valor || '').toLowerCase().includes(termo))
+    return categoriaOk && pesquisaOk
+  })
+})
 const criando = ref(false)
 
 const senhaEditando = ref(null) // id do usuário com o form de senha aberto
@@ -71,11 +81,38 @@ async function cadastrar() {
     })
     usuarios.value = [...usuarios.value, criado].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
     novo.value = { name: '', email: '', password: '', password_confirmation: '', role: 'imprensa' }
+    dialogCadastro.value = false
     mostrarFeedback('sucesso', 'Usuário criado com sucesso.')
   } catch (err) {
     mostrarFeedback('erro', err?.response?.data?.message || 'Não foi possível criar o usuário.')
   } finally {
     criando.value = false
+  }
+}
+
+function abrirEdicao(u) {
+  editando.value = u
+  editForm.value = { name: u.name || '', email: u.email || '', role: u.role || 'user', turma: u.turma || '' }
+  dialogEdicao.value = true
+}
+
+function fecharEdicao() {
+  dialogEdicao.value = false
+  editando.value = null
+}
+
+async function salvarEdicao() {
+  if (!editForm.value.name.trim() || !editForm.value.email.trim()) {
+    mostrarFeedback('erro', 'Preencha nome e e-mail.')
+    return
+  }
+  try {
+    const atualizado = await usuariosAdminService.update(editando.value.id, editForm.value)
+    usuarios.value = usuarios.value.map((u) => u.id === atualizado.id ? atualizado : u).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
+    fecharEdicao()
+    mostrarFeedback('sucesso', 'Usuário atualizado com sucesso.')
+  } catch (err) {
+    mostrarFeedback('erro', err?.response?.data?.message || 'Não foi possível atualizar o usuário.')
   }
 }
 
@@ -130,10 +167,21 @@ function roleLabel(u) {
 
 <template>
   <div class="admin-users">
-    <!-- Cadastro de novo usuário -->
-    <div class="card">
-      <h3 class="card-title">Cadastrar novo usuário</h3>
+    <div class="toolbar">
+      <div class="pesquisa">
+        <v-icon size="18">mdi-magnify</v-icon>
+        <input v-model="pesquisa" type="search" placeholder="Pesquisar por nome, e-mail ou turma..." aria-label="Pesquisar usuários" />
+      </div>
+      <button type="button" class="btn-add" @click="dialogCadastro = true">
+        <v-icon size="14">mdi-account-plus-outline</v-icon>
+        Cadastrar usuário
+      </button>
+    </div>
 
+    <!-- Cadastro de novo usuário -->
+    <div v-if="dialogCadastro" class="dialog-backdrop" @click.self="dialogCadastro = false">
+      <div class="dialog-card" role="dialog" aria-modal="true" aria-labelledby="dialog-cadastro-titulo">
+        <div class="dialog-header"><h3 id="dialog-cadastro-titulo">Cadastrar usuário</h3><button type="button" class="dialog-close" @click="dialogCadastro = false"><v-icon>mdi-close</v-icon></button></div>
       <div class="form-grid">
         <div>
           <label class="field-label">Nome completo</label>
@@ -165,12 +213,27 @@ function roleLabel(u) {
         {{ criando ? 'Cadastrando...' : 'Cadastrar usuário' }}
       </button>
 
+      </div>
       <transition name="feedback-fade">
         <p v-if="feedback" class="feedback-msg" :class="feedback.tipo === 'sucesso' ? 'feedback-sucesso' : 'feedback-erro'">
           <v-icon size="14">{{ feedback.tipo === 'sucesso' ? 'mdi-check-circle' : 'mdi-alert-circle' }}</v-icon>
           {{ feedback.mensagem }}
         </p>
       </transition>
+      </div>
+    </div>
+
+    <div v-if="dialogEdicao" class="dialog-backdrop" @click.self="fecharEdicao">
+      <div class="dialog-card" role="dialog" aria-modal="true" aria-labelledby="dialog-edicao-titulo">
+        <div class="dialog-header"><h3 id="dialog-edicao-titulo">Editar usuário</h3><button type="button" class="dialog-close" @click="fecharEdicao"><v-icon>mdi-close</v-icon></button></div>
+        <div class="form-grid">
+          <div><label class="field-label">Nome completo</label><input v-model="editForm.name" class="field-input" /></div>
+          <div><label class="field-label">E-mail</label><input v-model="editForm.email" type="email" class="field-input" /></div>
+          <div><label class="field-label">Cargo</label><select v-model="editForm.role" class="field-input field-select"><option value="admin">Administrador</option><option value="imprensa">Imprensa</option><option value="user">Usuário</option></select></div>
+          <div><label class="field-label">Turma</label><input v-model="editForm.turma" class="field-input" placeholder="Código da turma (opcional)" /></div>
+        </div>
+        <div class="dialog-actions"><button type="button" class="btn-cancelar" @click="fecharEdicao">Cancelar</button><button type="button" class="btn-salvar" @click="salvarEdicao">Salvar alterações</button></div>
+      </div>
     </div>
 
     <div class="categorias" aria-label="Filtrar usuários por cargo">
@@ -210,6 +273,7 @@ function roleLabel(u) {
           </span>
 
           <div class="user-acoes">
+            <button type="button" class="btn-editar" @click="abrirEdicao(u)"><v-icon size="13">mdi-pencil-outline</v-icon> Editar</button>
             <button type="button" class="btn-senha" @click="senhaEditando === u.id ? fecharSenha() : abrirSenha(u.id)">
               <v-icon size="13">mdi-key-outline</v-icon>
               Senha
@@ -262,6 +326,17 @@ function roleLabel(u) {
   margin: 0 0 16px;
 }
 
+.toolbar { display: flex; gap: 12px; align-items: center; }
+.pesquisa { flex: 1; display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid rgba(13,31,60,.1); border-radius: 12px; padding: 0 12px; color: #5a6a85; }
+.pesquisa input { width: 100%; border: 0; outline: 0; padding: 11px 0; background: transparent; font: inherit; color: #0d1f3c; }
+.dialog-backdrop { position: fixed; inset: 0; z-index: 2000; display: grid; place-items: center; padding: 20px; background: rgba(13,31,60,.45); }
+.dialog-card { width: min(620px, 100%); max-height: 90vh; overflow: auto; background: #fff; border-radius: 18px; padding: 24px; box-shadow: 0 24px 70px rgba(13,31,60,.2); }
+.dialog-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+.dialog-header h3 { margin:0; color:#0d1f3c; font-size:18px; }
+.dialog-close { border:0; background:transparent; cursor:pointer; color:#5a6a85; }
+.dialog-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:20px; }
+.btn-editar { display:flex; align-items:center; gap:4px; padding:6px 10px; border-radius:8px; border:1px solid rgba(13,31,60,.15); background:transparent; color:#1a3f8f; font-size:12px; cursor:pointer; }
+.btn-editar:hover { background:#eef3fb; }
 .form-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -493,6 +568,7 @@ function roleLabel(u) {
 }
 
 @media (max-width: 700px) {
+  .toolbar { flex-direction: column; align-items: stretch; }
   .categorias { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
