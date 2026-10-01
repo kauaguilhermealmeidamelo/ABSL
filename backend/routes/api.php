@@ -117,6 +117,7 @@ Route::middleware(['auth:sanctum', 'staff'])->group(function () {
     Route::delete('/diretorias/{id}', [DiretoriaController::class, 'destroy']);
 
     Route::post('/inicio-media', [InicioMediaController::class, 'store']);
+    Route::delete('/inicio-media', [InicioMediaController::class, 'destroy']);
 
     Route::get('/ouvintes', [OuvinteController::class, 'index']);
     Route::get('/ouvintes/{id}', [OuvinteController::class, 'show']);
