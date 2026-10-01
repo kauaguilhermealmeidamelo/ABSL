@@ -5,7 +5,10 @@ import { team } from '@/stores/appData'
 <template>
   <section id="equipe" class="team">
     <h2>Equipe</h2>
-    <div class="team-grid">
+    <div v-if="!team.length" class="team-empty">
+      A equipe ainda não foi cadastrada.
+    </div>
+    <div v-else class="team-grid">
       <article class="team-card" v-for="dir in team" :key="dir.name">
         <header>
           <v-icon class="dept-icon" color="#f4c430">{{ dir.icon }}</v-icon>
@@ -33,6 +36,16 @@ import { team } from '@/stores/appData'
   font-weight: 700;
   color: #0d1f3c;
   margin-bottom: 16px;
+}
+
+.team-empty {
+  padding: 24px;
+  border: 1px dashed rgba(13, 31, 60, 0.14);
+  border-radius: 12px;
+  color: #5a6a85;
+  font-size: 13px;
+  text-align: center;
+  background: #ffffff;
 }
 
 .team-grid {
