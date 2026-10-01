@@ -32,8 +32,12 @@ async function bootstrap() {
 	registerPlugins(app)
 	app.use(router)
 
-	// initialize app data from backend (non-fatal)
-	await initAppData().catch(() => { })
+	// Carrega os dados públicos do backend sem bloquear a montagem do app.
+	// O bootstrap já trata falhas individualmente por recurso; este catch
+	// protege apenas contra uma exceção inesperada fora desse fluxo.
+	await initAppData().catch((err) => {
+		console.error('Falha inesperada ao inicializar dados do app:', err)
+	})
 
 	// Confirma com o backend se a sessão de admin ainda é válida assim que o
 	// app carrega (cobre o caso da aba ter ficado aberta além do tempo
