@@ -80,7 +80,7 @@ export async function addTurma(turno: string, ano: string, letra: string): Promi
     return true
   } catch (err) {
     console.error('addTurma failed', err)
-    return false
+    throw err
   }
 }
 
