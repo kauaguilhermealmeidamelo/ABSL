@@ -4,13 +4,14 @@ import { inicioMedia, setInicioMedia, clearInicioMedia } from '@/stores/appData'
 
 const fileInput = ref(null)
 const error = ref('')
+const removendo = ref(false)
 
 function triggerFileSelect() {
-  fileInput.value?.click()
+  if (!removendo.value) fileInput.value?.click()
 }
 
 function handleFile(file) {
-  if (!file) return
+  if (!file || removendo.value) return
   if (!file.type.startsWith('video/')) {
     error.value = 'Selecione um arquivo de vídeo válido.'
     return
@@ -23,11 +24,24 @@ function handleFile(file) {
 function onFileChange(event) {
   const file = event.target.files?.[0]
   handleFile(file)
+  event.target.value = ''
 }
 
 function handleDrop(event) {
   const file = event.dataTransfer.files?.[0]
   handleFile(file)
+}
+
+async function removerVideo() {
+  removendo.value = true
+  error.value = ''
+  try {
+    await clearInicioMedia()
+  } catch (err) {
+    error.value = err?.response?.data?.message || 'Não foi possível remover o vídeo.'
+  } finally {
+    removendo.value = false
+  }
 }
 </script>
 
@@ -64,8 +78,8 @@ function handleDrop(event) {
       <video class="preview-player" controls :src="inicioMedia.videoUrl"></video>
       <div class="preview-actions">
         <span>{{ inicioMedia.fileName }}</span>
-        <button type="button" class="btn-remove" @click="clearInicioMedia()">
-          Remover vídeo
+        <button type="button" class="btn-remove" :disabled="removendo" @click="removerVideo">
+          {{ removendo ? 'Removendo...' : 'Remover vídeo' }}
         </button>
       </div>
     </div>
@@ -160,8 +174,12 @@ function handleDrop(event) {
   font-size: 13px;
   font-weight: 600;
 }
-.btn-remove:hover {
+.btn-remove:hover:not(:disabled) {
   background: #f1a5ab;
+}
+.btn-remove:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 .error {
   color: #b91c1c;
