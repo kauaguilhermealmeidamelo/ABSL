@@ -423,6 +423,7 @@ function roleLabel(u) {
 
 .categorias {
   display: grid;
+  margin-top: 8px;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
 }
