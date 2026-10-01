@@ -24,8 +24,6 @@ const adminRoute = {
 
 const routes = [
   adminRoute,
-
-const routes = [
   {
     path: '/',
     component: MainLayout,
