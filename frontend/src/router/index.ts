@@ -2,6 +2,29 @@ import { createRouter, createWebHistory, type RouteLocationNormalized } from 'vu
 import MainLayout from '@/MainLayout.vue'
 import { user } from '@/stores/auth'
 
+const adminRoute = {
+  path: '/admin',
+  component: () => import('@/layouts/AdminLayout.vue'),
+  meta: { requiresStaff: true },
+  children: [
+    { path: '', name: 'admin', component: () => import('@/views/Admin.vue'), meta: { title: 'Painel | ABSL', requiresStaff: true } },
+    { path: 'noticias', name: 'admin-noticias', component: () => import('@/views/Noticias.vue'), meta: { title: 'Notícias | Painel ABSL', requiresStaff: true } },
+    { path: 'projetos', name: 'admin-projetos', component: () => import('@/views/Projetos.vue'), meta: { title: 'Projetos | Painel ABSL', requiresStaff: true } },
+    { path: 'o-gremio', name: 'admin-o-gremio', component: () => import('@/views/Ogremio.vue'), meta: { title: 'O Grêmio | Painel ABSL', requiresStaff: true } },
+    { path: 'transparencia', name: 'admin-transparencia', component: () => import('@/views/Transparencia.vue'), meta: { title: 'Transparência | Painel ABSL', requiresStaff: true } },
+    { path: 'midia', name: 'admin-midia', component: () => import('@/components/gerenciamento/MidiaManager.vue'), meta: { title: 'Mídia | Painel ABSL', requiresStaff: true } },
+    { path: 'turmas', name: 'admin-turmas', component: () => import('@/components/gerenciamento/TurmasManager.vue'), meta: { title: 'Turmas | Painel ABSL', requiresStaff: true } },
+    { path: 'horarios', name: 'admin-horarios', component: () => import('@/views/Horario.vue'), meta: { title: 'Horários | Painel ABSL', requiresStaff: true } },
+    { path: 'cardapio', name: 'admin-cardapio', component: () => import('@/views/Cardapio.vue'), meta: { title: 'Cardápio | Painel ABSL', requiresStaff: true } },
+    { path: 'ouvidoria', name: 'admin-ouvidoria', component: () => import('@/views/Ouvintes.vue'), meta: { title: 'Ouvidoria | Painel ABSL', requiresStaff: true } },
+    { path: 'usuarios', name: 'admin-usuarios', component: () => import('@/components/gerenciamento/UsuariosAdminManager.vue'), meta: { title: 'Usuários | Painel ABSL', requiresAdmin: true } },
+    { path: 'logs', name: 'admin-logs', component: () => import('@/components/gerenciamento/LogsViewer.vue'), meta: { title: 'Logs | Painel ABSL', requiresAdmin: true } },
+  ],
+}
+
+const routes = [
+  adminRoute,
+
 const routes = [
   {
     path: '/',
@@ -105,7 +128,13 @@ const routes = [
 const router = createRouter({ history: createWebHistory(), routes })
 
 router.beforeEach((to: RouteLocationNormalized) => {
-  if (!to.meta.public && !user.value) return '/'
+  const currentUser = user.value
+  const role = String(currentUser?.role || (currentUser?.is_admin ? 'admin' : 'user')).toLowerCase()
+  const isStaff = role === 'admin' || role === 'imprensa'
+
+  if (to.meta.requiresAdmin && role !== 'admin') return '/admin'
+  if (to.meta.requiresStaff && !isStaff) return '/'
+  if (!to.meta.public && !to.meta.requiresStaff && !currentUser) return '/'
   return true
 })
 
