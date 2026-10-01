@@ -156,7 +156,8 @@ function roleLabel(u) {
       <label class="field-label">Tipo de acesso</label>
       <select v-model="novo.role" class="field-input field-select">
         <option value="admin">Administrador (acesso total)</option>
-        <option value="imprensa">Imprensa (todas as páginas, exceto Administradores)</option>
+        <option value="imprensa">Imprensa (conteúdo e operação)</option>
+        <option value="user">Usuário (acesso comum)</option>
       </select>
 
       <button type="button" class="btn-add" :disabled="criando" @click="cadastrar">
