@@ -301,7 +301,6 @@ function roleLabel(u) {
         <p v-if="!usuarios.length" class="status-msg">Nenhum usuário cadastrado.</p>
       </div>
     </div>
-  </div>
 </template>
 
 <style scoped>
