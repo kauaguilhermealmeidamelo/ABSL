@@ -72,7 +72,6 @@ function abrirResposta() {
 
 function salvarResposta() {
   emit('responder', { id: props.mensagem.id, resposta: replyText.value })
-  respondendo.value = false
 }
 </script>
 
