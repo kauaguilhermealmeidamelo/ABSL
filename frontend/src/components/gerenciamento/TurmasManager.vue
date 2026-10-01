@@ -10,6 +10,7 @@ const anosDisponiveis = computed(() => TURNO_ANOS[novoTurno.value])
 
 // Feedback de sucesso/erro ao cadastrar ou remover turma.
 const feedback = ref(null) // { tipo: 'sucesso' | 'erro', mensagem: string }
+const cadastrando = ref(false)
 let feedbackTimeoutId = null
 
 function mostrarFeedback(tipo, mensagem) {
@@ -31,13 +32,17 @@ async function cadastrar() {
     return
   }
 
-  const sucesso = await addTurma(novoTurno.value, novoAno.value, novaLetra.value)
+  if (cadastrando.value) return
 
-  if (sucesso) {
+  cadastrando.value = true
+  try {
+    await addTurma(novoTurno.value, novoAno.value, novaLetra.value)
     mostrarFeedback('sucesso', 'Turma adicionada.')
     novaLetra.value = ''
-  } else {
-    mostrarFeedback('erro', 'Erro ao adicionar turma.')
+  } catch (err) {
+    mostrarFeedback('erro', err?.response?.data?.message || 'Não foi possível adicionar a turma.')
+  } finally {
+    cadastrando.value = false
   }
 }
 
@@ -81,9 +86,9 @@ async function excluir(turno, ano, codigo) {
           />
         </div>
       </div>
-      <button type="button" class="btn-add" @click="cadastrar">
+      <button type="button" class="btn-add" :disabled="cadastrando" @click="cadastrar">
         <v-icon size="14">mdi-plus</v-icon>
-        Adicionar turma
+        {{ cadastrando ? 'Adicionando...' : 'Adicionar turma' }}
       </button>
 
       <transition name="feedback-fade">
@@ -194,8 +199,12 @@ async function excluir(turno, ano, codigo) {
   cursor: pointer;
   transition: background-color 0.15s ease;
 }
-.btn-add:hover {
+.btn-add:hover:not(:disabled) {
   background: #0d1f3c;
+}
+.btn-add:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .feedback-msg {
