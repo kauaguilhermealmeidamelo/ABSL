@@ -20,14 +20,14 @@ async function carregar() {
   loading.value = true
   error.value = ''
   try {
-    const [pendentesData, respondidasData] = await Promise.all([
+    const [mensagensData, respondidasData] = await Promise.all([
       ouvintesService.list(),
       ouvintesService.listRespondidas(),
     ])
-    pendentes.value = pendentesData
+    pendentes.value = mensagensData.filter((mensagem) => mensagem.status === 'pendente')
     respondidas.value = respondidasData
-  } catch {
-    error.value = 'Não foi possível carregar a ouvidoria.'
+  } catch (err) {
+    error.value = err?.response?.data?.message || 'Não foi possível carregar a ouvidoria.'
   } finally {
     loading.value = false
   }
