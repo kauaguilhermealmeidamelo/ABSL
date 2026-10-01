@@ -10,6 +10,7 @@ const respondidas = ref([])
 const loading = ref(false)
 const error = ref('')
 const categoria = ref('pendentes')
+const excluindoId = ref(null)
 
 const tabs = computed(() => [
   { id: 'pendentes', label: `Pendentes (${pendentes.value.length})`, icon: 'mdi-clock-outline' },
@@ -36,11 +37,16 @@ async function responderMensagem({ id, resposta }) {
 }
 
 async function excluirMensagem(id) {
+  if (excluindoId.value !== null) return
+  excluindoId.value = id
+  error.value = ''
   try {
     await ouvintesService.remove(id)
     await carregar()
   } catch (err) {
     error.value = err?.response?.data?.message || 'Não foi possível excluir a mensagem.'
+  } finally {
+    excluindoId.value = null
   }
 }
 
