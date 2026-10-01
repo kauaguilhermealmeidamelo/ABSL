@@ -52,6 +52,10 @@ class AdminUserController extends Controller
             'turma' => ['nullable', 'string', 'max:10', Rule::exists('turmas', 'codigo')],
         ]);
 
+        if ($user->id === $request->user()->id && $data['role'] !== $user->role) {
+            abort(422, 'Você não pode alterar o próprio cargo.');
+        }
+
         if ($user->is_admin && $data['role'] !== 'admin' && User::where('is_admin', true)->count() <= 1) {
             abort(422, 'Não é possível remover o único administrador do sistema.');
         }
