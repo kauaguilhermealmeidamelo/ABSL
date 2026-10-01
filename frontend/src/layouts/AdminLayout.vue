@@ -8,25 +8,20 @@ import logoImg from '@/assets/logo.png'
 
 const { mobile } = useDisplay()
 const route = useRoute()
-const { isSuperAdmin } = useAdmin()
+const { isAdmin } = useAdmin()
 const drawer = ref(true)
 
 const contentItems = [
-  { label: 'Notícias', to: '/admin/noticias', icon: 'mdi-newspaper' },
-  { label: 'Projetos', to: '/admin/projetos', icon: 'mdi-folder-multiple-outline' },
   { label: 'O Grêmio', to: '/admin/o-gremio', icon: 'mdi-account-group-outline' },
-  { label: 'Transparência', to: '/admin/transparencia', icon: 'mdi-shield-outline' },
   { label: 'Mídia', to: '/admin/midia', icon: 'mdi-filmstrip' },
 ]
 const schoolItems = [
   { label: 'Turmas', to: '/admin/turmas', icon: 'mdi-school-outline' },
-  { label: 'Horários', to: '/admin/horarios', icon: 'mdi-clock-outline' },
-  { label: 'Cardápio', to: '/admin/cardapio', icon: 'mdi-silverware-fork-knife' },
 ]
 const participationItems = [
   { label: 'Ouvidoria', to: '/admin/ouvidoria', icon: 'mdi-forum-outline' },
 ]
-const administrationItems = computed(() => isSuperAdmin.value
+const administrationItems = computed(() => isAdmin.value
   ? [
       { label: 'Usuários', to: '/admin/usuarios', icon: 'mdi-account-supervisor-outline' },
       { label: 'Logs', to: '/admin/logs', icon: 'mdi-text-box-search-outline' },
@@ -61,7 +56,7 @@ const displayName = computed(() => user.value?.name || user.value?.username || '
           <router-link v-for="item in participationItems" :key="item.to" :to="item.to" class="nav-item" :class="{ active: isActive(item.to) }" @click="navigate">
             <v-icon>{{ item.icon }}</v-icon><span>{{ item.label }}</span>
           </router-link>
-          <template v-if="isSuperAdmin">
+          <template v-if="isAdmin">
             <div class="nav-section">Administração</div>
             <router-link v-for="item in administrationItems" :key="item.to" :to="item.to" class="nav-item" :class="{ active: isActive(item.to) }" @click="navigate">
               <v-icon>{{ item.icon }}</v-icon><span>{{ item.label }}</span>
