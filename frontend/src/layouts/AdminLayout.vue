@@ -8,7 +8,7 @@ import logoImg from '@/assets/logo.png'
 
 const { mobile } = useDisplay()
 const route = useRoute()
-const { isAdmin } = useAdmin()
+const { isAdmin, isSuperAdmin } = useAdmin()
 const drawer = ref(true)
 
 const contentItems = [
@@ -21,7 +21,7 @@ const schoolItems = [
 const participationItems = [
   { label: 'Ouvidoria', to: '/admin/ouvidoria', icon: 'mdi-forum-outline' },
 ]
-const administrationItems = computed(() => isAdmin.value
+const administrationItems = computed(() => isSuperAdmin.value
   ? [
       { label: 'Usuários', to: '/admin/usuarios', icon: 'mdi-account-supervisor-outline' },
       { label: 'Logs', to: '/admin/logs', icon: 'mdi-text-box-search-outline' },
@@ -56,7 +56,7 @@ const displayName = computed(() => user.value?.name || user.value?.username || '
           <router-link v-for="item in participationItems" :key="item.to" :to="item.to" class="nav-item" :class="{ active: isActive(item.to) }" @click="navigate">
             <v-icon>{{ item.icon }}</v-icon><span>{{ item.label }}</span>
           </router-link>
-          <template v-if="isAdmin">
+          <template v-if="isSuperAdmin">
             <div class="nav-section">Administração</div>
             <router-link v-for="item in administrationItems" :key="item.to" :to="item.to" class="nav-item" :class="{ active: isActive(item.to) }" @click="navigate">
               <v-icon>{{ item.icon }}</v-icon><span>{{ item.label }}</span>
