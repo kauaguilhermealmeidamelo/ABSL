@@ -1,7 +1,7 @@
 <script setup>
 import PageHeader from '@/components/common/PageHeader.vue'
 import { useAdmin } from '@/composables/useAdmin'
-const { isSuperAdmin } = useAdmin()
+const { isAdmin } = useAdmin()
 </script>
 
 <template>
@@ -12,11 +12,9 @@ const { isSuperAdmin } = useAdmin()
       <v-icon size="54" class="welcome-icon">mdi-view-dashboard-outline</v-icon>
     </section>
     <section class="quick-grid" aria-label="Módulos do painel">
-      <router-link to="/admin/noticias" class="quick-card"><v-icon>mdi-newspaper</v-icon><strong>Notícias</strong><span>Publicações e conteúdo editorial.</span></router-link>
-      <router-link to="/admin/projetos" class="quick-card"><v-icon>mdi-folder-multiple-outline</v-icon><strong>Projetos</strong><span>Iniciativas e projetos do Grêmio.</span></router-link>
       <router-link to="/admin/o-gremio" class="quick-card"><v-icon>mdi-account-group-outline</v-icon><strong>O Grêmio</strong><span>Informações institucionais.</span></router-link>
-      <router-link v-if="isSuperAdmin" to="/admin/usuarios" class="quick-card"><v-icon>mdi-account-supervisor-outline</v-icon><strong>Usuários</strong><span>Contas e acessos do sistema.</span></router-link>
-      <router-link v-if="isSuperAdmin" to="/admin/logs" class="quick-card"><v-icon>mdi-text-box-search-outline</v-icon><strong>Logs</strong><span>Registro das ações administrativas.</span></router-link>
+      <router-link v-if="isAdmin" to="/admin/usuarios" class="quick-card"><v-icon>mdi-account-supervisor-outline</v-icon><strong>Usuários</strong><span>Contas e acessos do sistema.</span></router-link>
+      <router-link v-if="isAdmin" to="/admin/logs" class="quick-card"><v-icon>mdi-text-box-search-outline</v-icon><strong>Logs</strong><span>Registro das ações administrativas.</span></router-link>
     </section>
   </div>
 </template>
