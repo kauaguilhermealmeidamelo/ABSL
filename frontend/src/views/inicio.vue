@@ -2,8 +2,6 @@
 import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Banner from '@/components/inicio/Banner.vue'
-import Sobre from '@/components/inicio/Sobre.vue'
-import Equipe from '@/components/inicio/Equipe.vue'
 import { useNoticias } from '@/composables/useNoticias'
 import { useProjetos } from '@/composables/useProjetos'
 
@@ -35,21 +33,13 @@ function irPara(path) {
 }
 
 function conhecerGremio() {
-  document.getElementById('sobre-gremio')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  router.push('/o-gremio')
 }
 </script>
 
 <template>
   <main class="home">
     <Banner @conhecer-gremio="conhecerGremio" />
-
-    <section id="sobre-gremio" class="section intro" aria-labelledby="sobre-title">
-      <div class="heading">
-        <div><span class="kicker">O Grêmio</span><h2 id="sobre-title">Representação, projetos e participação estudantil</h2></div>
-        <button class="link" type="button" @click="irPara('/o-gremio')">Conheça o Grêmio <v-icon size="16">mdi-arrow-right</v-icon></button>
-      </div>
-      <Sobre />
-    </section>
 
     <section class="section" aria-labelledby="noticias-title">
       <div class="heading">
