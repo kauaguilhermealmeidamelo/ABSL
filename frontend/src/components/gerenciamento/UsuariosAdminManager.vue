@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { usuariosAdminService } from '@/services/usuariosAdmin'
 import { user as usuarioLogado } from '@/stores/auth'
 
@@ -8,6 +8,16 @@ const loading = ref(false)
 const error = ref('')
 
 const novo = ref({ name: '', email: '', password: '', password_confirmation: '', role: 'imprensa' })
+const categoria = ref('todos')
+const categorias = [
+  { id: 'todos', label: 'Todos os cargos', icon: 'mdi-account-group-outline' },
+  { id: 'admin', label: 'Administradores', icon: 'mdi-shield-account-outline' },
+  { id: 'imprensa', label: 'Imprensa', icon: 'mdi-newspaper-variant-outline' },
+  { id: 'user', label: 'Usuários', icon: 'mdi-account-outline' },
+]
+const usuariosFiltrados = computed(() => categoria.value === 'todos'
+  ? usuarios.value
+  : usuarios.value.filter((u) => u.role === categoria.value))
 const criando = ref(false)
 
 const senhaEditando = ref(null) // id do usuário com o form de senha aberto
@@ -162,6 +172,21 @@ function roleLabel(u) {
       </transition>
     </div>
 
+    <div class="categorias" aria-label="Filtrar usuários por cargo">
+      <button
+        v-for="item in categorias"
+        :key="item.id"
+        type="button"
+        class="categoria"
+        :class="{ 'categoria-ativa': categoria === item.id }"
+        @click="categoria = item.id"
+      >
+        <v-icon size="16">{{ item.icon }}</v-icon>
+        <span>{{ item.label }}</span>
+        <small>{{ item.id === 'todos' ? usuarios.length : usuarios.filter((u) => u.role === item.id).length }}</small>
+      </button>
+    </div>
+
     <!-- Lista de usuários -->
     <div class="card">
       <h3 class="card-title">Usuários cadastrados</h3>
@@ -170,7 +195,7 @@ function roleLabel(u) {
       <p v-else-if="error" class="status-msg status-erro">{{ error }}</p>
 
       <div v-else class="lista-usuarios">
-        <div v-for="u in usuarios" :key="u.id" class="user-row">
+        <div v-for="u in usuariosFiltrados" :key="u.id" class="user-row">
           <div class="user-info">
             <p class="user-nome">
               {{ u.name }}
@@ -320,6 +345,31 @@ function roleLabel(u) {
 .status-msg { color: #5a6a85; font-size: 14px; padding: 8px 0; }
 .status-erro { color: #dc2626; }
 
+.categorias {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.categoria {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 9px 12px;
+  border: 1px solid rgba(13, 31, 60, 0.08);
+  border-radius: 12px;
+  background: #fff;
+  color: #5a6a85;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+}
+.categoria span { flex: 1; }
+.categoria small { font-weight: 700; color: #1a3f8f; }
+.categoria-ativa { border-color: #1a3f8f; background: #eef3fb; color: #0d1f3c; }
+
 .lista-usuarios {
   display: flex;
   flex-direction: column;
@@ -439,6 +489,10 @@ function roleLabel(u) {
   background: transparent;
   border: 1px solid rgba(13, 31, 60, 0.15);
   color: #5a6a85;
+}
+
+@media (max-width: 700px) {
+  .categorias { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 480px) {
