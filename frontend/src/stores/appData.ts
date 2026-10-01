@@ -293,10 +293,16 @@ export function setInicioMedia(file: File | null): void {
     })
 }
 
-export function clearInicioMedia(): void {
-  inicioMedia.file = null
-  inicioMedia.fileName = ''
-  inicioMedia.videoUrl = ''
+export async function clearInicioMedia(): Promise<void> {
+  try {
+    await api.delete('/inicio-media')
+    inicioMedia.file = null
+    inicioMedia.fileName = ''
+    inicioMedia.videoUrl = ''
+  } catch (err) {
+    console.error('clearInicioMedia failed', err)
+    throw err
+  }
 }
 
 // ── Cardápio ─────────────────────────────────────────────────────────────
