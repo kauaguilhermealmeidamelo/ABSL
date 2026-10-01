@@ -48,6 +48,27 @@ class InicioMediaController extends Controller
         return response()->json($media, 201);
     }
 
+    public function destroy()
+    {
+        $media = InicioMedia::where('ativo', true)->orderBy('created_at', 'desc')->first();
+
+        if (! $media) {
+            return response()->json(['message' => 'Nenhum vídeo ativo para remover.'], 404);
+        }
+
+        $this->deleteArquivo($media->url);
+        $media->update(['ativo' => false]);
+
+        Auditoria::registrar(
+            'removeu_video_inicio',
+            descricao: "Removeu o vídeo da tela inicial: {$media->file_name}",
+            entidade: 'inicio_media',
+            entidadeId: $media->id
+        );
+
+        return response()->json(['message' => 'Vídeo removido com sucesso.']);
+    }
+
     private function deleteArquivo(?string $url): void
     {
         if (! $url) {
