@@ -1,9 +1,15 @@
 <script setup>
+import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Sobre from '@/components/inicio/Sobre.vue'
 import Equipe from '@/components/inicio/Equipe.vue'
+import InformacoesInstitucionais from '@/components/gremio/InformacoesInstitucionais.vue'
+import { useGremioConteudos } from '@/composables/useGremioConteudos'
 
 const router = useRouter()
+const { itens, error, fetchConteudos } = useGremioConteudos()
+
+onMounted(() => fetchConteudos(true))
 
 function irPara(rota) {
   router.push(rota)
@@ -48,16 +54,7 @@ function irPara(rota) {
       </div>
     </section>
 
-    <section class="section" aria-labelledby="funciona-title">
-      <div class="section-heading">
-        <h2 id="funciona-title">Como o Grêmio funciona</h2>
-      </div>
-
-      <div class="empty-state">
-        <v-icon size="34" aria-hidden="true">mdi-information-outline</v-icon>
-        <p>Conteúdo específico sobre o funcionamento do Grêmio ainda não está cadastrado.</p>
-      </div>
-    </section>
+    <InformacoesInstitucionais :itens="itens" :erro="error" />
 
     <section class="section" aria-labelledby="diretoria-title">
       <div class="section-heading">
@@ -105,27 +102,160 @@ function irPara(rota) {
 </template>
 
 <style scoped>
-.gremio-page{width:min(100%,1180px);margin:0 auto;padding:32px 32px 64px;font-family:'DM Sans',sans-serif}
-.page-header{padding:40px 0 28px;border-bottom:1px solid rgba(13,31,60,.08)}
-.kicker{display:block;margin-bottom:8px;color:#1a3f8f;font-family:'DM Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
-.page-header h1,.section-heading h2{margin:0;color:#0d1f3c;font-family:'Playfair Display',serif;line-height:1.15}
-.page-header h1{font-size:clamp(32px,6vw,52px)}
-.page-header p{max-width:720px;margin:12px 0 0;color:#5a6a85;line-height:1.6}
-.section{margin-top:48px;scroll-margin-top:24px}
-.section-heading{margin-bottom:20px}
-.section-heading h2{font-size:clamp(25px,4vw,34px)}
-.principios-grid,.participar-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
-.info-card{padding:20px;background:#fff;border:1px solid rgba(13,31,60,.08);border-radius:12px}
-.info-card h3{margin:0 0 8px;color:#0d1f3c;font-size:17px}
-.info-card p{margin:0;color:#5a6a85;font-size:14px;line-height:1.6}
-.action-card{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:20px;border:1px solid rgba(13,31,60,.08);border-radius:12px;background:#fff;color:#0d1f3c;text-align:left;cursor:pointer}
-.action-card:hover{border-color:rgba(26,63,143,.25);box-shadow:0 5px 16px rgba(13,31,60,.06)}
-.action-card span{color:#5a6a85;font-size:13px;line-height:1.5}
-.contato-card{display:flex;flex-wrap:wrap;gap:12px}
-.contato-card a{display:inline-flex;align-items:center;gap:9px;padding:12px 16px;border:1px solid rgba(13,31,60,.08);border-radius:11px;background:#fff;color:#0d1f3c;text-decoration:none;font-size:13px;font-weight:600}
-.contato-card a:hover{background:#f5f7fb}
-.empty-state{display:flex;flex-direction:column;align-items:center;gap:8px;padding:34px 16px;border:1px dashed rgba(13,31,60,.14);border-radius:12px;color:#5a6a85;text-align:center}
-.empty-state p{margin:0;font-size:14px}
-@media(max-width:800px){.principios-grid,.participar-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:620px){.gremio-page{padding:20px 16px 48px}.page-header{padding-top:24px}.section{margin-top:40px}.principios-grid,.participar-grid{grid-template-columns:1fr}}
+.gremio-page {
+  width: min(100%, 1180px);
+  margin: 0 auto;
+  padding: 32px 32px 64px;
+  font-family: var(--font-body, 'DM Sans', sans-serif);
+}
+
+.page-header {
+  padding: 40px 0 28px;
+  border-bottom: 1px solid rgba(13, 31, 60, 0.08);
+}
+
+.kicker {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--color-navy-soft, #16509b);
+  font-family: var(--font-mono, 'DM Mono', monospace);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.page-header h1,
+.section-heading h2 {
+  margin: 0;
+  color: var(--color-navy, #0f2038);
+  font-family: var(--font-heading, 'Playfair Display', serif);
+  line-height: 1.15;
+}
+
+.page-header h1 {
+  font-size: clamp(32px, 6vw, 52px);
+}
+
+.page-header p {
+  max-width: 720px;
+  margin: 12px 0 0;
+  color: var(--color-text-secondary, #6b7c93);
+  line-height: 1.6;
+}
+
+.section {
+  margin-top: 48px;
+  scroll-margin-top: 24px;
+}
+
+.section-heading {
+  margin-bottom: 20px;
+}
+
+.section-heading h2 {
+  font-size: clamp(25px, 4vw, 34px);
+}
+
+.principios-grid,
+.participar-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.info-card {
+  padding: 20px;
+  background: var(--color-surface, #ffffff);
+  border: 1px solid rgba(13, 31, 60, 0.08);
+  border-radius: 12px;
+}
+
+.info-card h3 {
+  margin: 0 0 8px;
+  color: var(--color-navy, #0f2038);
+  font-size: 17px;
+}
+
+.info-card p {
+  margin: 0;
+  color: var(--color-text-secondary, #6b7c93);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.action-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 20px;
+  border: 1px solid rgba(13, 31, 60, 0.08);
+  border-radius: 12px;
+  background: var(--color-surface, #ffffff);
+  color: var(--color-navy, #0f2038);
+  text-align: left;
+  cursor: pointer;
+}
+
+.action-card:hover {
+  border-color: rgba(26, 63, 143, 0.25);
+  box-shadow: 0 5px 16px rgba(13, 31, 60, 0.06);
+}
+
+.action-card span {
+  color: var(--color-text-secondary, #6b7c93);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.contato-card {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.contato-card a {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 12px 16px;
+  border: 1px solid rgba(13, 31, 60, 0.08);
+  border-radius: 11px;
+  background: var(--color-surface, #ffffff);
+  color: var(--color-navy, #0f2038);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.contato-card a:hover {
+  background: var(--color-surface-muted, #f7f8fc);
+}
+
+@media (max-width: 800px) {
+  .principios-grid,
+  .participar-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .gremio-page {
+    padding: 20px 16px 48px;
+  }
+
+  .page-header {
+    padding-top: 24px;
+  }
+
+  .section {
+    margin-top: 40px;
+  }
+
+  .principios-grid,
+  .participar-grid {
+    grid-template-columns: 1fr;
+  }
+}
 </style>

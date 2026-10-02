@@ -19,7 +19,8 @@ use App\Http\Controllers\Api\{
     LogController,
     NoticiaCurtidaController,
     NoticiaComentarioController,
-    NoticiaMidiaController
+    NoticiaMidiaController,
+    GremioConteudoController
 };
 
 // Rotas públicas de autenticação — throttle aqui, que é onde a requisição
@@ -54,6 +55,7 @@ Route::get('/inicio-media', [InicioMediaController::class, 'index']);
 Route::get('/transparencia', [TransparenciaController::class, 'index']);
 Route::get('/transparencia/{id}', [TransparenciaController::class, 'show']);
 Route::post('/visitas', [VisitaController::class, 'store'])->middleware('throttle:30,1');
+Route::get('/gremio-conteudos', [GremioConteudoController::class, 'index']);
 
 // ── Ouvidoria: rotas públicas ───────────────────────────────────────────
 // IMPORTANTE: '/ouvintes/respondidas' e '/ouvintes/protocolo/{id}' têm que
@@ -123,6 +125,11 @@ Route::middleware(['auth:sanctum', 'staff'])->group(function () {
     Route::get('/ouvintes/{id}', [OuvinteController::class, 'show']);
     Route::put('/ouvintes/{id}', [OuvinteController::class, 'update']);
     Route::delete('/ouvintes/{id}', [OuvinteController::class, 'destroy']);
+
+    Route::post('/gremio-conteudos', [GremioConteudoController::class, 'store']);
+    Route::put('/gremio-conteudos/{id}', [GremioConteudoController::class, 'update']);
+    Route::post('/gremio-conteudos/reorder', [GremioConteudoController::class, 'reorder']);
+    Route::delete('/gremio-conteudos/{id}', [GremioConteudoController::class, 'destroy']);
 
     Route::get('/visitas/estatisticas', [VisitaController::class, 'estatisticas']);
 });

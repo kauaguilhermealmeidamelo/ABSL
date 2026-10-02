@@ -35,6 +35,10 @@ const ACAO_LABELS = {
   respondeu_ouvidoria: 'Respondeu mensagem da ouvidoria',
   atualizou_status_ouvidoria: 'Atualizou status de mensagem da ouvidoria',
   excluiu_ouvidoria: 'Excluiu mensagem da ouvidoria',
+  criou_conteudo_gremio: 'Criou conteúdo institucional',
+  editou_conteudo_gremio: 'Editou conteúdo institucional',
+  reordenou_conteudo_gremio: 'Reordenou conteúdos institucionais',
+  excluiu_conteudo_gremio: 'Excluiu conteúdo institucional',
 }
 
 export function acaoLabel(acao) {
