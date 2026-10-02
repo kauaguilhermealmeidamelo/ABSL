@@ -1,10 +1,17 @@
 <script setup>
-defineProps({
+const props = defineProps({
   projeto: { type: Object, required: true },
   isAdmin: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['editar', 'excluir', 'abrir'])\n\nfunction abrirComTeclado(event) {\n  if (event.key === 'Enter' || event.key === ' ') {\n    event.preventDefault()\n    emit('abrir', props.projeto)\n  }\n}
+const emit = defineEmits(['editar', 'excluir', 'abrir'])
+
+function abrirComTeclado(event) {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault()
+    emit('abrir', props.projeto)
+  }
+}
 </script>
 
 <template>
