@@ -4,11 +4,11 @@ defineProps({
   isAdmin: { type: Boolean, default: false },
 })
 
-defineEmits(['editar', 'excluir', 'abrir'])
+const emit = defineEmits(['editar', 'excluir', 'abrir'])\n\nfunction abrirComTeclado(event) {\n  if (event.key === 'Enter' || event.key === ' ') {\n    event.preventDefault()\n    emit('abrir', props.projeto)\n  }\n}
 </script>
 
 <template>
-  <article class="projeto-card" @click="$emit('abrir', projeto)">
+  <article class="projeto-card" role="button" tabindex="0" @click="emit('abrir', projeto)" @keydown="abrirComTeclado">
     <div v-if="projeto.imagem_url" class="projeto-imagem">
       <img :src="projeto.imagem_url" :alt="projeto.titulo" />
     </div>
@@ -54,7 +54,7 @@ defineEmits(['editar', 'excluir', 'abrir'])
   transition: box-shadow 0.15s ease;
 }
 
-.projeto-card:hover {
+.projeto-card:hover,\n.projeto-card:focus-visible {
   box-shadow: 0 6px 16px rgba(13, 31, 60, 0.1);
 }
 
