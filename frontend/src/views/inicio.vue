@@ -12,14 +12,32 @@ const { noticias, loading: noticiasLoading, error: noticiasError, fetchNoticias 
 const { projetos, loading: projetosLoading, error: projetosError, fetchProjetos } = useProjetos()
 
 const noticiasRecentes = computed(() => noticias.value.slice(0, 3))
-const noticiaPrincipal = computed(() => noticiasRecentes.value[0])
-const noticiasSecundarias = computed(() => noticiasRecentes.value.slice(1))
-const projetosDestaque = computed(() =>
-  projetos.value.filter((projeto) => projeto.destaque).slice(0, 3)
+const projetosPublicados = computed(() =>
+  projetos.value.filter((projeto) => projeto.status !== 'inativo').slice(0, 3)
 )
 
+const noticiasTrilhaRef = ref(null)
+const noticiaIndice = ref(0)
 const projetosTrilhaRef = ref(null)
 const projetoIndice = ref(0)
+
+function atualizarIndiceNoticias() {
+  const el = noticiasTrilhaRef.value
+  if (!el || !el.clientWidth) return
+  const item = el.querySelector('.news-slide')
+  if (!item) return
+  const passo = item.getBoundingClientRect().width + 16
+  noticiaIndice.value = Math.max(0, Math.min(noticiasRecentes.value.length - 1, Math.round(el.scrollLeft / passo)))
+}
+
+function moverNoticias(direcao) {
+  const el = noticiasTrilhaRef.value
+  if (!el) return
+  const item = el.querySelector('.news-slide')
+  if (!item) return
+  const passo = item.getBoundingClientRect().width + 16
+  el.scrollBy({ left: direcao * passo, behavior: 'smooth' })
+}
 
 function atualizarIndiceProjetos() {
   const el = projetosTrilhaRef.value
@@ -27,7 +45,7 @@ function atualizarIndiceProjetos() {
   const item = el.querySelector('.project-slide')
   if (!item) return
   const passo = item.getBoundingClientRect().width + 16
-  projetoIndice.value = Math.max(0, Math.min(projetosDestaque.value.length - 1, Math.round(el.scrollLeft / passo)))
+  projetoIndice.value = Math.max(0, Math.min(projetosPublicados.value.length - 1, Math.round(el.scrollLeft / passo)))
 }
 
 function moverProjetos(direcao) {
@@ -73,22 +91,34 @@ function participar() {
       <div v-if="noticiasLoading" class="state">Carregando notícias...</div>
       <div v-else-if="noticiasError" class="state error">{{ noticiasError }}</div>
       <div v-else-if="!noticiasRecentes.length" class="state">Nenhuma notícia publicada no momento.</div>
-      <div v-else class="news-featured-layout">
-        <article v-if="noticiaPrincipal" class="news-featured">
-          <NoticiaCard :noticia="noticiaPrincipal" :destaque="true" />
-        </article>
-        <div v-if="noticiasSecundarias.length" class="news-secondary">
-          <div v-for="noticia in noticiasSecundarias" :key="noticia.id" class="news-secondary-item">
-            <NoticiaCard :noticia="noticia" />
-          </div>
+      <div v-else class="news-carousel-wrapper">
+        <button v-if="noticiasRecentes.length > 1" type="button"
+          class="news-carousel-arrow news-carousel-arrow-left" aria-label="Notícia anterior"
+          :disabled="noticiaIndice === 0" @click="moverNoticias(-1)">
+          <v-icon size="22">mdi-chevron-left</v-icon>
+        </button>
+        <div ref="noticiasTrilhaRef" class="news-carousel" @scroll.passive="atualizarIndiceNoticias">
+          <article
+            v-for="(noticia, index) in noticiasRecentes"
+            :key="noticia.id"
+            class="news-slide"
+            :class="{ 'news-slide-featured': index === 0 }"
+          >
+            <NoticiaCard :noticia="noticia" :destaque="index === 0" />
+          </article>
         </div>
+        <button v-if="noticiasRecentes.length > 1" type="button"
+          class="news-carousel-arrow news-carousel-arrow-right" aria-label="Próxima notícia"
+          :disabled="noticiaIndice >= noticiasRecentes.length - 1" @click="moverNoticias(1)">
+          <v-icon size="22">mdi-chevron-right</v-icon>
+        </button>
       </div>
     </section>
 
     <section class="section" aria-labelledby="projetos-title">
       <div class="heading">
         <div><span class="kicker">Ação</span>
-          <h2 id="projetos-title">Projetos em destaque</h2>
+          <h2 id="projetos-title">Projetos publicados</h2>
           <p>Iniciativas cadastradas no portfólio do Grêmio.</p>
         </div>
         <button class="link" type="button" @click="irPara('/projetos')">Ver projetos <v-icon
@@ -96,15 +126,15 @@ function participar() {
       </div>
       <div v-if="projetosLoading" class="state">Carregando projetos...</div>
       <div v-else-if="projetosError" class="state error">{{ projetosError }}</div>
-      <div v-else-if="!projetosDestaque.length" class="state">Nenhum projeto disponível no momento.</div>
+      <div v-else-if="!projetosPublicados.length" class="state">Nenhum projeto publicado no momento.</div>
       <div v-else class="project-carousel-wrapper">
-        <button v-if="projetosDestaque.length > 1" type="button"
+        <button v-if="projetosPublicados.length > 1" type="button"
           class="project-carousel-arrow project-carousel-arrow-left" aria-label="Projeto anterior"
           :disabled="projetoIndice === 0" @click="moverProjetos(-1)">
           <v-icon size="22">mdi-chevron-left</v-icon>
         </button>
         <div ref="projetosTrilhaRef" class="project-carousel" @scroll.passive="atualizarIndiceProjetos">
-          <article v-for="projeto in projetosDestaque" :key="projeto.id" class="card project project-slide" tabindex="0"
+          <article v-for="projeto in projetosPublicados" :key="projeto.id" class="card project project-slide" tabindex="0"
             role="link" @click="irPara(`/projetos/${projeto.id}`)" @keydown.enter="irPara(`/projetos/${projeto.id}`)">
             <img v-if="projeto.imagem_url" :src="projeto.imagem_url" :alt="projeto.titulo" loading="lazy">
             <small>{{ projeto.categoria || 'Projeto' }} · {{ projeto.status === 'concluido' ? 'Concluído' : 'Em andamento' }}</small>
@@ -115,7 +145,7 @@ function participar() {
         </div>
         <button v-if="projetosDestaque.length > 1" type="button"
           class="project-carousel-arrow project-carousel-arrow-right" aria-label="Próximo projeto"
-          :disabled="projetoIndice >= projetosDestaque.length - 1" @click="moverProjetos(1)">
+          :disabled="projetoIndice >= projetosPublicados.length - 1" @click="moverProjetos(1)">
           <v-icon size="22">mdi-chevron-right</v-icon>
         </button>
       </div>
@@ -227,27 +257,8 @@ function participar() {
   text-decoration: none
 }
 
-/* Notícias: destaque + secundárias */
-.news-featured-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(280px, .85fr);
-  gap: 16px
-}
-
-.news-secondary {
-  display: grid;
-  gap: 16px
-}
-
-.news-secondary-item {
-  min-width: 0
-}
-
-.news-featured :deep(.noticia-card) {
-  height: 100%
-}
-
-/* Projetos: carrossel */
+/* Notícias: carrossel com a mais recente em destaque */
+.news-carousel-wrapper,
 .project-carousel-wrapper {
   position: relative;
   display: flex;
@@ -255,6 +266,66 @@ function participar() {
   gap: 10px
 }
 
+.news-carousel {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x
+}
+
+.news-carousel::-webkit-scrollbar {
+  display: none
+}
+
+.news-slide {
+  flex: 0 0 38%;
+  min-width: 0;
+  scroll-snap-align: start
+}
+
+.news-slide-featured {
+  flex-basis: 55%
+}
+
+.news-slide :deep(.noticia-card) {
+  height: 100%
+}
+
+.news-carousel-arrow,
+.project-carousel-arrow {
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(13, 31, 60, .12);
+  border-radius: 50%;
+  background: #fff;
+  color: #0d1f3c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(13, 31, 60, .08);
+  z-index: 2
+}
+
+.news-carousel-arrow:hover:not(:disabled),
+.project-carousel-arrow:hover:not(:disabled) {
+  background: #f4f6fa
+}
+
+.news-carousel-arrow:disabled,
+.project-carousel-arrow:disabled {
+  opacity: .35;
+  cursor: default
+}
+
+/* Projetos: carrossel */
 .project-carousel {
   display: flex;
   gap: 16px;
@@ -276,31 +347,6 @@ function participar() {
   flex: 0 0 calc((100% - 32px) / 3);
   min-width: 0;
   scroll-snap-align: start
-}
-
-.project-carousel-arrow {
-  flex: 0 0 38px;
-  width: 38px;
-  height: 38px;
-  border: 1px solid rgba(13, 31, 60, .12);
-  border-radius: 50%;
-  background: #fff;
-  color: #0d1f3c;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(13, 31, 60, .08);
-  z-index: 2
-}
-
-.project-carousel-arrow:hover:not(:disabled) {
-  background: #f4f6fa
-}
-
-.project-carousel-arrow:disabled {
-  opacity: .35;
-  cursor: default
 }
 
 .card {
@@ -459,8 +505,12 @@ button:focus-visible,
     padding-inline: 20px
   }
 
-  .news-featured-layout {
-    grid-template-columns: 1fr
+  .news-slide {
+    flex-basis: 42%
+  }
+
+  .news-slide-featured {
+    flex-basis: 58%
   }
 
   .participation,
@@ -493,18 +543,23 @@ button:focus-visible,
     grid-template-columns: 1fr
   }
 
+  .news-carousel-wrapper,
   .project-carousel-wrapper {
     display: block
   }
 
+  .news-carousel,
   .project-carousel {
     gap: 16px
   }
 
+  .news-slide,
+  .news-slide-featured,
   .project-slide {
     flex-basis: 100%
   }
 
+  .news-carousel-arrow,
   .project-carousel-arrow {
     display: none
   }
