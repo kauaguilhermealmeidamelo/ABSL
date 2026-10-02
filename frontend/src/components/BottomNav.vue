@@ -10,7 +10,7 @@ const { isAdmin } = useAdmin()
 const primaryItems = [
     { label: 'Início', to: '/inicio', icon: 'mdi-home-outline', iconActive: 'mdi-home' },
     { label: 'Notícias', to: '/noticias', icon: 'mdi-newspaper-variant-outline', iconActive: 'mdi-newspaper-variant' },
-    { label: 'Projetos', to: '/projetos', icon: 'mdi-folder-multiple-outline', iconActive: 'mdi-folder-multiple' },
+    { label: 'Gestão GAB', to: '/gestao-gab', icon: 'mdi-view-dashboard-outline', iconActive: 'mdi-view-dashboard' },
 ]
 
 const moreItems = computed(() => {
