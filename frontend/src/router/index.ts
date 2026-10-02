@@ -67,10 +67,16 @@ const routes = [
         meta: { public: true, title: 'Projeto | CEMSL - Brasília', description: 'Confira detalhes dos projetos do CEMSL em Brasília, no Setor Leste, e conheça as iniciativas realizadas pela comunidade escolar.' }
       },
       {
-        path: 'impacto',
-        name: 'impacto',
+        path: 'gestao-gab',
+        name: 'gestao-gab',
         component: () => import('@/views/Impacto.vue'),
-        meta: { public: true, title: 'Impacto | CEMSL - Brasília', description: 'Conheça os indicadores e resultados registrados das ações e projetos do Grêmio Athos Bulcão em Brasília.' }
+        meta: { public: true, title: 'Gestão GAB | CEMSL - Brasília', description: 'Acompanhe projetos, parcerias, eventos e ações do Grêmio Athos Bulcão em Brasília.' }
+      },
+      {
+        path: 'impacto',
+        name: 'impacto-legado',
+        redirect: '/gestao-gab',
+        meta: { public: true, title: 'Gestão GAB | CEMSL - Brasília' }
       },
       {
         path: 'gabarito',
