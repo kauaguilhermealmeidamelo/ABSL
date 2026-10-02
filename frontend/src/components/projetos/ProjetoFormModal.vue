@@ -10,7 +10,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'salvar'])
 
-const form = ref({ titulo: '', categoria: '', descricao: '', status: 'em_andamento', imagem_url: undefined })
+const form = ref({ titulo: '', categoria: '', descricao: '', status: 'em_andamento', imagem_url: undefined, destaque: false })
 
 watch(
   () => [props.modelValue, props.projeto],
@@ -18,7 +18,7 @@ watch(
     if (props.modelValue) {
       form.value = props.projeto
         ? { ...props.projeto }
-        : { titulo: '', categoria: props.categoriaPadrao, descricao: '', status: 'em_andamento', imagem_url: undefined }
+        : { titulo: '', categoria: props.categoriaPadrao, descricao: '', status: 'em_andamento', imagem_url: undefined, destaque: false }
     }
   },
   { immediate: true }
@@ -78,6 +78,12 @@ function salvar() {
 
         <label class="field-label">Descrição</label>
         <textarea v-model="form.descricao" rows="3" class="field-textarea" placeholder="Descrição do projeto" />
+
+        <label class="field-label">Exibição na Home</label>
+        <label class="destaque-toggle">
+          <input v-model="form.destaque" type="checkbox" />
+          <span>Destacar este projeto na Home</span>
+        </label>
 
         <label class="field-label">Status</label>
         <select v-model="form.status" class="field-select">
@@ -147,7 +153,7 @@ function salvar() {
   line-height: 1.6;
 }
 
-.field-input:focus,
+.destaque-toggle {\n  display: flex;\n  align-items: center;\n  gap: 8px;\n  color: #0d1f3c;\n  font-size: 13px;\n  cursor: pointer;\n}\n\n.destaque-toggle input {\n  width: 16px;\n  height: 16px;\n  accent-color: #1a3f8f;\n}\n\n.field-input:focus,
 .field-textarea:focus,
 .field-select:focus {
   outline: none;
