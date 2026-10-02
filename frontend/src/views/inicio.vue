@@ -171,16 +171,6 @@ function participar() {
       </div>
     </section>
 
-    <section class="section" aria-labelledby="equipe-title">
-      <div class="heading">
-        <div><span class="kicker">Organização</span>
-          <h2 id="equipe-title">Como o Grêmio se organiza</h2>
-          <p>Equipe e diretorias cadastradas no portal.</p>
-        </div>
-      </div>
-      <Equipe />
-    </section>
-
     <section class="final" aria-labelledby="final-title">
       <div><span class="kicker">Portal ABSL</span>
         <h2 id="final-title">Informação, participação e transparência em um só lugar.</h2>
