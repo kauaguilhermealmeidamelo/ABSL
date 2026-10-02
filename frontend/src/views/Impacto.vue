@@ -140,7 +140,17 @@ const indicadores = [
   text-transform: uppercase;
 }
 
-.projetos {\n  margin-bottom: 32px;\n}\n\n.projetos-grid {\n  display: grid;\n  grid-template-columns: repeat(3, minmax(0, 1fr));\n  gap: 16px;\n}\n\n.indicadores-grid {
+.projetos {
+  margin-bottom: 32px;
+}
+
+.projetos-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.indicadores-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
