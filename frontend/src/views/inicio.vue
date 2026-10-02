@@ -134,7 +134,7 @@ function participar() {
           <v-icon size="22">mdi-chevron-left</v-icon>
         </button>
         <div ref="projetosTrilhaRef" class="project-carousel" @scroll.passive="atualizarIndiceProjetos">
-          <article v-for="projeto in projetosPublicados" :key="projeto.id" class="card project project-slide" tabindex="0"
+          <article v-for="(projeto, index) in projetosPublicados" :key="projeto.id" class="card project project-slide" :class="{ 'project-slide-featured': index === 0 }" tabindex="0"
             role="link" @click="irPara(`/projetos/${projeto.id}`)" @keydown.enter="irPara(`/projetos/${projeto.id}`)">
             <img v-if="projeto.imagem_url" :src="projeto.imagem_url" :alt="projeto.titulo" loading="lazy">
             <small>{{ projeto.categoria || 'Projeto' }} · {{ projeto.status === 'concluido' ? 'Concluído' : 'Em andamento' }}</small>
@@ -143,7 +143,7 @@ function participar() {
             <span class="link">Conhecer projeto <v-icon size="15">mdi-arrow-right</v-icon></span>
           </article>
         </div>
-        <button v-if="projetosDestaque.length > 1" type="button"
+        <button v-if="projetosPublicados.length > 1" type="button"
           class="project-carousel-arrow project-carousel-arrow-right" aria-label="Próximo projeto"
           :disabled="projetoIndice >= projetosPublicados.length - 1" @click="moverProjetos(1)">
           <v-icon size="22">mdi-chevron-right</v-icon>
@@ -344,9 +344,13 @@ function participar() {
 }
 
 .project-slide {
-  flex: 0 0 calc((100% - 32px) / 3);
+  flex: 0 0 38%;
   min-width: 0;
   scroll-snap-align: start
+}
+
+.project-slide-featured {
+  flex-basis: 55%
 }
 
 .card {
