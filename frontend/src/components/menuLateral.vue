@@ -21,7 +21,7 @@ const menuItems = [
   { label: 'Início', to: '/', icon: 'mdi-home' },
   { label: 'Horário das Aulas', to: '/horario', icon: 'mdi-clock-outline' },
   { label: 'Notícias', to: '/noticias', icon: 'mdi-newspaper' },
-  { label: 'Projetos', to: '/projetos', icon: 'mdi-folder-multiple-outline' },
+  { label: 'Gestão GAB', to: '/gestao-gab', icon: 'mdi-view-dashboard-outline' },
   { label: 'Gabarito Provão', to: '/gabarito', icon: 'mdi-file-document-outline' },
   { label: 'Transparência', to: '/transparencia', icon: 'mdi-shield-outline' },
   { label: 'Cardápio Semanal', to: '/cardapio', icon: 'mdi-silverware-fork-knife' },
