@@ -15,8 +15,8 @@ function fecharVideo() {
 }
 
 
-function irParaEquipe() {
-  document.getElementById('equipe')?.scrollIntoView({ behavior: 'smooth' })
+function irParaProjetos() {
+  window.location.href = '/projetos'
 }
 
 </script>
@@ -28,22 +28,20 @@ function irParaEquipe() {
     <!-- Dark overlay so text stays readable -->
     <div class="hero-overlay" />
     <div class="hero-content">
-      <p class="eyebrow">GESTÃO 2026 · ABSL</p>
-      <h1 class="title title-white">GRÊMIO</h1>
-      <h1 class="title title-gold">ATHOS</h1>
-      <h1 class="title title-white title-sm">BULCÃO ✦</h1>
+      <p class="eyebrow">GRÊMIO ESTUDANTIL</p>
+      <h1 class="title title-white">Grêmio Athos</h1>
+      <h1 class="title title-gold">Bulcão</h1>
 
       <div class="hero-body">
         <div class="hero-text-row">
           <div class="accent-bar" />
           <p class="hero-text">
-            Não é apenas representação estudantil. É a <strong>voz</strong> de cada aluno
-            virando decisão, projeto e mudança real dentro da escola.
+            Uma organização estudantil voltada à representação, aos projetos e à participação da comunidade escolar.
           </p>
         </div>
         <div class="hero-actions">
-          <button class="btn-primary" type="button" @click="irParaEquipe">
-            CONHEÇA O GRÊMIO <span class="arrow">→</span>
+          <button class="btn-primary" type="button" @click="irParaProjetos">
+            CONHEÇA NOSSOS PROJETOS <span class="arrow">→</span>
           </button>
           <button v-if="inicioMedia.videoUrl" class="btn-ghost" type="button" @click="abrirVideo">
             <span class="play-icon">▶</span> Ver Vídeo
