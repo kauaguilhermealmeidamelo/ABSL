@@ -10,18 +10,19 @@ const { isAdmin } = useAdmin()
 const primaryItems = [
     { label: 'Início', to: '/inicio', icon: 'mdi-home-outline', iconActive: 'mdi-home' },
     { label: 'Notícias', to: '/noticias', icon: 'mdi-newspaper-variant-outline', iconActive: 'mdi-newspaper-variant' },
-    { label: 'Horário', to: '/horario', icon: 'mdi-clock-outline', iconActive: 'mdi-clock' },
-    { label: 'Cardápio', to: '/cardapio', icon: 'mdi-silverware-fork-knife', iconActive: 'mdi-silverware-fork-knife' },
-    { label: 'Gabarito', to: '/gabarito', icon: 'mdi-file-document-outline', iconActive: 'mdi-file-document' },
+    { label: 'Projetos', to: '/projetos', icon: 'mdi-folder-multiple-outline', iconActive: 'mdi-folder-multiple' },
 ]
 
 const moreItems = computed(() => {
     const items = [
-        { label: 'Notícias', to: '/noticias', icon: 'mdi-newspaper-variant-outline' },
-        { label: 'Projetos', to: '/projetos', icon: 'mdi-folder-multiple-outline' },
+        { label: 'Horário', to: '/horario', icon: 'mdi-clock-outline' },
+        { label: 'Cardápio', to: '/cardapio', icon: 'mdi-silverware-fork-knife' },
+        { label: 'Gabarito', to: '/gabarito', icon: 'mdi-file-document-outline' },
         { label: 'Transparência', to: '/transparencia', icon: 'mdi-shield-outline' },
+        { label: 'O Grêmio', to: '/o-gremio', icon: 'mdi-account-group-outline' },
         { label: 'Os Ouvintes', to: '/ouvintes', icon: 'mdi-forum-outline' },
         { label: 'Conhecendo sua escola', to: '/mapa', icon: 'mdi-map-outline' },
+        { label: 'Minha conta', to: '/conta', icon: 'mdi-account-circle-outline' },
     ]
     return items
 })
