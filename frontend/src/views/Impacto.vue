@@ -1,11 +1,22 @@
 <script setup>
+import { onMounted, computed } from 'vue'
 import PageHeader from '@/components/common/PageHeader.vue'
+import ProjetoCard from '@/components/projetos/ProjetoCard.vue'
+import { useProjetos } from '@/composables/useProjetos'
+import { useAdmin } from '@/composables/useAdmin'
+
+const { projetos, fetchProjetos, loading: projetosLoading } = useProjetos()
+const { isAdmin } = useAdmin()
+
+onMounted(fetchProjetos)
+
+const projetosPublicados = computed(() =>
+  projetos.value.filter((projeto) => projeto.status !== 'inativo').slice(0, 6)
+)
 
 const indicadores = [
-  { titulo: 'Projetos', descricao: 'Projetos cadastrados no portfólio do Grêmio.', icone: 'mdi-folder-multiple-outline' },
-  { titulo: 'Eventos', descricao: 'Eventos e atividades que vierem a ser registrados.', icone: 'mdi-calendar-outline' },
+  { titulo: 'Eventos', descricao: 'Eventos e atividades registrados pelo Grêmio.', icone: 'mdi-calendar-outline' },
   { titulo: 'Ações', descricao: 'Ações realizadas e registradas pelo Grêmio.', icone: 'mdi-hand-heart-outline' },
-  { titulo: 'Participantes', descricao: 'Participações contabilizadas quando houver dado disponível.', icone: 'mdi-account-group-outline' },
   { titulo: 'Parcerias', descricao: 'Parcerias institucionais registradas no sistema.', icone: 'mdi-handshake-outline' },
 ]
 </script>
@@ -14,8 +25,8 @@ const indicadores = [
   <div class="impacto-page">
     <PageHeader
       label="ABSL"
-      title="Impacto"
-      subtitle="Resultados reais das ações e projetos do Grêmio Athos Bulcão."
+      title="Gestão GAB"
+      subtitle="Projetos, parcerias, eventos e ações do Grêmio Athos Bulcão."
     />
 
     <section class="intro" aria-labelledby="impacto-intro-title">
@@ -23,11 +34,30 @@ const indicadores = [
         <v-icon size="28">mdi-chart-line</v-icon>
       </div>
       <div>
-        <h2 id="impacto-intro-title">Dados que podem ser acompanhados</h2>
+        <h2 id="impacto-intro-title">Gestão das iniciativas do Grêmio</h2>
         <p>
           Esta área será alimentada conforme o sistema passar a registrar os indicadores das ações do Grêmio.
           Nenhum número é exibido sem uma fonte de dados real.
         </p>
+      </div>
+    </section>
+
+    <section class="projetos" aria-labelledby="projetos-title">
+      <div class="section-heading">
+        <span class="kicker">Projetos</span>
+        <h2 id="projetos-title">Projetos cadastrados</h2>
+      </div>
+
+      <p v-if="projetosLoading" class="status-msg">Carregando projetos...</p>
+      <p v-else-if="!projetosPublicados.length" class="status-msg">Nenhum projeto publicado no momento.</p>
+      <div v-else class="projetos-grid">
+        <ProjetoCard
+          v-for="projeto in projetosPublicados"
+          :key="projeto.id"
+          :projeto="projeto"
+          :is-admin="isAdmin"
+          @abrir="$router.push(`/projetos/${$event}`)"
+        />
       </div>
     </section>
 
@@ -110,7 +140,7 @@ const indicadores = [
   text-transform: uppercase;
 }
 
-.indicadores-grid {
+.projetos {\n  margin-bottom: 32px;\n}\n\n.projetos-grid {\n  display: grid;\n  grid-template-columns: repeat(3, minmax(0, 1fr));\n  gap: 16px;\n}\n\n.indicadores-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
@@ -148,6 +178,7 @@ const indicadores = [
 }
 
 @media (max-width: 800px) {
+  .projetos-grid,
   .indicadores-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -162,6 +193,7 @@ const indicadores = [
     padding: 16px;
   }
 
+  .projetos-grid,
   .indicadores-grid {
     grid-template-columns: 1fr;
   }
