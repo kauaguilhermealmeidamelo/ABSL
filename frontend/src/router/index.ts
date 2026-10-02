@@ -12,7 +12,7 @@ const routes = [
         path: 'inicio',
         name: 'inicio',
         component: () => import('@/views/inicio.vue'),
-        meta: { public: true, title: 'Início | CEMSL - Brasília', description: 'Conheça o CEMSL em Brasília, no Setor Leste. Acesse notícias, projetos, horários e informações da comunidade escolar.' }
+        meta: { public: true, title: 'Grêmio Athos Bulcão | CEMSL - Brasília', description: 'Conheça o Grêmio Athos Bulcão do CEMSL, no Setor Leste de Brasília. Acompanhe notícias, projetos e informações institucionais.' }
       },
       {
         path: 'horario',
@@ -117,6 +117,19 @@ router.afterEach((to, _from, failure) => {
     }
     description.content = to.meta.description
   }
+
+  const setOpenGraph = (property: string, content: string) => {
+    let tag = document.querySelector<HTMLMetaElement>(`meta[property="${property}"]`)
+    if (!tag) {
+      tag = document.createElement('meta')
+      tag.setAttribute('property', property)
+      document.head.appendChild(tag)
+    }
+    tag.content = content
+  }
+
+  if (typeof to.meta.title === 'string') setOpenGraph('og:title', to.meta.title)
+  if (typeof to.meta.description === 'string') setOpenGraph('og:description', to.meta.description)
 })
 
 export default router
