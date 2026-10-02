@@ -41,4 +41,5 @@ async function compartilhar(){
 
 <style scoped>
 .noticia-card{position:relative;background:#fff;border:1px solid rgba(13,31,60,.08);border-radius:16px;overflow:hidden;font-family:'DM Sans',sans-serif}.admin-acoes{position:absolute;top:10px;right:10px;z-index:5;display:flex;gap:6px}.admin-btn{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:999px;border:0;background:rgba(13,31,60,.55);color:#fff;cursor:pointer;backdrop-filter:blur(2px)}.admin-btn:hover{background:rgba(13,31,60,.75)}.admin-btn-excluir:hover{background:#dc2626}
-.noticia-categoria{padding:10px 16px 0;color:#1a3f8f;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}\n</style>
+.noticia-categoria{padding:10px 16px 0;color:#1a3f8f;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+</style>
