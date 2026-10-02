@@ -26,7 +26,8 @@ async function compartilhar(){
 </script>
 
 <template>
-<article class="noticia-card">\n<div v-if="noticia.categoria" class="noticia-categoria">{{ noticia.categoria }}</div>
+<article class="noticia-card">
+<div v-if="noticia.categoria" class="noticia-categoria">{{ noticia.categoria }}</div>
 <div v-if="isAdmin" class="admin-acoes" @click.stop>
 <button type="button" class="admin-btn" @click="emit('editar',noticia)"><v-icon size="14">mdi-pencil-outline</v-icon></button>
 <button type="button" class="admin-btn admin-btn-excluir" @click="emit('excluir',noticia.id)"><v-icon size="14">mdi-trash-can-outline</v-icon></button>
