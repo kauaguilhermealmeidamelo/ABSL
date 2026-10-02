@@ -153,7 +153,22 @@ function salvar() {
   line-height: 1.6;
 }
 
-.destaque-toggle {\n  display: flex;\n  align-items: center;\n  gap: 8px;\n  color: #0d1f3c;\n  font-size: 13px;\n  cursor: pointer;\n}\n\n.destaque-toggle input {\n  width: 16px;\n  height: 16px;\n  accent-color: #1a3f8f;\n}\n\n.field-input:focus,
+.destaque-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #0d1f3c;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.destaque-toggle input {
+  width: 16px;
+  height: 16px;
+  accent-color: #1a3f8f;
+}
+
+.field-input:focus,
 .field-textarea:focus,
 .field-select:focus {
   outline: none;
