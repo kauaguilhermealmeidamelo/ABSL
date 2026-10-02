@@ -14,10 +14,9 @@ const { projetos, loading: projetosLoading, error: projetosError, fetchProjetos 
 const noticiasRecentes = computed(() => noticias.value.slice(0, 3))
 const noticiaPrincipal = computed(() => noticiasRecentes.value[0])
 const noticiasSecundarias = computed(() => noticiasRecentes.value.slice(1))
-const projetosDestaque = computed(() => {
-  const destacados = projetos.value.filter((projeto) => projeto.destaque)
-  return (destacados.length ? destacados : projetos.value).slice(0, 3)
-})
+const projetosDestaque = computed(() =>
+  projetos.value.filter((projeto) => projeto.destaque).slice(0, 3)
+)
 
 const projetosTrilhaRef = ref(null)
 const projetoIndice = ref(0)
