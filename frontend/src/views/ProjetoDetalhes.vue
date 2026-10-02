@@ -75,8 +75,34 @@ async function excluir() {
       </div>
 
       <h1 class="detalhe-titulo">{{ projeto.titulo }}</h1>
-      <p class="detalhe-texto">{{ projeto.descricao }}</p>
-      <p v-if="projeto.conteudo_detalhado" class="detalhe-texto">{{ projeto.conteudo_detalhado }}</p>
+
+      <section class="detalhe-secao" aria-labelledby="projeto-sobre">
+        <h2 id="projeto-sobre" class="detalhe-subtitulo">Sobre o projeto</h2>
+        <p class="detalhe-texto">{{ projeto.descricao }}</p>
+      </section>
+
+      <section v-if="projeto.conteudo_detalhado" class="detalhe-secao" aria-labelledby="projeto-detalhes">
+        <h2 id="projeto-detalhes" class="detalhe-subtitulo">Detalhes</h2>
+        <p class="detalhe-texto">{{ projeto.conteudo_detalhado }}</p>
+      </section>
+
+      <section class="detalhe-secao" aria-labelledby="projeto-informacoes">
+        <h2 id="projeto-informacoes" class="detalhe-subtitulo">Informações do projeto</h2>
+        <dl class="detalhe-informacoes">
+          <div v-if="projeto.categoria || projeto.diretoria">
+            <dt>Área</dt>
+            <dd>{{ projeto.categoria || projeto.diretoria }}</dd>
+          </div>
+          <div>
+            <dt>Status</dt>
+            <dd>{{ projeto.status === 'concluido' ? 'Concluído' : 'Em andamento' }}</dd>
+          </div>
+          <div v-if="projeto.data_conclusao && projeto.status === 'concluido'">
+            <dt>Conclusão</dt>
+            <dd>{{ projeto.data_conclusao }}</dd>
+          </div>
+        </dl>
+      </section>
 
       <div v-if="projeto.data_conclusao && projeto.status === 'concluido'" class="detalhe-conclusao">
         <v-icon size="14" color="#15803d">mdi-check</v-icon>
@@ -193,6 +219,46 @@ async function excluir() {
   color: #0d1f3c;
   line-height: 1.3;
   margin: 0 0 20px;
+}
+
+.detalhe-secao {
+  margin: 0 0 28px;
+}
+
+.detalhe-subtitulo {
+  color: #0d1f3c;
+  font-family: 'Playfair Display', serif;
+  font-size: 20px;
+  line-height: 1.3;
+  margin: 0 0 10px;
+}
+
+.detalhe-informacoes {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.detalhe-informacoes > div {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(13, 31, 60, 0.08);
+}
+
+.detalhe-informacoes dt {
+  color: #5a6a85;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.detalhe-informacoes dd {
+  margin: 0;
+  color: #3d4a5c;
+  font-size: 14px;
 }
 
 .detalhe-texto {
