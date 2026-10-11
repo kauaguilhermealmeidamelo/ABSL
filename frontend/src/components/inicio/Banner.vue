@@ -15,14 +15,8 @@ function fecharVideo() {
 }
 
 
-const emit = defineEmits(['conhecer-gremio', 'participar'])
-
-function irParaEquipe() {
-  emit('conhecer-gremio')
-}
-
-function participar() {
-  emit('participar')
+function irParaProjetos() {
+  window.location.href = '/projetos'
 }
 
 </script>
@@ -34,27 +28,23 @@ function participar() {
     <!-- Dark overlay so text stays readable -->
     <div class="hero-overlay" />
     <div class="hero-content">
-      <p class="eyebrow">GRÊMIO ATHOS BULCÃO</p>
-      <h1 class="title title-white">VOZ ESTUDANTIL.</h1>
-      <h1 class="title title-gold">AÇÃO.</h1>
-      <h1 class="title title-white title-sm">COMUNIDADE. ✦</h1>
+      <p class="eyebrow">GRÊMIO ESTUDANTIL</p>
+      <h1 class="title title-white">Grêmio Athos</h1>
+      <h1 class="title title-gold">Bulcão</h1>
 
       <div class="hero-body">
         <div class="hero-text-row">
           <div class="accent-bar" />
           <p class="hero-text">
-            Informação, participação e projetos para aproximar estudantes, escola e comunidade.
+            Uma organização estudantil voltada à representação, aos projetos e à participação da comunidade escolar.
           </p>
         </div>
         <div class="hero-actions">
-          <button class="btn-primary" type="button" @click="irParaEquipe">
-            CONHEÇA O GRÊMIO <span class="arrow">→</span>
-          </button>
-          <button class="btn-ghost" type="button" @click="participar">
-            <span class="play-icon">→</span> Participe
+          <button class="btn-primary" type="button" @click="irParaProjetos">
+            CONHEÇA NOSSOS PROJETOS <span class="arrow">→</span>
           </button>
           <button v-if="inicioMedia.videoUrl" class="btn-ghost" type="button" @click="abrirVideo">
-            <span class="play-icon">▶</span> Ver vídeo
+            <span class="play-icon">▶</span> Ver Vídeo
           </button>
         </div>
       </div>
