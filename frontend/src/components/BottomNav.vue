@@ -17,6 +17,7 @@ const primaryItems = [
 const moreItems = computed(() => {
     const items = [
         { label: 'Notícias', to: '/noticias', icon: 'mdi-newspaper-variant-outline' },
+        { label: 'Eventos', to: '/eventos', icon: 'mdi-calendar-star' },
         { label: 'Projetos', to: '/projetos', icon: 'mdi-folder-multiple-outline' },
         { label: 'Transparência', to: '/transparencia', icon: 'mdi-shield-outline' },
         { label: 'Os Ouvintes', to: '/ouvintes', icon: 'mdi-forum-outline' },

@@ -33,6 +33,12 @@ const routes = [
         meta: { public: true, title: 'Notícia | CEMSL - Brasília', description: 'Confira esta notícia do Grêmio Estudantil Athos Bulcão e da comunidade escolar do CEMSL.' }
       },
       {
+        path: 'eventos',
+        name: 'eventos',
+        component: () => import('@/views/Eventos.vue'),
+        meta: { public: true, title: 'Eventos | CEMSL - Brasília', description: 'Confira os próximos eventos do Grêmio Athos Bulcão e da comunidade escolar do CEMSL em Brasília.' }
+      },
+      {
         path: 'projetos',
         name: 'projetos',
         component: () => import('@/views/Projetos.vue'),

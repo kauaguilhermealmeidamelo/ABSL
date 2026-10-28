@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\{
     NoticiaController,
+    EventoController,
     ProjetoController,
     CardapioController,
     OuvinteController,
@@ -40,6 +41,8 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::get('/noticias', [NoticiaController::class, 'index']);
 Route::get('/noticias/{id}', [NoticiaController::class, 'show']);
 Route::get('/noticias/{id}/comentarios', [NoticiaComentarioController::class, 'index']);
+Route::get('/eventos', [EventoController::class, 'index']);
+Route::get('/eventos/{id}', [EventoController::class, 'show']);
 Route::get('/projetos', [ProjetoController::class, 'index']);
 Route::get('/projetos/{id}', [ProjetoController::class, 'show']);
 Route::get('/cardapio', [CardapioController::class, 'index']);
@@ -87,6 +90,10 @@ Route::middleware(['auth:sanctum', 'staff'])->group(function () {
     Route::post('/noticias/{id}/midias', [NoticiaMidiaController::class, 'store']);
     Route::delete('/noticias/{id}/midias/{midiaId}', [NoticiaMidiaController::class, 'destroy']);
     Route::delete('/noticias/{id}/comentarios/{comentarioId}', [NoticiaComentarioController::class, 'destroy']);
+
+    Route::post('/eventos', [EventoController::class, 'store']);
+    Route::put('/eventos/{id}', [EventoController::class, 'update']);
+    Route::delete('/eventos/{id}', [EventoController::class, 'destroy']);
 
     Route::post('/projetos', [ProjetoController::class, 'store']);
     Route::put('/projetos/{id}', [ProjetoController::class, 'update']);
