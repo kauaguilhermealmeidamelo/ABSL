@@ -1,4 +1,5 @@
 <script setup>
+import { ref, onMounted, nextTick } from 'vue'
 import { formatarDataEvento } from './eventoFormat'
 
 defineProps({
@@ -6,6 +7,17 @@ defineProps({
   isAdmin: { type: Boolean, default: false },
 })
 defineEmits(['editar', 'excluir'])
+
+// "Ver mais" só aparece quando o texto realmente passa do limite de linhas.
+const descricaoEl = ref(null)
+const expandida = ref(false)
+const truncada = ref(false)
+
+onMounted(async () => {
+  await nextTick()
+  const el = descricaoEl.value
+  if (el) truncada.value = el.scrollHeight > el.clientHeight + 1
+})
 </script>
 
 <template>
@@ -28,7 +40,12 @@ defineEmits(['editar', 'excluir'])
       <h2 class="evento-titulo">{{ evento.titulo }}</h2>
       <p class="evento-meta"><v-icon size="16">mdi-calendar-clock</v-icon>{{ formatarDataEvento(evento.data_evento) }}</p>
       <p v-if="evento.local" class="evento-meta"><v-icon size="16">mdi-map-marker-outline</v-icon>{{ evento.local }}</p>
-      <p v-if="evento.descricao" class="evento-descricao">{{ evento.descricao }}</p>
+      <template v-if="evento.descricao">
+        <p ref="descricaoEl" class="evento-descricao" :class="{ 'evento-descricao--aberta': expandida }">{{ evento.descricao }}</p>
+        <button v-if="truncada" type="button" class="btn-ver-mais" :aria-expanded="expandida" @click="expandida = !expandida">
+          {{ expandida ? 'Ver menos' : 'Ver mais' }}
+        </button>
+      </template>
 
       <a v-if="evento.link_ingresso" class="btn-ingresso" :href="evento.link_ingresso" target="_blank" rel="noopener noreferrer">
         <v-icon size="18">mdi-ticket-confirmation-outline</v-icon>Comprar ingresso
@@ -49,6 +66,9 @@ defineEmits(['editar', 'excluir'])
 .evento-titulo{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:#0d1f3c;margin:0 0 4px;overflow-wrap:anywhere}
 .evento-meta{display:flex;align-items:center;gap:6px;margin:0;font-size:13px;color:#5a6a85}
 .evento-descricao{margin:6px 0 0;font-size:14px;line-height:1.6;color:#0d1f3c;white-space:pre-line;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.evento-descricao--aberta{display:block;-webkit-line-clamp:unset;overflow:visible}
+.btn-ver-mais{align-self:flex-start;border:0;background:transparent;padding:0;color:#1a3f8f;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.btn-ver-mais:hover{text-decoration:underline}
 .btn-ingresso{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:10px 20px;border-radius:999px;background:#f5c518;color:#0d1f3c;font-size:13px;font-weight:700;text-decoration:none}
 .btn-ingresso:hover{background:#e0b300}
 @media (max-width:560px){.btn-ingresso{align-self:stretch;justify-content:center}}
