@@ -81,3 +81,22 @@ export async function resendVerification() {
   const { data } = await api.post('/email/verification-notification')
   return data
 }
+export async function forgotPassword(email) {
+  await ensureCsrfCookie()
+  try {
+    const { data } = await api.post('/forgot-password', { email })
+    return data.message
+  } catch (err) {
+    throw new Error(toUserMessage(err, 'Não foi possível enviar o e-mail. Tente novamente.'))
+  }
+}
+
+export async function resetPassword({ token, email, password, password_confirmation }) {
+  await ensureCsrfCookie()
+  try {
+    const { data } = await api.post('/reset-password', { token, email, password, password_confirmation })
+    return data.message
+  } catch (err) {
+    throw new Error(toUserMessage(err, 'Não foi possível redefinir a senha.'))
+  }
+}

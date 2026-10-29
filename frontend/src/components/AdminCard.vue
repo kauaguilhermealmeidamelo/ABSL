@@ -19,6 +19,7 @@ const titulo = computed(() => {
   return 'Minha conta'
 })
 function abrir(m) { modo.value = m; aba.value = 'conta'; open.value = true }
+function irEsqueciSenha() { open.value = false; router.push('/esqueci-senha') }
 function aoEntrar() { open.value = false; if (isAdmin.value) router.push('/usuarios') }
 async function doLogout() { try { await logout() } finally { open.value = false; router.replace('/') } }
 function goUsuarios() { open.value = false; router.push('/usuarios') }
@@ -50,7 +51,7 @@ function goUsuarios() { open.value = false; router.push('/usuarios') }
               <button type="button" role="tab" :aria-selected="modo === 'login'" class="tab" :class="{ ativo: modo === 'login' }" @click="modo = 'login'">Entrar</button>
               <button type="button" role="tab" :aria-selected="modo === 'cadastro'" class="tab" :class="{ ativo: modo === 'cadastro' }" @click="modo = 'cadastro'">Criar conta</button>
             </div>
-            <LoginForm v-if="modo === 'login'" @logado="aoEntrar" />
+            <LoginForm v-if="modo === 'login'" @logado="aoEntrar" @esqueci="irEsqueciSenha" />
             <RegisterForm v-else @registrado="aoEntrar" />
           </v-card-text>
         </v-card>

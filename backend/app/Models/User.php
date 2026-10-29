@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Mail\RedefinirSenhaEmail;
 use App\Mail\VerificarEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -30,6 +31,14 @@ class User extends Authenticatable implements MustVerifyEmail
     public function sendEmailVerificationNotification(): void
     {
         Mail::to($this)->send(new VerificarEmail($this));
+    }
+
+    /**
+     * E-mail de redefinição de senha no layout institucional ABSL.
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        Mail::to($this)->send(new RedefinirSenhaEmail($this, (string) $token));
     }
 
     /**

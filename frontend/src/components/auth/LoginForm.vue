@@ -6,7 +6,7 @@ const props = defineProps({
   erroExterno: { type: String, default: '' },
 })
 
-const emit = defineEmits(['logado'])
+const emit = defineEmits(['logado', 'esqueci'])
 
 const email = ref('')
 const password = ref('')
@@ -99,6 +99,8 @@ async function submit() {
 
     <v-btn type="submit" :loading="loading" class="enter-btn" block>Entrar</v-btn>
 
+    <button type="button" class="link-esqueci" @click="emit('esqueci')">Esqueci minha senha</button>
+
     <p v-if="erroGeral" class="erro-geral" role="alert">{{ erroGeral }}</p>
   </form>
 </template>
@@ -187,6 +189,18 @@ async function submit() {
   box-shadow: none !important;
   margin-top: 4px;
 }
+.link-esqueci {
+  align-self: center;
+  border: 0;
+  background: transparent;
+  color: #16509b;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px;
+}
+.link-esqueci:hover { text-decoration: underline; }
 .erro-campo {
   color: #dc2626;
   font-size: 12.5px;

@@ -4,6 +4,7 @@ const ACAO_LABELS = {
   login: 'Login',
   logout: 'Logout',
   criou_usuario: 'Criou usuário',
+  redefiniu_senha: 'Redefiniu a senha (recuperação)',
   atualizou_senha_usuario: 'Atualizou senha de usuário',
   excluiu_usuario: 'Excluiu usuário',
   alterou_cargo_usuario: 'Alterou cargo de usuário',
