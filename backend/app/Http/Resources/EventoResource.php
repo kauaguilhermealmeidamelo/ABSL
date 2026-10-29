@@ -17,6 +17,8 @@ class EventoResource extends JsonResource
             'data_evento' => $this->data_evento?->toIso8601String(),
             'imagem_url' => $this->imagem_url,
             'link_ingresso' => $this->link_ingresso,
+            'preco' => $this->preco !== null ? (float) $this->preco : null,
+            'gratuito' => (bool) $this->gratuito,
             'ativo' => $this->ativo,
             // 'autor_id' omitido de propósito: endpoint é público.
         ];

@@ -10,7 +10,7 @@ const props = defineProps({
 })
 const emit = defineEmits(['update:modelValue', 'salvar'])
 
-const vazio = () => ({ titulo: '', data_evento: '', local: '', descricao: '', link_ingresso: '' })
+const vazio = () => ({ titulo: '', data_evento: '', local: '', descricao: '', link_ingresso: '', preco: '', gratuito: false })
 const form = ref(vazio())
 const imagemArquivo = ref(null)
 const imagemPreview = ref('')
@@ -24,7 +24,7 @@ watch(() => props.modelValue, (open) => {
   removerImagem.value = false
   if (props.evento) {
     const e = props.evento
-    form.value = { titulo: e.titulo ?? '', data_evento: paraInputLocal(e.data_evento), local: e.local ?? '', descricao: e.descricao ?? '', link_ingresso: e.link_ingresso ?? '' }
+    form.value = { titulo: e.titulo ?? '', data_evento: paraInputLocal(e.data_evento), local: e.local ?? '', descricao: e.descricao ?? '', link_ingresso: e.link_ingresso ?? '', preco: e.preco ?? '', gratuito: !!e.gratuito }
     imagemPreview.value = e.imagem_url ?? ''
   } else {
     form.value = vazio()
@@ -55,6 +55,8 @@ function linkValido(v) {
 
 function salvar() {
   erro.value = ''
+  const preco = String(form.value.preco).replace(',', '.').trim()
+  if (!form.value.gratuito && preco !== '' && (isNaN(Number(preco)) || Number(preco) < 0)) { erro.value = 'Informe um preço válido.'; return }
   if (!form.value.titulo.trim()) { erro.value = 'Informe o título do evento.'; return }
   if (!form.value.data_evento) { erro.value = 'Informe a data e hora do evento.'; return }
   if (!linkValido(form.value.link_ingresso.trim())) { erro.value = 'O link de ingresso deve começar com http:// ou https://'; return }
@@ -64,6 +66,7 @@ function salvar() {
       ...form.value,
       titulo: form.value.titulo.trim(),
       link_ingresso: form.value.link_ingresso.trim(),
+      preco: form.value.gratuito ? '' : preco,
       imagem: imagemArquivo.value,
       removerImagem: removerImagem.value,
     },
@@ -102,6 +105,10 @@ function fechar() { emit('update:modelValue', false) }
         <label class="field-label">Descrição</label>
         <textarea v-model="form.descricao" rows="4" class="field-textarea" placeholder="Detalhes do evento" />
 
+        <label class="field-label">Preço do ingresso</label>
+        <label class="check-gratuito"><input v-model="form.gratuito" type="checkbox" />Evento gratuito</label>
+        <input v-model="form.preco" type="number" inputmode="decimal" min="0" step="0.01" class="field-input" :disabled="form.gratuito" placeholder="Ex.: 25,00" />
+
         <label class="field-label">Link de ingresso (Sympla, Eventbrite, Pix...)</label>
         <input v-model="form.link_ingresso" type="url" class="field-input" placeholder="https://www.sympla.com.br/..." />
 
@@ -123,7 +130,9 @@ function fechar() { emit('update:modelValue', false) }
 .field-input,.field-textarea{width:100%;border:1px solid rgba(13,31,60,.15);border-radius:12px;padding:10px 12px;font-size:14px;background:#eef3fb;font-family:inherit;color:#0d1f3c;box-sizing:border-box}
 .modal-body>*{flex-shrink:0}
 .field-textarea{resize:none;line-height:1.6;min-height:110px;display:block}
-.field-input:focus,.field-textarea:focus{outline:none;border-color:#1a3f8f}
+.field-input:focus,.check-gratuito{display:flex;align-items:center;gap:8px;font-size:13px;color:#0d1f3c;cursor:pointer;margin-bottom:6px}
+.field-input:disabled{opacity:.5;cursor:not-allowed}
+.field-textarea:focus{outline:none;border-color:#1a3f8f}
 .field-erro{display:block;color:#dc2626;font-size:12px;margin-top:8px}
 .imagem-box{display:flex;flex-direction:column;gap:8px}
 .imagem-preview{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:12px}

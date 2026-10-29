@@ -13,12 +13,16 @@ class Evento extends Model
         'data_evento',
         'imagem_url',
         'link_ingresso',
+        'preco',
+        'gratuito',
         'ativo',
         'autor_id',
     ];
 
     protected $casts = [
         'data_evento' => 'datetime',
+        'preco' => 'decimal:2',
+        'gratuito' => 'boolean',
         'ativo' => 'boolean',
     ];
 }

@@ -38,10 +38,18 @@ class EventoController extends Controller
             'data_evento' => 'required|date',
             // Só http(s): evita javascript: e afins no botão "Comprar ingresso".
             'link_ingresso' => ['nullable', 'url:http,https', 'max:500'],
+            'preco' => 'nullable|numeric|min:0|max:99999.99',
+            'gratuito' => 'nullable|boolean',
             'imagem' => 'nullable|image|max:5120',
         ]);
 
-        $evento = new Evento(collect($validated)->except('imagem')->all());
+        $dados = collect($validated)->except('imagem')->all();
+        $dados['gratuito'] = (bool) ($dados['gratuito'] ?? false);
+        if ($dados['gratuito']) {
+            $dados['preco'] = null; // gratuito não tem preço
+        }
+
+        $evento = new Evento($dados);
         if ($request->hasFile('imagem')) {
             $path = $request->file('imagem')->store('eventos', 'public');
             $evento->imagem_url = Storage::disk('public')->url($path);
@@ -70,11 +78,20 @@ class EventoController extends Controller
             'local' => 'nullable|string|max:255',
             'data_evento' => 'sometimes|required|date',
             'link_ingresso' => ['nullable', 'url:http,https', 'max:500'],
+            'preco' => 'nullable|numeric|min:0|max:99999.99',
+            'gratuito' => 'nullable|boolean',
             'imagem' => 'nullable|image|max:5120',
             'remover_imagem' => 'nullable|boolean',
         ]);
 
-        $evento->fill(collect($validated)->except(['imagem', 'remover_imagem'])->all());
+        $dados = collect($validated)->except(['imagem', 'remover_imagem'])->all();
+        if (array_key_exists('gratuito', $dados)) {
+            $dados['gratuito'] = (bool) $dados['gratuito'];
+            if ($dados['gratuito']) {
+                $dados['preco'] = null;
+            }
+        }
+        $evento->fill($dados);
 
         if ($request->hasFile('imagem')) {
             $this->deleteArquivo($evento->imagem_url);

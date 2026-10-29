@@ -4,11 +4,12 @@ import { createResourceService } from './resource'
 const base = createResourceService('/eventos')
 
 // Multipart com _method=PUT: o PHP não lê arquivos em PUT puro.
-function toFormData({ imagem, removerImagem, ...campos }) {
+function toFormData({ imagem, removerImagem, gratuito, ...campos }) {
   const fd = new FormData()
   Object.entries(campos).forEach(([k, v]) => {
     if (v !== null && v !== undefined) fd.append(k, v)
   })
+  fd.append('gratuito', gratuito ? '1' : '0')
   if (imagem instanceof File) fd.append('imagem', imagem)
   if (removerImagem) fd.append('remover_imagem', '1')
   return fd
