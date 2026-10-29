@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\{
     DiretoriaController,
     InicioMediaController,
     AuthController,
+    PasswordResetController,
     VisitaController,
     AdminUserController,
     LogController,
@@ -27,6 +28,8 @@ use App\Http\Controllers\Api\{
 // de fato chega (sem sessão).
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:6,1');
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:6,1');
+Route::post('/forgot-password', [PasswordResetController::class, 'forgot'])->middleware('throttle:5,1');
+Route::post('/reset-password', [PasswordResetController::class, 'reset'])->middleware('throttle:6,1');
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 
 // Verificação de e-mail oficial do Laravel (MustVerifyEmail).
