@@ -121,7 +121,8 @@ function fechar() { emit('update:modelValue', false) }
 .modal-body{display:flex;flex-direction:column;gap:4px;padding:8px 20px 4px}
 .field-label{font-size:12px;font-weight:600;color:#5a6a85;margin-top:12px;margin-bottom:4px}
 .field-input,.field-textarea{width:100%;border:1px solid rgba(13,31,60,.15);border-radius:12px;padding:10px 12px;font-size:14px;background:#eef3fb;font-family:inherit;color:#0d1f3c;box-sizing:border-box}
-.field-textarea{resize:none;line-height:1.6}
+.modal-body>*{flex-shrink:0}
+.field-textarea{resize:none;line-height:1.6;min-height:110px;display:block}
 .field-input:focus,.field-textarea:focus{outline:none;border-color:#1a3f8f}
 .field-erro{display:block;color:#dc2626;font-size:12px;margin-top:8px}
 .imagem-box{display:flex;flex-direction:column;gap:8px}
