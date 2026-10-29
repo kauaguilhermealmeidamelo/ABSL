@@ -6,6 +6,7 @@ const ACAO_LABELS = {
   criou_usuario: 'Criou usuário',
   atualizou_senha_usuario: 'Atualizou senha de usuário',
   excluiu_usuario: 'Excluiu usuário',
+  alterou_cargo_usuario: 'Alterou cargo de usuário',
   criou_noticia: 'Criou notícia',
   editou_noticia: 'Editou notícia',
   excluiu_noticia: 'Excluiu notícia',

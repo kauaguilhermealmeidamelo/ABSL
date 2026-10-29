@@ -11,7 +11,7 @@ class LogController extends Controller
     /**
      * Lista paginada de logs de auditoria. A rota é protegida pelo
      * middleware 'admin' (routes/api.php) — diferente das demais rotas de
-     * gerenciamento, que também aceitam 'imprensa'. Aqui só o
+     * gerenciamento, que também aceitam 'supervisor'. Aqui só o
      * administrador máximo tem acesso.
      */
     public function index(Request $request)

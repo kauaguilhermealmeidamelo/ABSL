@@ -7,7 +7,7 @@ const usuarios = ref([])
 const loading = ref(false)
 const error = ref('')
 
-const novo = ref({ name: '', email: '', password: '', password_confirmation: '', role: 'imprensa' })
+const novo = ref({ name: '', email: '', password: '', password_confirmation: '', role: 'supervisor' })
 const criando = ref(false)
 
 const senhaEditando = ref(null) // id do usuário com o form de senha aberto
@@ -60,7 +60,7 @@ async function cadastrar() {
       role: novo.value.role,
     })
     usuarios.value = [...usuarios.value, criado].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
-    novo.value = { name: '', email: '', password: '', password_confirmation: '', role: 'imprensa' }
+    novo.value = { name: '', email: '', password: '', password_confirmation: '', role: 'supervisor' }
     mostrarFeedback('sucesso', 'Usuário criado com sucesso.')
   } catch (err) {
     mostrarFeedback('erro', err?.response?.data?.message || 'Não foi possível criar o usuário.')
@@ -96,6 +96,22 @@ async function salvarSenha(id) {
   }
 }
 
+const alterandoRole = ref(null) // id do usuário cujo cargo está sendo salvo
+
+async function alterarRole(u, novoRole) {
+  if (novoRole === u.role) return
+  alterandoRole.value = u.id
+  try {
+    const atualizado = await usuariosAdminService.updateRole(u.id, novoRole)
+    usuarios.value = usuarios.value.map((item) => (item.id === u.id ? { ...item, ...atualizado } : item))
+    mostrarFeedback('sucesso', `Cargo de ${u.name} alterado para ${roleLabel(atualizado)}.`)
+  } catch (err) {
+    mostrarFeedback('erro', err?.response?.data?.message || 'Não foi possível alterar o cargo.')
+  } finally {
+    alterandoRole.value = null
+  }
+}
+
 async function excluir(u) {
   if (!confirm(`Excluir o usuário "${u.name}"? Essa ação não pode ser desfeita.`)) return
   try {
@@ -113,7 +129,7 @@ function ehVoceMesmo(u) {
 
 function roleLabel(u) {
   if (u.role === 'admin') return 'Administrador'
-  if (u.role === 'imprensa') return 'Imprensa'
+  if (u.role === 'supervisor') return 'Supervisor'
   return 'Usuário'
 }
 </script>
@@ -146,7 +162,8 @@ function roleLabel(u) {
       <label class="field-label">Tipo de acesso</label>
       <select v-model="novo.role" class="field-input field-select">
         <option value="admin">Administrador (acesso total)</option>
-        <option value="imprensa">Imprensa (todas as páginas, exceto Administradores)</option>
+        <option value="supervisor">Supervisor (todas as páginas, exceto Administradores)</option>
+        <option value="user">Usuário comum</option>
       </select>
 
       <button type="button" class="btn-add" :disabled="criando" @click="cadastrar">
@@ -179,9 +196,22 @@ function roleLabel(u) {
             <p class="user-email">{{ u.email }}</p>
           </div>
 
-          <span class="badge-role" :class="`badge-${u.role}`">
+          <span v-if="ehVoceMesmo(u)" class="badge-role" :class="`badge-${u.role}`">
             {{ roleLabel(u) }}
           </span>
+          <select
+            v-else
+            class="select-role"
+            :class="`badge-${u.role}`"
+            :value="u.role"
+            :disabled="alterandoRole === u.id"
+            aria-label="Cargo do usuário"
+            @change="alterarRole(u, $event.target.value)"
+          >
+            <option value="admin">Administrador</option>
+            <option value="supervisor">Supervisor</option>
+            <option value="user">Usuário</option>
+          </select>
 
           <div class="user-acoes">
             <button type="button" class="btn-senha" @click="senhaEditando === u.id ? fecharSenha() : abrirSenha(u.id)">
@@ -376,9 +406,11 @@ function roleLabel(u) {
   white-space: nowrap;
 }
 .badge-admin { background: #dbeafe; color: #1a3f8f; }
-.badge-imprensa { background: #fef3c7; color: #b45309; }
+.badge-supervisor { background: #fef3c7; color: #b45309; }
 .badge-user { background: #f3f4f6; color: #6b7280; }
 
+.select-role { border: 0; border-radius: 999px; padding: 4px 10px; font: inherit; font-size: 11px; font-weight: 600; cursor: pointer; }
+.select-role:disabled { opacity: .6; cursor: wait; }
 .user-acoes {
   display: flex;
   gap: 8px;

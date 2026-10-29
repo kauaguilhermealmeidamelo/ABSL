@@ -9,6 +9,10 @@ export const usuariosAdminService = {
     const { data } = await api.post('/admin/usuarios', dados)
     return data
   },
+  async updateRole(id, role) {
+    const { data } = await api.put(`/admin/usuarios/${id}/role`, { role })
+    return data
+  },
   async updatePassword(id, password) {
     const { data } = await api.put(`/admin/usuarios/${id}/senha`, { password })
     return data

@@ -13,7 +13,7 @@ class EnsureUserIsStaff
         $user = $request->user();
 
         if (! $user || ! $user->isStaff()) {
-            abort(403, 'Acesso restrito à equipe (administrador ou imprensa).');
+            abort(403, 'Acesso restrito à equipe (administrador ou supervisor).');
         }
 
         return $next($request);

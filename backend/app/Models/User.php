@@ -54,6 +54,6 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isStaff(): bool
     {
         // "staff" = pode gerenciar conteúdo (notícias, projetos, etc.)
-        return $this->isAdmin() || $this->role === 'imprensa';
+        return $this->isAdmin() || $this->role === 'supervisor';
     }
 }

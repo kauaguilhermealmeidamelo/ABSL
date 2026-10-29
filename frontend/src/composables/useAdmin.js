@@ -9,7 +9,7 @@ export function useAdmin() {
   })
 
   // Pode editar conteúdo (notícias, projetos, cardápio, etc.)
-  const isAdmin = computed(() => role.value === 'admin' || role.value === 'imprensa')
+  const isAdmin = computed(() => role.value === 'admin' || role.value === 'supervisor')
 
   // Pode gerenciar contas de usuário (aba "Administradores")
   const isSuperAdmin = computed(() => role.value === 'admin')
