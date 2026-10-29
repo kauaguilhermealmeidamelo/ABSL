@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { updateProfile, resendVerification } from '@/services/auth'
+import { updateProfile, resendVerification, forgotPassword } from '@/services/auth'
 import { user } from '@/stores/auth'
 import TurmaSelect from '@/components/auth/TurmaSelect.vue'
 const emit = defineEmits(['salvo'])
@@ -10,6 +10,9 @@ const email = ref(user.value?.email ?? '')
 const turma = ref(user.value?.turma ?? '')
 const loading = ref(false)
 const reenviando = ref(false)
+const enviandoSenha = ref(false)
+const okSenha = ref('')
+const erroSenha = ref('')
 const ok = ref('')
 const erro = ref('')
 const erros = ref({ name: '', username: '', email: '', turma: '' })
@@ -35,6 +38,17 @@ async function submit() {
     emit('salvo')
   } catch (err) { erro.value = err instanceof Error ? err.message : 'Não foi possível salvar.' }
   finally { loading.value = false }
+}
+// Troca de senha sem pedir a senha antiga: envia o link de redefinição para o
+// e-mail JÁ salvo na conta (não o que está sendo digitado no formulário).
+async function enviarLinkSenha() {
+  okSenha.value = ''; erroSenha.value = ''
+  enviandoSenha.value = true
+  try {
+    await forgotPassword(user.value?.email ?? '')
+    okSenha.value = `Enviamos um link para ${user.value?.email}. Ele vale por 60 minutos.`
+  } catch (err) { erroSenha.value = err instanceof Error ? err.message : 'Não foi possível enviar o e-mail.' }
+  finally { enviandoSenha.value = false }
 }
 async function reenviar() {
   erro.value = ''; ok.value = ''
@@ -77,6 +91,16 @@ async function reenviar() {
     <p v-if="ok" class="ok" role="status">{{ ok }}</p>
     <p v-if="erro" class="erro-geral" role="alert">{{ erro }}</p>
   </form>
+
+  <section class="bloco-senha">
+    <h4 class="bloco-titulo">Senha</h4>
+    <p class="bloco-texto">Para trocar a senha, enviamos um link de redefinição para o e-mail da sua conta.</p>
+    <v-btn variant="outlined" :loading="enviandoSenha" class="senha-btn" block @click="enviarLinkSenha">
+      <v-icon size="18" class="mr-2">mdi-email-lock-outline</v-icon>Alterar senha por e-mail
+    </v-btn>
+    <p v-if="okSenha" class="ok" role="status">{{ okSenha }}</p>
+    <p v-if="erroSenha" class="erro-geral" role="alert">{{ erroSenha }}</p>
+  </section>
 </template>
 
 <style scoped>
@@ -185,6 +209,35 @@ async function reenviar() {
   font-size: 13px;
   text-align: center;
   margin: 4px 0 0;
+}
+
+.bloco-senha {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(13, 31, 60, 0.1);
+}
+
+.bloco-titulo {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a2f4a;
+  margin: 0 0 6px;
+}
+
+.bloco-texto {
+  font-size: 13px;
+  color: #5a6a85;
+  margin: 0 0 12px;
+  line-height: 1.5;
+}
+
+.senha-btn {
+  color: #16509b !important;
+  border-color: #16509b !important;
+  border-radius: 28px !important;
+  height: 48px !important;
+  text-transform: none !important;
+  font-weight: 700 !important;
 }
 
 .ok {
