@@ -14,7 +14,9 @@ class EventoResource extends JsonResource
             'titulo' => $this->titulo,
             'descricao' => $this->descricao,
             'local' => $this->local,
-            'data_evento' => $this->data_evento?->toIso8601String(),
+            // Horário "de parede" (sem fuso): o que foi digitado no formulário é o que
+            // aparece. Com fuso (+00:00) o navegador em Brasília mostrava 3h a menos.
+            'data_evento' => $this->data_evento?->format('Y-m-d\TH:i:s'),
             'imagem_url' => $this->imagem_url,
             'link_ingresso' => $this->link_ingresso,
             'preco' => $this->preco !== null ? (float) $this->preco : null,
