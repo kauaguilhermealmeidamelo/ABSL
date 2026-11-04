@@ -93,6 +93,14 @@ class DeclaracaoInatividadeController extends Controller
                     ->where(fn ($q) => $q->whereNull('fim_previsto_em')->orWhere('fim_previsto_em', '>', now()))
                     ->orderByDesc('interino')->first();
                 abort_unless($vinculo, 403);
+                if (! $vinculo->interino && DB::table('vinculos_financeiros')
+                    ->where('gestao_financeira_id', $gestao->id)
+                    ->where('cargo', 'tesoureiro_geral')->where('interino', true)
+                    ->whereNull('fim_em')->where('inicio_em', '<=', now())
+                    ->where(fn ($q) => $q->whereNull('fim_previsto_em')->orWhere('fim_previsto_em', '>', now()))
+                    ->exists()) {
+                    abort(403, 'O titular não aprova durante interinidade ativa.');
+                }
                 if ((int) $registro->aprovada_admin_por === $usuario->id) {
                     throw ValidationException::withMessages(['aprovacao' => 'As aprovações exigem duas pessoas distintas.']);
                 }
