@@ -159,6 +159,7 @@ Route::middleware('auth:sanctum')->prefix('admin/financeiro')->group(function ()
     Route::get('/gestoes/{gestao}/movimentacoes', [FinanceiroController::class, 'movimentacoes']);
     Route::post('/gestoes/{gestao}/movimentacoes', [FinanceiroController::class, 'criarMovimentacao']);
     Route::post('/movimentacoes/{movimentacao}/confirmar', [FinanceiroController::class, 'confirmarMovimentacao']);
+    Route::post('/gestoes/{gestao}/relatorios/fechar', [RelatorioFinanceiroController::class, 'fechar']);
     Route::post('/gestoes/{gestao}/relatorios', [RelatorioFinanceiroController::class, 'publicar']);
     Route::get('/movimentacoes/{movimentacao}/comprovantes', [ComprovanteFinanceiroController::class, 'index']);
     Route::post('/movimentacoes/{movimentacao}/comprovantes', [ComprovanteFinanceiroController::class, 'store']);
