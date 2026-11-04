@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\MovimentacaoTransicaoController;
 use App\Http\Controllers\Api\FechamentoTransicaoController;
 use App\Http\Controllers\Api\CancelamentoFinanceiroController;
 use App\Http\Controllers\Api\RetificacaoFinanceiraController;
+use App\Http\Controllers\Api\EsclarecimentoFinanceiroController;
 use App\Http\Controllers\Api\ConciliacaoFinanceiraController;
 use App\Http\Controllers\Api\VinculoFinanceiroController;
 use App\Http\Controllers\Api\RelatorioFinanceiroController;
@@ -73,6 +74,7 @@ Route::get('/diretorias', [DiretoriaController::class, 'index']);
 Route::get('/inicio-media', [InicioMediaController::class, 'index']);
 Route::get('/transparencia', [TransparenciaController::class, 'index']);
 Route::get('/financeiro/relatorios', [RelatorioFinanceiroController::class, 'index']);
+Route::get('/financeiro/gestoes/{gestao}/esclarecimentos', [EsclarecimentoFinanceiroController::class, 'index']);
 Route::get('/financeiro/relatorios/{relatorio}/pdf', [PdfRelatorioFinanceiroController::class, 'download']);
 Route::get('/financeiro/relatorios/{relatorio}/versoes/{versao}/pdf', [PdfRelatorioFinanceiroController::class, 'versao']);
 Route::get('/financeiro/transicoes/{transicao}/relatorio', [FechamentoTransicaoController::class, 'relatorio']);
@@ -159,6 +161,7 @@ Route::middleware(['auth:sanctum', 'staff'])->group(function () {
 // Gestão financeira: dados completos restritos a administradores.
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin/financeiro')->group(function () {
     Route::get('/gestoes', [FinanceiroController::class, 'gestoes']);
+    Route::post('/gestoes/{gestao}/esclarecimentos', [EsclarecimentoFinanceiroController::class, 'publicar']);
     Route::get('/transicoes', [TransicaoFinanceiraController::class, 'index']);
     Route::post('/transicoes', [TransicaoFinanceiraController::class, 'iniciar']);
     Route::get('/transicoes/{transicao}/movimentacoes', [MovimentacaoTransicaoController::class, 'index']);
