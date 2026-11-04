@@ -67,8 +67,12 @@ async function excluir(id) {
       </button>
     </div>
 
-    <nav class="financeiro-links" aria-label="Prestação de contas">
-      <router-link to="/transparencia/prestacao-de-contas">Consultar relatórios financeiros mensais</router-link>
+    <nav class="portal-cards" aria-label="Seções do portal de transparência">
+      <router-link to="/transparencia/gremio"><strong>Grêmio Estudantil</strong><span>Estatuto e regimento interno</span></router-link>
+      <router-link to="/transparencia/reunioes"><strong>Reuniões</strong><span>Atas e documentos das reuniões</span></router-link>
+      <router-link to="/transparencia/prestacao-de-contas"><strong>Prestação de Contas</strong><span>Relatórios financeiros mensais</span></router-link>
+    </nav>
+    <nav class="financeiro-links" aria-label="Acesso administrativo">
       <router-link v-if="isSuperAdmin" to="/admin/financeiro">Administrar finanças</router-link>
     </nav>
 
@@ -103,6 +107,10 @@ async function excluir(id) {
 </template>
 
 <style scoped>
+.portal-cards { display: grid; grid-template-columns: repeat(auto-fit,minmax(210px,1fr)); gap: 16px; margin: 16px 0 24px; }
+.portal-cards a { display: flex; flex-direction: column; gap: 8px; padding: 22px; border: 1px solid #dce4f0; border-radius: 16px; text-decoration: none; color: #0b132b; }
+.portal-cards a:hover, .portal-cards a:focus-visible { border-color: #16509b; background: #f4f7fc; }
+.portal-cards span { color: #53647c; font-size: 14px; }
 .financeiro-links { display: flex; flex-wrap: wrap; gap: 16px; margin: 12px 0 24px; }
 .financeiro-links a { color: #16509b; font-weight: 600; }
 .transparencia-page {
