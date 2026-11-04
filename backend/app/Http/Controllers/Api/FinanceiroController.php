@@ -65,6 +65,12 @@ class FinanceiroController extends Controller
             if ($bloqueada->status !== 'ativa') {
                 throw ValidationException::withMessages(['gestao' => 'Gestão encerrada.']);
             }
+            if (\App\Models\RelatorioFinanceiro::where('gestao_financeira_id', $bloqueada->id)
+                ->where('ano', (int) substr($data['data'], 0, 4))
+                ->where('mes', (int) substr($data['data'], 5, 2))
+                ->where('status', 'publicado')->exists()) {
+                throw ValidationException::withMessages(['data' => 'Este mês já possui relatório publicado.']);
+            }
             $movimentacao = $bloqueada->movimentacoes()->create([...$data, 'status' => 'pendente', 'criada_por' => $request->user()->id]);
             Auditoria::registrar('criou_movimentacao_financeira', entidade: 'movimentacao_financeira', entidadeId: $movimentacao->id);
             return $movimentacao;
@@ -78,7 +84,11 @@ class FinanceiroController extends Controller
         DB::transaction(function () use ($movimentacao) {
             $gestao = GestaoFinanceira::whereKey($movimentacao->gestao_financeira_id)->lockForUpdate()->firstOrFail();
             $registro = MovimentacaoFinanceira::whereKey($movimentacao->id)->lockForUpdate()->firstOrFail();
-            if ($gestao->status !== 'ativa' || $registro->status !== 'pendente') {
+            if ($gestao->status !== 'ativa' || $registro->status !== 'pendente'
+                || \App\Models\RelatorioFinanceiro::where('gestao_financeira_id', $gestao->id)
+                    ->where('ano', (int) $registro->data->format('Y'))
+                    ->where('mes', (int) $registro->data->format('m'))
+                    ->where('status', 'publicado')->exists()) {
                 throw ValidationException::withMessages(['movimentacao' => 'Movimentação não pode ser confirmada.']);
             }
             $registro->update(['status' => 'confirmada']);
