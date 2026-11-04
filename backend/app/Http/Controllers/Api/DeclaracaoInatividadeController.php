@@ -133,6 +133,11 @@ class DeclaracaoInatividadeController extends Controller
             }
             DB::table('declaracoes_inatividade_financeira')->where('id', $registro->id)
                 ->update(['status' => 'publicada', 'publicada_em' => now(), 'updated_at' => now()]);
+            $pdf = app(PdfInatividadeController::class)->download(
+                $gestao, app(\App\Services\PdfFinanceiroSimples::class)
+            )->getContent();
+            DB::table('declaracoes_inatividade_financeira')->where('id', $registro->id)
+                ->update(['pdf_base64' => base64_encode($pdf)]);
             Auditoria::registrar('publicou_declaracao_inatividade', entidade: 'declaracao_inatividade_financeira', entidadeId: $registro->id);
             return DB::table('declaracoes_inatividade_financeira')->find($registro->id);
         });
