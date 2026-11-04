@@ -178,6 +178,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin/financeiro')->group(
     Route::post('/transicoes/{transicao}/encerrar', [FechamentoTransicaoController::class, 'encerrar']);
     Route::get('/gestoes/{gestao}/membros', [MembroGestaoFinanceiraController::class, 'index']);
     Route::post('/gestoes/{gestao}/membros', [MembroGestaoFinanceiraController::class, 'registrar']);
+    Route::post('/gestoes/{gestao}/membros/{membro}/desligar', [MembroGestaoFinanceiraController::class, 'desligar']);
     Route::get('/gestoes/{gestao}/vinculos', [VinculoFinanceiroController::class, 'index']);
     Route::post('/gestoes/{gestao}/vinculos', [VinculoFinanceiroController::class, 'store']);
     Route::post('/gestoes/{gestao}/vinculos/{vinculo}/encerrar', [VinculoFinanceiroController::class, 'encerrar']);
