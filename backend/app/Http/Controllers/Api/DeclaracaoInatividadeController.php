@@ -124,6 +124,13 @@ class DeclaracaoInatividadeController extends Controller
         $declaracao = DB::transaction(function () use ($gestao) {
             $gestao = GestaoFinanceira::whereKey($gestao->id)->lockForUpdate()->firstOrFail();
             $this->validarInatividade($gestao);
+            if ($gestao->saldo_real_final_centavos === null || $gestao->conciliado_em === null) {
+                throw ValidationException::withMessages(['gestao' => 'Concilie o saldo real antes de publicar a declaração.']);
+            }
+            if ((int) $gestao->saldo_real_final_centavos - (int) $gestao->saldo_inicial_centavos
+                !== (int) $gestao->diferenca_conciliacao_centavos) {
+                throw ValidationException::withMessages(['gestao' => 'A conciliação não corresponde ao saldo contábil.']);
+            }
             $registro = DB::table('declaracoes_inatividade_financeira')
                 ->where('gestao_financeira_id', $gestao->id)->lockForUpdate()->first();
             if (! $registro || $registro->status !== 'rascunho'
