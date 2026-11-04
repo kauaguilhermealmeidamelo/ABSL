@@ -98,6 +98,9 @@ class CicloGestaoFinanceiraController extends Controller
                 ->where('fim_previsto', '>=', $dados['inicio'])->exists()) {
                 throw ValidationException::withMessages(['inicio' => 'Período sobreposto a uma transição administrativa.']);
             }
+            if ($gestao->status === 'ativa' && $dados['inicio'] > today()->toDateString()) {
+                throw ValidationException::withMessages(['inicio' => 'Gestão ativa não pode começar no futuro.']);
+            }
             if ($gestao->movimentacoes()->where(fn ($q) => $q->where('data', '<', $dados['inicio'])
                 ->orWhere('data', '>', $dados['fim_previsto']))->exists()) {
                 throw ValidationException::withMessages(['inicio' => 'Existem movimentações fora do período proposto.']);
