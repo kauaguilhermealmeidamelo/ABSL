@@ -87,6 +87,34 @@ class VinculoFinanceiroController extends Controller
         return response()->json(['id' => $id], 201);
     }
 
+    public function ajustarInterinidade(Request $request, GestaoFinanceira $gestao, int $vinculo)
+    {
+        $dados = $request->validate([
+            'fim_previsto_em' => ['required', 'date', 'after:now'],
+            'justificativa' => ['required', 'string', 'min:10', 'max:2000'],
+        ]);
+        DB::transaction(function () use ($request, $gestao, $vinculo, $dados) {
+            $gestao = GestaoFinanceira::whereKey($gestao->id)->lockForUpdate()->firstOrFail();
+            if (! in_array($gestao->status, ['planejada', 'ativa'], true)) {
+                throw ValidationException::withMessages(['gestao' => 'Gestão não admite ajustes.']);
+            }
+            $registro = DB::table('vinculos_financeiros')
+                ->where('gestao_financeira_id', $gestao->id)
+                ->where('id', $vinculo)->lockForUpdate()->first();
+            abort_unless($registro, 404);
+            if (! $registro->interino || $registro->fim_em !== null) {
+                throw ValidationException::withMessages(['vinculo' => 'Somente interinidade não encerrada pode ser ajustada.']);
+            }
+            DB::table('vinculos_financeiros')->where('id', $vinculo)->update([
+                'fim_previsto_em' => $dados['fim_previsto_em'], 'updated_at' => now(),
+            ]);
+            Auditoria::registrar('ajustou_interinidade_financeira',
+                descricao: 'Prazo anterior: '.$registro->fim_previsto_em.'; novo prazo: '.$dados['fim_previsto_em'].'; '.$dados['justificativa'],
+                entidade: 'vinculo_financeiro', entidadeId: $vinculo);
+        });
+        return response()->noContent();
+    }
+
     public function encerrar(Request $request, GestaoFinanceira $gestao, int $vinculo)
     {
         $dados = $request->validate([
