@@ -51,7 +51,9 @@ class VinculoFinanceiroController extends Controller
                 ->where(fn ($q) => $q->whereNull('fim_previsto_em')->orWhere('fim_previsto_em', '>', now()));
 
             if ($interino) {
-                $vinculado = (clone $ativos)->where('user_id', $dados['user_id'])->exists();
+                $vinculado = DB::table('membros_gestao_financeira')
+                    ->where('gestao_financeira_id', $gestao->id)
+                    ->where('user_id', $dados['user_id'])->whereNull('desligado_em')->exists();
                 if (! $vinculado) {
                     throw ValidationException::withMessages(['user_id' => 'O interino deve integrar oficialmente esta gestão.']);
                 }
