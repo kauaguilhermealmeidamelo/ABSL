@@ -69,6 +69,12 @@ const routes = [
         meta: { public: true, title: 'Prestação de Contas | ABSL', description: 'Consulte relatórios financeiros mensais do Grêmio Athos Bulcão.' }
       },
       {
+        path: 'admin/financeiro',
+        name: 'admin-financeiro',
+        component: () => import('@/views/FinanceiroAdmin.vue'),
+        meta: { title: 'Controle Financeiro | ABSL', description: 'Gestão financeira administrativa do Grêmio.' }
+      },
+      {
         path: 'cardapio',
         name: 'cardapio',
         component: () => import('@/views/Cardapio.vue'),
