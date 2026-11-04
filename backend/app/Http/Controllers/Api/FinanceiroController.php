@@ -55,13 +55,13 @@ class FinanceiroController extends Controller
 
     public function resumo(Request $request, GestaoFinanceira $gestao, FinanceiroService $financeiro, AutorizacaoFinanceira $autorizacao)
     {
-        abort_unless($autorizacao->podeOperar($request->user(), $gestao), 403);
+        abort_unless($autorizacao->podeConsultarHistorico($request->user(), $gestao), 403);
         return response()->json(['gestao' => $gestao->only(['id', 'nome', 'status', 'inicio', 'encerrada_em']), 'totais' => $financeiro->totais($gestao)]);
     }
 
     public function movimentacoes(Request $request, GestaoFinanceira $gestao, AutorizacaoFinanceira $autorizacao)
     {
-        abort_unless($autorizacao->podeOperar($request->user(), $gestao), 403);
+        abort_unless($autorizacao->podeConsultarHistorico($request->user(), $gestao), 403);
         return $gestao->movimentacoes()->orderByDesc('data')->orderByDesc('id')->paginate(25);
     }
 
