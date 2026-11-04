@@ -11,6 +11,39 @@ use Illuminate\Validation\ValidationException;
 
 class CicloGestaoFinanceiraController extends Controller
 {
+    public function ativar(Request $request, GestaoFinanceira $gestao)
+    {
+        $resultado = DB::transaction(function () use ($request, $gestao) {
+            $gestao = GestaoFinanceira::whereKey($gestao->id)->lockForUpdate()->firstOrFail();
+
+            if ($gestao->status !== 'planejada') {
+                throw ValidationException::withMessages(['gestao' => 'Somente gestões planejadas podem ser ativadas.']);
+            }
+            if (GestaoFinanceira::where('status', 'ativa')->whereKeyNot($gestao->id)->exists()) {
+                throw ValidationException::withMessages(['gestao' => 'Já existe uma gestão ativa.']);
+            }
+
+            $anterior = GestaoFinanceira::where('inicio', '<', $gestao->inicio)
+                ->orderByDesc('inicio')->lockForUpdate()->first();
+
+            if ($anterior && ($anterior->status !== 'encerrada' || $anterior->saldo_real_final_centavos === null)) {
+                throw ValidationException::withMessages(['gestao' => 'A gestão anterior precisa estar encerrada e conciliada.']);
+            }
+
+            $gestao->update([
+                'status' => 'ativa',
+                'saldo_inicial_centavos' => $anterior ? (int) $anterior->saldo_real_final_centavos : 0,
+                'ativada_em' => now(),
+                'ativada_por' => $request->user()->id,
+            ]);
+
+            Auditoria::registrar('ativou_gestao_financeira', entidade: 'gestao_financeira', entidadeId: $gestao->id);
+            return $gestao;
+        });
+
+        return response()->json($resultado);
+    }
+
     public function planejar(Request $request)
     {
         $dados = $request->validate([
