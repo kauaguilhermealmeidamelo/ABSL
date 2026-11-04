@@ -78,6 +78,13 @@ class FinanceiroService
                 'observacao_encerramento' => $observacao,
             ]);
 
+            DB::table('vinculos_financeiros')->where('gestao_financeira_id', $bloqueada->id)
+                ->whereNull('fim_em')->update([
+                    'fim_em' => now(),
+                    'encerrado_por' => $usuarioId,
+                    'justificativa_encerramento' => 'Encerramento definitivo da gestão financeira.',
+                    'updated_at' => now(),
+                ]);
             return $totais;
         });
     }
