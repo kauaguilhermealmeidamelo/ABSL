@@ -164,6 +164,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin/financeiro')->group(
     Route::post('/gestoes/{gestao}/esclarecimentos', [EsclarecimentoFinanceiroController::class, 'publicar']);
     Route::get('/transicoes', [TransicaoFinanceiraController::class, 'index']);
     Route::post('/transicoes', [TransicaoFinanceiraController::class, 'iniciar']);
+    Route::put('/transicoes/{transicao}', [TransicaoFinanceiraController::class, 'ajustar']);
     Route::get('/transicoes/{transicao}/movimentacoes', [MovimentacaoTransicaoController::class, 'index']);
     Route::post('/transicoes/{transicao}/movimentacoes', [MovimentacaoTransicaoController::class, 'criar']);
     Route::post('/transicoes/{transicao}/movimentacoes/{movimentacao}/resolver', [MovimentacaoTransicaoController::class, 'resolver']);
