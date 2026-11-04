@@ -44,6 +44,11 @@ class FechamentoTransicaoController extends Controller
                 'relatorio_publicado_em' => now(), 'relatorio_publicado_por' => $request->user()->id,
                 'updated_at' => now(),
             ]);
+            $pdf = app(PdfTransicaoFinanceiraController::class)->download(
+                $transicao, app(\App\Services\PdfFinanceiroSimples::class)
+            )->getContent();
+            DB::table('transicoes_financeiras')->where('id', $transicao)
+                ->update(['pdf_base64' => base64_encode($pdf)]);
             Auditoria::registrar('encerrou_transicao_financeira', entidade: 'transicao_financeira', entidadeId: $transicao);
             return ['saldo_contabil_centavos' => $contabil, 'saldo_real_final_centavos' => $dados['saldo_real_final_centavos']];
         });
