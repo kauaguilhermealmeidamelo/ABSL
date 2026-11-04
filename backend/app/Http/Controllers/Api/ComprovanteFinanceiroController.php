@@ -43,7 +43,7 @@ class ComprovanteFinanceiroController extends Controller
     public function index(Request $request, MovimentacaoFinanceira $movimentacao, AutorizacaoFinanceira $autorizacao)
     {
         $gestao = GestaoFinanceira::findOrFail($movimentacao->gestao_financeira_id);
-        abort_unless($autorizacao->podeOperar($request->user(), $gestao), 403);
+        abort_unless($autorizacao->podeConsultarHistorico($request->user(), $gestao), 403);
         return DB::table('comprovantes_financeiros')->where('movimentacao_financeira_id', $movimentacao->id)
             ->get(['id', 'nome_original', 'created_at']);
     }
@@ -54,7 +54,7 @@ class ComprovanteFinanceiroController extends Controller
         abort_unless($registro, 404);
         $movimentacao = MovimentacaoFinanceira::findOrFail($registro->movimentacao_financeira_id);
         $gestao = GestaoFinanceira::findOrFail($movimentacao->gestao_financeira_id);
-        abort_unless($autorizacao->podeOperar($request->user(), $gestao), 403);
+        abort_unless($autorizacao->podeConsultarHistorico($request->user(), $gestao), 403);
         abort_unless(Storage::disk('local')->exists($registro->arquivo_privado), 404);
         return Storage::disk('local')->download($registro->arquivo_privado, $registro->nome_original);
     }
