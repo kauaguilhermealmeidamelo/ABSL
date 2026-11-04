@@ -7,21 +7,7 @@
     <InicioNoticias />
     <InicioProjetos />
 
-    <section class="home-section" aria-labelledby="eventos-titulo">
-      <div class="section-heading">
-        <div>
-          <p class="section-eyebrow">Agenda</p>
-          <h2 id="eventos-titulo">Próximos eventos</h2>
-        </div>
-      </div>
-
-      <div class="empty-state">
-        <h3>Eventos ainda não informados</h3>
-        <p>
-          A Home já está preparada para receber eventos reais quando esse recurso estiver disponível no sistema.
-        </p>
-      </div>
-    </section>
+    <InicioEventos />
 
     <section class="institutional-grid" aria-label="Informações institucionais">
       <article class="institutional-card">
@@ -57,6 +43,7 @@ import Sobre from '@/components/inicio/Sobre.vue'
 import Equipe from '@/components/inicio/Equipe.vue'
 import InicioNoticias from '@/components/inicio/InicioNoticias.vue'
 import InicioProjetos from '@/components/inicio/InicioProjetos.vue'
+import InicioEventos from '@/components/inicio/InicioEventos.vue'
 </script>
 
 <style scoped>
@@ -64,18 +51,6 @@ import InicioProjetos from '@/components/inicio/InicioProjetos.vue'
   padding: 32px 40px 64px;
   max-width: 1180px;
   margin: 0 auto;
-}
-
-.home-section {
-  margin-bottom: 48px;
-}
-
-.section-heading {
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 18px;
 }
 
 .section-eyebrow {
@@ -92,25 +67,6 @@ h2 {
   color: #0d1f3c;
   font-family: 'Playfair Display', serif;
   font-size: 30px;
-}
-
-.empty-state {
-  padding: 28px 20px;
-  border: 1px solid rgba(13, 31, 60, 0.08);
-  border-radius: 12px;
-  background: #ffffff;
-  color: #5a6a85;
-}
-
-.empty-state h3 {
-  margin: 0 0 6px;
-  color: #0d1f3c;
-  font-size: 16px;
-}
-
-.empty-state p {
-  margin: 0;
-  line-height: 1.6;
 }
 
 .institutional-grid {

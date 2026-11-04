@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\{
     NoticiaController,
+    EventoController,
     ProjetoController,
     CardapioController,
     OuvinteController,
@@ -14,19 +15,21 @@ use App\Http\Controllers\Api\{
     DiretoriaController,
     InicioMediaController,
     AuthController,
+    PasswordResetController,
     VisitaController,
     AdminUserController,
     LogController,
     NoticiaCurtidaController,
     NoticiaComentarioController,
-    NoticiaMidiaController,
-    GremioConteudoController
+    NoticiaMidiaController
 };
 
 // Rotas públicas de autenticação — throttle aqui, que é onde a requisição
 // de fato chega (sem sessão).
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:6,1');
 Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:6,1');
+Route::post('/forgot-password', [PasswordResetController::class, 'forgot'])->middleware('throttle:5,1');
+Route::post('/reset-password', [PasswordResetController::class, 'reset'])->middleware('throttle:6,1');
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 
 // Verificação de e-mail oficial do Laravel (MustVerifyEmail).
@@ -41,6 +44,8 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::get('/noticias', [NoticiaController::class, 'index']);
 Route::get('/noticias/{id}', [NoticiaController::class, 'show']);
 Route::get('/noticias/{id}/comentarios', [NoticiaComentarioController::class, 'index']);
+Route::get('/eventos', [EventoController::class, 'index']);
+Route::get('/eventos/{id}', [EventoController::class, 'show']);
 Route::get('/projetos', [ProjetoController::class, 'index']);
 Route::get('/projetos/{id}', [ProjetoController::class, 'show']);
 Route::get('/cardapio', [CardapioController::class, 'index']);
@@ -55,7 +60,6 @@ Route::get('/inicio-media', [InicioMediaController::class, 'index']);
 Route::get('/transparencia', [TransparenciaController::class, 'index']);
 Route::get('/transparencia/{id}', [TransparenciaController::class, 'show']);
 Route::post('/visitas', [VisitaController::class, 'store'])->middleware('throttle:30,1');
-Route::get('/gremio-conteudos', [GremioConteudoController::class, 'index']);
 
 // ── Ouvidoria: rotas públicas ───────────────────────────────────────────
 // IMPORTANTE: '/ouvintes/respondidas' e '/ouvintes/protocolo/{id}' têm que
@@ -90,6 +94,10 @@ Route::middleware(['auth:sanctum', 'staff'])->group(function () {
     Route::delete('/noticias/{id}/midias/{midiaId}', [NoticiaMidiaController::class, 'destroy']);
     Route::delete('/noticias/{id}/comentarios/{comentarioId}', [NoticiaComentarioController::class, 'destroy']);
 
+    Route::post('/eventos', [EventoController::class, 'store']);
+    Route::put('/eventos/{id}', [EventoController::class, 'update']);
+    Route::delete('/eventos/{id}', [EventoController::class, 'destroy']);
+
     Route::post('/projetos', [ProjetoController::class, 'store']);
     Route::put('/projetos/{id}', [ProjetoController::class, 'update']);
     Route::delete('/projetos/{id}', [ProjetoController::class, 'destroy']);
@@ -119,17 +127,11 @@ Route::middleware(['auth:sanctum', 'staff'])->group(function () {
     Route::delete('/diretorias/{id}', [DiretoriaController::class, 'destroy']);
 
     Route::post('/inicio-media', [InicioMediaController::class, 'store']);
-    Route::delete('/inicio-media', [InicioMediaController::class, 'destroy']);
 
     Route::get('/ouvintes', [OuvinteController::class, 'index']);
     Route::get('/ouvintes/{id}', [OuvinteController::class, 'show']);
     Route::put('/ouvintes/{id}', [OuvinteController::class, 'update']);
     Route::delete('/ouvintes/{id}', [OuvinteController::class, 'destroy']);
-
-    Route::post('/gremio-conteudos', [GremioConteudoController::class, 'store']);
-    Route::put('/gremio-conteudos/{id}', [GremioConteudoController::class, 'update']);
-    Route::post('/gremio-conteudos/reorder', [GremioConteudoController::class, 'reorder']);
-    Route::delete('/gremio-conteudos/{id}', [GremioConteudoController::class, 'destroy']);
 
     Route::get('/visitas/estatisticas', [VisitaController::class, 'estatisticas']);
 });
@@ -138,7 +140,7 @@ Route::middleware(['auth:sanctum', 'staff'])->group(function () {
 Route::middleware(['auth:sanctum', 'admin'])->group(function () {
     Route::get('/admin/usuarios', [AdminUserController::class, 'index']);
     Route::post('/admin/usuarios', [AdminUserController::class, 'store']);
-    Route::put('/admin/usuarios/{id}', [AdminUserController::class, 'update']);
+    Route::put('/admin/usuarios/{id}/role', [AdminUserController::class, 'updateRole']);
     Route::put('/admin/usuarios/{id}/senha', [AdminUserController::class, 'updatePassword']);
     Route::delete('/admin/usuarios/{id}', [AdminUserController::class, 'destroy']);
 

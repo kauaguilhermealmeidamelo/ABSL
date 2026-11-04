@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Mail\RedefinirSenhaEmail;
 use App\Mail\VerificarEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -33,6 +34,14 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * E-mail de redefinição de senha no layout institucional ABSL.
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        Mail::to($this)->send(new RedefinirSenhaEmail($this, (string) $token));
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
@@ -54,6 +63,6 @@ class User extends Authenticatable implements MustVerifyEmail
     public function isStaff(): bool
     {
         // "staff" = pode gerenciar conteúdo (notícias, projetos, etc.)
-        return $this->isAdmin() || $this->role === 'imprensa';
+        return $this->isAdmin() || $this->role === 'supervisor';
     }
 }

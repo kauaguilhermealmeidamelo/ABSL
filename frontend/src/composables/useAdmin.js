@@ -8,14 +8,11 @@ export function useAdmin() {
     return String(u.role || (u.is_admin ? 'admin' : 'user')).toLowerCase()
   })
 
-  // Pode acessar o painel e os módulos operacionais.
-  const isStaff = computed(() => role.value === 'admin' || role.value === 'imprensa')
+  // Pode editar conteúdo (notícias, projetos, cardápio, etc.)
+  const isAdmin = computed(() => role.value === 'admin' || role.value === 'supervisor')
 
-  // Mantido como alias para componentes existentes que usam isAdmin como acesso ao painel.
-  const isAdmin = isStaff
-
-  // Somente administrador pode gerenciar contas e logs.
+  // Pode gerenciar contas de usuário (aba "Administradores")
   const isSuperAdmin = computed(() => role.value === 'admin')
 
-  return { isAdmin, isStaff, isSuperAdmin }
+  return { isAdmin, isSuperAdmin }
 }

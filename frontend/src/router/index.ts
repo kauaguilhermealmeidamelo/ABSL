@@ -55,6 +55,12 @@ const routes = [
         meta: { public: true, title: 'Notícia | CEMSL - Brasília', description: 'Confira esta notícia do Grêmio Estudantil Athos Bulcão e da comunidade escolar do CEMSL.' }
       },
       {
+        path: 'eventos',
+        name: 'eventos',
+        component: () => import('@/views/Eventos.vue'),
+        meta: { public: true, title: 'Eventos | CEMSL - Brasília', description: 'Confira os próximos eventos do Grêmio Athos Bulcão e da comunidade escolar do CEMSL em Brasília.' }
+      },
+      {
         path: 'projetos',
         name: 'projetos',
         component: () => import('@/views/Projetos.vue'),
@@ -95,6 +101,18 @@ const routes = [
         name: 'mapa',
         component: () => import('@/views/Mapa.vue'),
         meta: { public: true, title: 'Localização | CEMSL - Brasília', description: 'Encontre a localização do CEMSL no Setor Leste de Brasília e consulte informações para chegar à instituição.' }
+      },
+      {
+        path: 'esqueci-senha',
+        name: 'esqueci-senha',
+        component: () => import('@/views/EsqueciSenha.vue'),
+        meta: { public: true, title: 'Esqueci minha senha | ABSL', description: 'Recupere o acesso à sua conta no portal ABSL.' }
+      },
+      {
+        path: 'redefinir-senha',
+        name: 'redefinir-senha',
+        component: () => import('@/views/RedefinirSenha.vue'),
+        meta: { public: true, title: 'Redefinir senha | ABSL', description: 'Crie uma nova senha para a sua conta no portal ABSL.' }
       },
       {
         path: 'conta',

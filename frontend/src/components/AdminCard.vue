@@ -19,9 +19,10 @@ const titulo = computed(() => {
   return 'Minha conta'
 })
 function abrir(m) { modo.value = m; aba.value = 'conta'; open.value = true }
-function aoEntrar() { open.value = false; if (isAdmin.value) router.push('/admin') }
+function irEsqueciSenha() { open.value = false; router.push('/esqueci-senha') }
+function aoEntrar() { open.value = false; if (isAdmin.value) router.push('/usuarios') }
 async function doLogout() { try { await logout() } finally { open.value = false; router.replace('/') } }
-function goUsuarios() { open.value = false; router.push('/admin') }
+function goUsuarios() { open.value = false; router.push('/usuarios') }
 </script>
 
 <template>
@@ -31,7 +32,7 @@ function goUsuarios() { open.value = false; router.push('/admin') }
         <v-icon color="#F17100" class="mr-2">mdi-login-variant</v-icon>
         <span class="login-text">Entrar</span>
       </v-btn>
-      <v-dialog v-model="open" max-width="480" content-class="admin-modal-wrap">
+      <v-dialog v-model="open" max-width="480" scrollable content-class="admin-modal-wrap">
         <v-card class="admin-modal">
           <v-card-title class="popup-title">
             <div class="title-row">
@@ -50,7 +51,7 @@ function goUsuarios() { open.value = false; router.push('/admin') }
               <button type="button" role="tab" :aria-selected="modo === 'login'" class="tab" :class="{ ativo: modo === 'login' }" @click="modo = 'login'">Entrar</button>
               <button type="button" role="tab" :aria-selected="modo === 'cadastro'" class="tab" :class="{ ativo: modo === 'cadastro' }" @click="modo = 'cadastro'">Criar conta</button>
             </div>
-            <LoginForm v-if="modo === 'login'" @logado="aoEntrar" />
+            <LoginForm v-if="modo === 'login'" @logado="aoEntrar" @esqueci="irEsqueciSenha" />
             <RegisterForm v-else @registrado="aoEntrar" />
           </v-card-text>
         </v-card>
@@ -69,7 +70,7 @@ function goUsuarios() { open.value = false; router.push('/admin') }
         <v-icon color="#F17100" class="mr-2">mdi-logout</v-icon>
         <span class="login-text">Sair</span>
       </v-btn>
-      <v-dialog v-model="open" max-width="480" content-class="admin-modal-wrap">
+      <v-dialog v-model="open" max-width="480" scrollable content-class="admin-modal-wrap">
         <v-card class="admin-modal">
           <v-card-title class="popup-title">
             <div class="title-row">
@@ -151,13 +152,14 @@ function goUsuarios() { open.value = false; router.push('/admin') }
 
 .admin-modal {
   border-radius: 20px;
-  overflow: visible;
+  overflow: hidden;
   padding: 8px 8px 24px;
   box-shadow: 0 20px 50px rgba(4, 20, 40, 0.25);
 }
 
 .modal-scroll-area {
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 8px 20px 4px;
 }
 

@@ -10,6 +10,8 @@ use Illuminate\Validation\Rule;
 
 class AdminUserController extends Controller
 {
+    private const ROLES = ['admin', 'supervisor', 'user'];
+
     public function index()
     {
         return User::select('id', 'name', 'email', 'role', 'is_admin', 'turma', 'created_at')
@@ -24,12 +26,19 @@ class AdminUserController extends Controller
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8',
             'turma' => ['nullable', 'string', 'max:10', Rule::exists('turmas', 'codigo')],
-            'role' => 'required|in:admin,imprensa,user',
+            'role' => ['required', Rule::in(self::ROLES)],
         ]);
 
-        $data['is_admin'] = $data['role'] === 'admin';
+        // role e is_admin NÃO são fillable (proteção contra mass assignment no
+        // cadastro público), então create($data) os ignorava e todo mundo
+        // virava 'user'. Aqui, em rota exclusiva de admin, atribuímos à mão.
+        $role = $data['role'];
+        unset($data['role']);
 
-        $user = User::create($data);
+        $user = new User($data);
+        $user->role = $role;
+        $user->is_admin = $role === 'admin';
+        $user->save();
 
         Auditoria::registrar(
             'criou_usuario',
@@ -41,31 +50,30 @@ class AdminUserController extends Controller
         return response()->json($user->only(['id', 'name', 'email', 'role', 'is_admin', 'turma', 'created_at']), 201);
     }
 
-    public function update(Request $request, string $id)
+    public function updateRole(Request $request, string $id)
     {
-        $user = User::findOrFail($id);
-
         $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => ['required', 'email', Rule::unique('users', 'email')->ignore($user->id)],
-            'role' => 'required|in:admin,imprensa,user',
-            'turma' => ['nullable', 'string', 'max:10', Rule::exists('turmas', 'codigo')],
+            'role' => ['required', Rule::in(self::ROLES)],
         ]);
 
-        if ($user->id === $request->user()->id && $data['role'] !== $user->role) {
-            abort(422, 'Você não pode alterar o próprio cargo.');
+        if ((int) $id === $request->user()->id) {
+            abort(422, 'Você não pode alterar o seu próprio cargo.');
         }
 
-        if ($user->is_admin && $data['role'] !== 'admin' && User::where('is_admin', true)->count() <= 1) {
-            abort(422, 'Não é possível remover o único administrador do sistema.');
+        $user = User::findOrFail($id);
+
+        if ($user->isAdmin() && $data['role'] !== 'admin' && User::where('is_admin', true)->count() <= 1) {
+            abort(422, 'Não é possível rebaixar o único administrador do sistema.');
         }
 
-        $data['is_admin'] = $data['role'] === 'admin';
-        $user->update($data);
+        $anterior = $user->role;
+        $user->role = $data['role'];
+        $user->is_admin = $data['role'] === 'admin';
+        $user->save();
 
         Auditoria::registrar(
-            'atualizou_usuario',
-            descricao: "Atualizou o usuário {$user->email} ({$user->role})",
+            'alterou_cargo_usuario',
+            descricao: "Alterou o cargo de {$user->email} de {$anterior} para {$user->role}",
             entidade: 'usuario',
             entidadeId: $user->id
         );
