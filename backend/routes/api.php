@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Api\FinanceiroController;
+use App\Http\Controllers\Api\RelatorioFinanceiroController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\{
     NoticiaController,
@@ -59,6 +60,7 @@ Route::get('/turmas', [TurmaController::class, 'index']);
 Route::get('/diretorias', [DiretoriaController::class, 'index']);
 Route::get('/inicio-media', [InicioMediaController::class, 'index']);
 Route::get('/transparencia', [TransparenciaController::class, 'index']);
+Route::get('/financeiro/relatorios', [RelatorioFinanceiroController::class, 'index']);
 Route::get('/transparencia/{id}', [TransparenciaController::class, 'show']);
 Route::post('/visitas', [VisitaController::class, 'store'])->middleware('throttle:30,1');
 
@@ -140,6 +142,7 @@ Route::middleware(['auth:sanctum', 'staff'])->group(function () {
 // Gestão financeira: dados completos restritos a administradores.
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin/financeiro')->group(function () {
     Route::get('/gestoes', [FinanceiroController::class, 'gestoes']);
+    Route::post('/gestoes/{gestao}/relatorios', [RelatorioFinanceiroController::class, 'publicar']);
     Route::post('/gestoes', [FinanceiroController::class, 'criarGestao']);
     Route::get('/gestoes/{gestao}/resumo', [FinanceiroController::class, 'resumo']);
     Route::get('/gestoes/{gestao}/movimentacoes', [FinanceiroController::class, 'movimentacoes']);
