@@ -123,6 +123,11 @@ class CicloGestaoFinanceiraController extends Controller
                 throw ValidationException::withMessages(['inicio' => 'Período de gestão sobreposto.']);
             }
 
+            if (DB::table('transicoes_financeiras')
+                ->where('inicio', '<=', $dados['fim_previsto'])
+                ->where('fim_previsto', '>=', $dados['inicio'])->exists()) {
+                throw ValidationException::withMessages(['inicio' => 'Período sobreposto a uma transição administrativa.']);
+            }
             $gestao = GestaoFinanceira::create([
                 ...$dados,
                 'status' => 'planejada',
