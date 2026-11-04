@@ -7,7 +7,7 @@ import TransparenciaFormModal from '@/components/transparencia/TransparenciaForm
 import { useAdmin } from '@/composables/useAdmin'
 import { transparenciaService } from '@/services/transparencia'
 
-const { isAdmin } = useAdmin()
+const { isAdmin, isSuperAdmin } = useAdmin()
 
 const aba = ref('atas') // 'atas' | 'contas'
 const documentos = ref([])
@@ -67,6 +67,11 @@ async function excluir(id) {
       </button>
     </div>
 
+    <nav class="financeiro-links" aria-label="Prestação de contas">
+      <router-link to="/transparencia/prestacao-de-contas">Consultar relatórios financeiros mensais</router-link>
+      <router-link v-if="isSuperAdmin" to="/admin/financeiro">Administrar finanças</router-link>
+    </nav>
+
     <div class="tabs">
       <button type="button" class="tab" :class="{ 'tab-active': aba === 'atas' }" @click="aba = 'atas'">
         Atas das Reuniões
@@ -98,6 +103,8 @@ async function excluir(id) {
 </template>
 
 <style scoped>
+.financeiro-links { display: flex; flex-wrap: wrap; gap: 16px; margin: 12px 0 24px; }
+.financeiro-links a { color: #16509b; font-weight: 600; }
 .transparencia-page {
   font-family: 'DM Sans', sans-serif;
   padding: 24px;
