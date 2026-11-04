@@ -123,7 +123,6 @@ class FinanceiroController extends Controller
     {
         $data = $request->validate(['observacao' => ['required', 'string', 'min:10', 'max:2000']]);
         $totais = $financeiro->encerrar($gestao, $request->user()->id, $data['observacao']);
-        Auditoria::registrar('encerrou_gestao_financeira', descricao: $data['observacao'], entidade: 'gestao_financeira', entidadeId: $gestao->id);
         return response()->json(['totais' => $totais, 'status' => 'encerrada']);
     }
 }
