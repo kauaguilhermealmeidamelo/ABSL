@@ -42,6 +42,11 @@ class FinanceiroService
                 throw ValidationException::withMessages(['gestao' => 'Concilie o saldo real antes do encerramento definitivo.']);
             }
 
+            $ultimaMovimentacao = $bloqueada->movimentacoes()->max('updated_at');
+            if ($ultimaMovimentacao && $bloqueada->conciliado_em->lt($ultimaMovimentacao)) {
+                throw ValidationException::withMessages(['gestao' => 'Refaça a conciliação após a última alteração financeira.']);
+            }
+
             $totais = $this->totais($bloqueada);
             if ((int) $bloqueada->saldo_real_final_centavos - $totais['saldo_final_centavos']
                 !== (int) $bloqueada->diferenca_conciliacao_centavos) {
