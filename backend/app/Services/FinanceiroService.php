@@ -38,6 +38,16 @@ class FinanceiroService
                 throw ValidationException::withMessages(['gestao' => 'Confirme ou regularize as movimentações pendentes antes de encerrar.']);
             }
 
+            $periodos = $bloqueada->movimentacoes()->where('status', 'confirmada')
+                ->pluck('data')->map(fn ($data) => substr((string) $data, 0, 7))->unique();
+            foreach ($periodos as $periodo) {
+                [$ano, $mes] = array_map('intval', explode('-', $periodo));
+                $publicado = \App\Models\RelatorioFinanceiro::where('gestao_financeira_id', $bloqueada->id)
+                    ->where('ano', $ano)->where('mes', $mes)->where('status', 'publicado')->exists();
+                if (! $publicado) {
+                    throw ValidationException::withMessages(['gestao' => "Publique o relatório de {$periodo} antes de encerrar."]);
+                }
+            }
             $totais = $this->totais($bloqueada);
             $bloqueada->update([
                 'status' => 'encerrada',
