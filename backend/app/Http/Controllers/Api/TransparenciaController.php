@@ -22,6 +22,11 @@ class TransparenciaController extends Controller
         return TransparenciaResource::collection(Transparencia::hydrate($rows));
     }
 
+    public function show(string $id)
+    {
+        return new TransparenciaResource(Transparencia::where('ativo', true)->findOrFail($id));
+    }
+
     public function store(Request $request)
     {
         $data = $request->validate([
@@ -41,8 +46,8 @@ class TransparenciaController extends Controller
         ]);
 
         if ($request->hasFile('file')) {
-            $path = $request->file('file')->store('public/transparencia');
-            $data['arquivo_url'] = Storage::url($path);
+            $path = $request->file('file')->store('transparencia', 'public');
+            $data['arquivo_url'] = Storage::disk('public')->url($path);
         }
 
         $data['publicado_por'] = $request->user() ? $request->user()->id : null;
