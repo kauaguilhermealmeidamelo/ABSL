@@ -49,6 +49,14 @@ class RetificacaoFinanceiraController extends Controller
                 }
             }
 
+            foreach ($relatorios as $relatorio) {
+                if (! DB::table('versoes_relatorios_financeiros')
+                    ->where('relatorio_financeiro_id', $relatorio->id)
+                    ->where('versao', $relatorio->versao)->exists()) {
+                    throw ValidationException::withMessages(['relatorio' => 'A versão original deve ter PDF preservado antes da retificação.']);
+                }
+            }
+
             DB::table('retificacoes_financeiras')->insert([
                 'movimentacao_financeira_id' => $registro->id,
                 'valor_anterior_centavos' => $registro->valor_centavos,
