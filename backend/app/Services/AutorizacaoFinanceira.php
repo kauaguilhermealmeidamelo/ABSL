@@ -21,6 +21,11 @@ class AutorizacaoFinanceira
         return $this->possuiCargo($usuario, $gestao, ['tesoureiro', 'tesoureiro_geral'], false);
     }
 
+    public function podeConsultarHistorico(User $usuario, GestaoFinanceira $gestao): bool
+    {
+        return $usuario->isAdmin() || $this->podeOperar($usuario, $gestao);
+    }
+
     public function podeGerenciarFechamento(User $usuario, GestaoFinanceira $gestao): bool
     {
         if ($gestao->status !== 'ativa') {
