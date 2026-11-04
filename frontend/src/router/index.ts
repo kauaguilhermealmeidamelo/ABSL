@@ -63,6 +63,12 @@ const routes = [
         meta: { public: true, title: 'Transparência | CEMSL - Brasília', description: 'Acesse informações de transparência do CEMSL em Brasília, no Setor Leste, e consulte dados e informações institucionais.' }
       },
       {
+        path: 'transparencia/prestacao-de-contas',
+        name: 'prestacao-de-contas',
+        component: () => import('@/views/PrestacaoContas.vue'),
+        meta: { public: true, title: 'Prestação de Contas | ABSL', description: 'Consulte relatórios financeiros mensais do Grêmio Athos Bulcão.' }
+      },
+      {
         path: 'cardapio',
         name: 'cardapio',
         component: () => import('@/views/Cardapio.vue'),
