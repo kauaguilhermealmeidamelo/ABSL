@@ -63,6 +63,20 @@ const routes = [
         meta: { public: true, title: 'Transparência | CEMSL - Brasília', description: 'Acesse informações de transparência do CEMSL em Brasília, no Setor Leste, e consulte dados e informações institucionais.' }
       },
       {
+        path: 'transparencia/gremio',
+        name: 'transparencia-gremio',
+        component: () => import('@/views/DocumentosTransparencia.vue'),
+        props: { tipo: 'gremio' },
+        meta: { public: true, title: 'Estatuto e Regimento | ABSL' }
+      },
+      {
+        path: 'transparencia/reunioes',
+        name: 'transparencia-reunioes',
+        component: () => import('@/views/DocumentosTransparencia.vue'),
+        props: { tipo: 'reunioes' },
+        meta: { public: true, title: 'Atas das Reuniões | ABSL' }
+      },
+      {
         path: 'transparencia/prestacao-de-contas',
         name: 'prestacao-de-contas',
         component: () => import('@/views/PrestacaoContas.vue'),
