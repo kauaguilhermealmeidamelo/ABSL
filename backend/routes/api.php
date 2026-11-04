@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Api\FinanceiroController;
+use App\Http\Controllers\Api\CicloGestaoFinanceiraController;
 use App\Http\Controllers\Api\ConciliacaoFinanceiraController;
 use App\Http\Controllers\Api\VinculoFinanceiroController;
 use App\Http\Controllers\Api\RelatorioFinanceiroController;
@@ -148,7 +149,8 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin/financeiro')->group(
     Route::get('/gestoes/{gestao}/vinculos', [VinculoFinanceiroController::class, 'index']);
     Route::post('/gestoes/{gestao}/vinculos', [VinculoFinanceiroController::class, 'store']);
     Route::post('/gestoes/{gestao}/vinculos/{vinculo}/encerrar', [VinculoFinanceiroController::class, 'encerrar']);
-    Route::post('/gestoes', [FinanceiroController::class, 'criarGestao']);
+    Route::post('/gestoes', [CicloGestaoFinanceiraController::class, 'planejar']);
+    Route::post('/gestoes/{gestao}/ativar', [CicloGestaoFinanceiraController::class, 'ativar']);
     Route::post('/gestoes/{gestao}/encerrar', [FinanceiroController::class, 'encerrar']);
 });
 
