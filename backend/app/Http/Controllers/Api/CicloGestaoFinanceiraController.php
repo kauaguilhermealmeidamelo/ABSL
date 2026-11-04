@@ -38,6 +38,13 @@ class CicloGestaoFinanceiraController extends Controller
             $transicaoPosterior = $transicao && (! $anterior || $transicao->inicio > $anterior->inicio->toDateString());
             $saldoInicial = $transicaoPosterior ? (int) $transicao->saldo_real_final_centavos
                 : ($anterior ? (int) $anterior->saldo_real_final_centavos : 0);
+            $titulares = DB::table('vinculos_financeiros')
+                ->where('gestao_financeira_id', $gestao->id)
+                ->where('cargo', 'tesoureiro_geral')->where('interino', false)
+                ->whereNull('fim_em')->count();
+            if ($titulares !== 1) {
+                throw ValidationException::withMessages(['gestao' => 'A gestão precisa de exatamente um Tesoureiro-Geral titular.']);
+            }
             $gestao->update([
                 'status' => 'ativa',
                 'saldo_inicial_centavos' => $saldoInicial,
