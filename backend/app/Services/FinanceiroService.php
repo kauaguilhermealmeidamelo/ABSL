@@ -65,7 +65,10 @@ class FinanceiroService
                 }
             }
 
-            if (! $bloqueada->movimentacoes()->where('status', 'confirmada')->exists()) {
+            if (! $bloqueada->movimentacoes()->where('status', 'confirmada')->exists()
+                && ! DB::table('declaracoes_inatividade_financeira')
+                    ->where('gestao_financeira_id', $bloqueada->id)
+                    ->where('status', 'publicada')->exists()) {
                 throw ValidationException::withMessages(['gestao' => 'Gestão sem movimentações: publique a declaração de inatividade com dupla aprovação antes de encerrar.']);
             }
             $bloqueada->update([
