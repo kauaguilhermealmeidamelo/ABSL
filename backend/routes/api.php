@@ -180,6 +180,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin/financeiro')->group(
     Route::put('/gestoes/{gestao}/vinculos/{vinculo}/interinidade', [VinculoFinanceiroController::class, 'ajustarInterinidade']);
     Route::post('/gestoes', [CicloGestaoFinanceiraController::class, 'planejar']);
     Route::post('/gestoes/{gestao}/ativar', [CicloGestaoFinanceiraController::class, 'ativar']);
+    Route::put('/gestoes/{gestao}/datas', [CicloGestaoFinanceiraController::class, 'ajustarDatas']);
     Route::post('/gestoes/{gestao}/inatividade/publicar', [DeclaracaoInatividadeController::class, 'publicar']);
     Route::post('/gestoes/{gestao}/encerrar', [FinanceiroController::class, 'encerrar']);
 });
