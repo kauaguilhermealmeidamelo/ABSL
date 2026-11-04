@@ -30,9 +30,16 @@ class CicloGestaoFinanceiraController extends Controller
                 throw ValidationException::withMessages(['gestao' => 'A gestão anterior precisa estar encerrada e conciliada.']);
             }
 
+            $transicao = DB::table('transicoes_financeiras')->where('inicio', '<', $gestao->inicio->toDateString())
+                ->orderByDesc('inicio')->first();
+            if ($transicao && $transicao->status !== 'encerrada') {
+                throw ValidationException::withMessages(['gestao' => 'Encerre a transição antes de ativar a gestão.']);
+            }
+            $saldoInicial = $transicao ? (int) $transicao->saldo_real_final_centavos
+                : ($anterior ? (int) $anterior->saldo_real_final_centavos : 0);
             $gestao->update([
                 'status' => 'ativa',
-                'saldo_inicial_centavos' => $anterior ? (int) $anterior->saldo_real_final_centavos : 0,
+                'saldo_inicial_centavos' => $saldoInicial,
                 'ativada_em' => now(),
                 'ativada_por' => $request->user()->id,
             ]);
