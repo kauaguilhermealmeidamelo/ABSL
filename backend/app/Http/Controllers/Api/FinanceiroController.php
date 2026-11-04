@@ -106,7 +106,7 @@ class FinanceiroController extends Controller
                 || \App\Models\RelatorioFinanceiro::where('gestao_financeira_id', $gestao->id)
                     ->where('ano', (int) $registro->data->format('Y'))
                     ->where('mes', (int) $registro->data->format('m'))
-                    ->where('status', 'publicado')->exists()) {
+                    ->whereIn('status', ['fechado', 'publicado'])->exists()) {
                 throw ValidationException::withMessages(['movimentacao' => 'Movimentação não pode ser confirmada.']);
             }
             $registro->update(['status' => 'confirmada']);
