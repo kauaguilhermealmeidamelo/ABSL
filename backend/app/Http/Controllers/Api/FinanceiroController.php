@@ -69,7 +69,7 @@ class FinanceiroController extends Controller
     {
         abort_unless($autorizacao->podeOperar($request->user(), $gestao), 403);
         $data = $request->validate([
-            'data' => ['required', 'date', 'after_or_equal:' . $gestao->inicio->toDateString()],
+            'data' => ['required', 'date', 'before_or_equal:today', 'after_or_equal:' . $gestao->inicio->toDateString()],
             'tipo' => ['required', Rule::in(['receita', 'despesa'])],
             'categoria' => ['required', 'string', 'max:100'],
             'descricao' => ['required', 'string', 'max:255'],
