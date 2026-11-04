@@ -20,39 +20,6 @@ class FinanceiroController extends Controller
         return GestaoFinanceira::query()->orderByDesc('inicio')->get(['id', 'nome', 'inicio', 'fim_previsto', 'status', 'encerrada_em', 'saldo_inicial_centavos']);
     }
 
-    public function criarGestao(Request $request)
-    {
-        $data = $request->validate([
-            'nome' => ['required', 'string', 'max:255'],
-            'inicio' => ['required', 'date'],
-            'fim_previsto' => ['nullable', 'date', 'after_or_equal:inicio'],
-            'saldo_inicial_centavos' => ['sometimes', 'integer', 'min:0'],
-        ]);
-
-        $gestao = DB::transaction(function () use ($data, $request) {
-            if (GestaoFinanceira::query()->where('status', 'ativa')->lockForUpdate()->exists()) {
-                throw ValidationException::withMessages(['gestao' => 'Encerre a gestão ativa antes de criar outra.']);
-            }
-            $anterior = GestaoFinanceira::query()->orderByDesc('inicio')->lockForUpdate()->first();
-            $saldoInicial = (int) ($data['saldo_inicial_centavos'] ?? 0);
-            if ($anterior) {
-                $saldoAnterior = app(FinanceiroService::class)->totais($anterior)['saldo_final_centavos'];
-                if ($anterior->status !== 'encerrada') {
-                    throw ValidationException::withMessages(['gestao' => 'Encerre a gestão anterior antes de iniciar outra.']);
-                }
-                $saldoInicial = $saldoAnterior;
-                if ($data['inicio'] < $anterior->encerrada_em->toDateString()) {
-                    throw ValidationException::withMessages(['inicio' => 'A nova gestão não pode começar antes do encerramento anterior.']);
-                }
-            }
-            $gestao = GestaoFinanceira::create([...$data, 'saldo_inicial_centavos' => $saldoInicial, 'status' => 'ativa', 'criada_por' => $request->user()->id]);
-            Auditoria::registrar('criou_gestao_financeira', entidade: 'gestao_financeira', entidadeId: $gestao->id);
-            return $gestao;
-        });
-
-        return response()->json($gestao, 201);
-    }
-
     public function resumo(Request $request, GestaoFinanceira $gestao, FinanceiroService $financeiro, AutorizacaoFinanceira $autorizacao)
     {
         abort_unless($autorizacao->podeConsultarHistorico($request->user(), $gestao), 403);
