@@ -16,6 +16,10 @@ const fechamento = ref({ ano: new Date().getFullYear(), mes: new Date().getMonth
 const observacao = ref('')
 const comprovantes = ref({})
 const modalGestao = ref(false)
+const modalMovimentacao = ref(false)
+const aba = ref('movimentacoes')
+const filtroTipo = ref('todas')
+const filtradas = computed(() => movimentacoes.value.filter(m => filtroTipo.value === 'todas' || m.tipo === filtroTipo.value))
 const pagina = ref(1)
 const ultimaPagina = ref(1)
 const inicialManual = computed(() => gestoes.value.length === 0)
@@ -53,7 +57,7 @@ const gestaoSelecionada = computed(() => gestoes.value.find(g => g.id === atual.
 async function executar(acao, sucesso) {
   ocupado.value = true; erro.value = ''; aviso.value = ''
   try { await acao(); aviso.value = sucesso; await carregar() }
-  catch (e) { erro.value = e.response?.data?.message || e.message || 'Não foi possível concluir a operação.' }
+  catch (e) { erro.value = Object.values(e.response?.data?.errors || {}).flat().join(' ') || e.response?.data?.message || e.message || 'Não foi possível concluir a operação.' }
   finally { ocupado.value = false }
 }
 function criarGestao() {
@@ -72,7 +76,12 @@ function adicionar() {
       ...nova.value, valor_centavos: centavos(nova.value.valor),
     })
     nova.value = { data: '', tipo: 'receita', categoria: '', descricao: '', valor: '' }
+    modalMovimentacao.value = false
   }, 'Movimentação registrada como pendente.')
+}
+function abrirMovimentacao(tipo) {
+  nova.value = { data: new Date().toISOString().slice(0, 10), tipo, categoria: '', descricao: '', valor: '' }
+  modalMovimentacao.value = true
 }
 function confirmar(id) {
   executar(() => api.post(`/admin/financeiro/movimentacoes/${id}/confirmar`), 'Movimentação confirmada.')
@@ -116,10 +125,14 @@ onMounted(() => { carregar().catch(() => { erro.value = 'Falha ao carregar os da
 
 <template>
   <main class="painel-financeiro">
-    <PageHeader label="Administração" title="Controle Financeiro" subtitle="Gestões, receitas, despesas e prestação de contas." />
-    <router-link to="/transparencia">← Transparência</router-link>
-    <p v-if="erro" role="alert" class="erro">{{ erro }}</p>
-    <p v-if="aviso" role="status" class="aviso">{{ aviso }}</p>
+    <PageHeader label="ADMIN" title="Prestação de Contas" subtitle="Controle financeiro do Grêmio Estudantil Athos Bulcão" />
+    <p v-if="erro" class="mensagem erro" role="alert">{{ erro }}</p>
+    <p v-if="aviso" class="mensagem aviso" role="status">{{ aviso }}</p>
+    <nav class="abas" aria-label="Seções financeiras">
+      <button v-for="item in [{ id: 'dashboard', nome: 'Dashboard', icone: 'mdi-chart-bar' }, { id: 'movimentacoes', nome: 'Movimentações', icone: 'mdi-wallet-outline' }, { id: 'relatorios', nome: 'Gerar PDF', icone: 'mdi-printer-outline' }, { id: 'historico', nome: 'Histórico', icone: 'mdi-history' }]" :key="item.id" type="button" :class="{ selecionada: aba === item.id }" @click="aba = item.id">
+        <v-icon size="16">{{ item.icone }}</v-icon> {{ item.nome }}
+      </button>
+    </nav>
     <div class="barra-gestao">
       <div class="gestao-atual">
         <span class="rotulo">Gestão selecionada</span>
@@ -157,33 +170,23 @@ onMounted(() => { carregar().catch(() => { erro.value = 'Falha ao carregar os da
       </v-card>
     </v-dialog>
     <template v-if="atual && totais">
-      <section class="bloco">
-        <h2>Resumo financeiro</h2>
+      <section v-if="aba === 'dashboard'" class="bloco painel-resumo">
+        <h2>Visão geral</h2>
         <div class="indicadores">
           <p>Saldo inicial <strong>{{ moeda(totais.saldo_inicial_centavos) }}</strong></p>
-          <p>Receitas <strong>{{ moeda(totais.receitas_centavos) }}</strong></p>
-          <p>Despesas <strong>{{ moeda(totais.despesas_centavos) }}</strong></p>
+          <p>Receitas <strong class="texto-receita">{{ moeda(totais.receitas_centavos) }}</strong></p>
+          <p>Despesas <strong class="texto-despesa">{{ moeda(totais.despesas_centavos) }}</strong></p>
           <p>Saldo calculado <strong>{{ moeda(totais.saldo_final_centavos) }}</strong></p>
         </div>
+        <p class="ajuda">O saldo calculado considera apenas movimentações confirmadas e não representa necessariamente o saldo bancário.</p>
       </section>
-      <section v-if="gestaoSelecionada?.status === 'ativa'" class="bloco">
-        <h2>Nova movimentação</h2>
-        <form class="formulario" @submit.prevent="adicionar">
-          <input v-model="nova.data" type="date" required aria-label="Data da movimentação" />
-          <select v-model="nova.tipo" aria-label="Tipo"><option value="receita">Receita</option><option value="despesa">Despesa</option></select>
-          <input v-model="nova.categoria" required maxlength="100" placeholder="Categoria" aria-label="Categoria" />
-          <input v-model="nova.descricao" required maxlength="255" placeholder="Descrição" aria-label="Descrição" />
-          <input :value="nova.valor" required inputmode="numeric" @input="formatarReais($event, 'movimentacao')" placeholder="R$ 0,00" aria-label="Valor em reais" />
-          <button :disabled="ocupado">Registrar</button>
-        </form>
-      </section>
-      <section class="bloco">
-        <h2>Movimentações recentes</h2>
+      <section v-if="aba === 'movimentacoes'" class="bloco lista-movimentacoes">
+        <h2 class="sr-only">Movimentações</h2>
         <div class="tabela-scroll">
           <table>
             <thead><tr><th>Data</th><th>Descrição</th><th>Tipo</th><th>Valor</th><th>Situação</th><th>Ação</th><th>Comprovantes</th></tr></thead>
             <tbody>
-              <tr v-for="m in movimentacoes" :key="m.id">
+              <tr v-for="m in filtradas" :key="m.id">
                 <td>{{ m.data }}</td><td>{{ m.descricao }}</td><td>{{ m.tipo }}</td>
                 <td>{{ moeda(m.valor_centavos) }}</td><td>{{ m.status }}</td>
                 <td><button v-if="m.status === 'pendente' && gestaoSelecionada?.status === 'ativa'" :disabled="ocupado" @click="confirmar(m.id)">Confirmar</button></td>
@@ -199,7 +202,7 @@ onMounted(() => { carregar().catch(() => { erro.value = 'Falha ao carregar os da
                   </ul>
                 </td>
               </tr>
-              <tr v-if="!movimentacoes.length"><td colspan="7">Nenhuma movimentação cadastrada.</td></tr>
+              <tr v-if="!filtradas.length"><td colspan="7">Nenhuma movimentação cadastrada.</td></tr>
             </tbody>
           </table>
         </div>
@@ -209,57 +212,26 @@ onMounted(() => { carregar().catch(() => { erro.value = 'Falha ao carregar os da
           <button type="button" class="btn-secundario" :disabled="pagina >= ultimaPagina" @click="selecionar(atual, pagina + 1)">Próxima</button>
         </div>
       </section>
-      <section v-if="gestaoSelecionada?.status === 'ativa'" class="bloco">
-        <h2>Publicar relatório mensal</h2>
-        <form class="formulario" @submit.prevent="publicar">
-          <input v-model.number="fechamento.ano" type="number" min="2000" max="2100" required aria-label="Ano do relatório" />
-          <input v-model.number="fechamento.mes" type="number" min="1" max="12" required aria-label="Mês do relatório" />
-          <button :disabled="ocupado">Publicar relatório</button>
-        </form>
-        <h2>Encerrar gestão</h2>
-        <form class="formulario" @submit.prevent="encerrar">
-          <textarea v-model="observacao" required minlength="10" maxlength="2000" placeholder="Justificativa do encerramento" aria-label="Justificativa do encerramento" />
-          <button class="perigo" :disabled="ocupado">Encerrar gestão</button>
-        </form>
-      </section>
-    </template>
-  </main>
-</template>
+      <div v-if="aba === 'movimentacoes' && gestaoSelecionada?.status === 'ativa'" class="barra-acoes">
+        <div class="botoes-lancamento">
+          <button class="botao-receita" type="button" @click="abrirMovimentacao('receita')"><v-icon size="17">mdi-plus</v-icon> Nova receita</button>
+          <button class="botao-despesa" type="button" @click="abrirMovimentacao('despesa')"><v-icon size="17">mdi-plus</v-icon> Nova despesa</button>
+        </div>
+        <label class="filtro">Filtrar <select v-model="filtroTipo"><option value="todas">Todas</option><option value="receita">Receitas</option><option value="despesa">Despesas</option></select></label>
+      </div>
+      <v-dialog v-model="modalMovimentacao" max-width="520">
+        <v-card class="gestao-dialog">
+          <v-card-title class="dialog-titulo">{{ nova.tipo === 'receita' ? 'Nova receita' : 'Nova despesa' }}</v-card-title>
+          <v-card-text class="dialog-conteudo">
+            <form id="nova-movimentacao" class="modal-form" @submit.prevent="adicionar">
+              <label for="mov-data">Data</label><input id="mov-data" v-model="nova.data" type="date" required />
+              <label for="mov-tipo">Tipo</label><select id="mov-tipo" v-model="nova.tipo"><option value="receita">Receita</option><option value="despesa">Despesa</option></select>
+              <label for="mov-categoria">Categoria</label><input id="mov-categoria" v-model.trim="nova.categoria" required maxlength="100" placeholder="Categoria" />
+              <label for="mov-descricao">Descrição</label><textarea id="mov-descricao" v-model.trim="nova.descricao" required maxlength="255" rows="3" placeholder="Descreva a movimentação" />
+              <label for="mov-valor">Valor em reais</label><input id="mov-valor" :value="nova.valor" required inputmode="numeric" @input="formatarReais($event, 'movimentacao')" placeholder="R$ 0,00" />
+              <div class="acoes-modal"><button class="btn-secundario" type="button" @click="modalMovimentacao = false">Cancelar</button><button type="submit" :disabled="ocupado">Registrar</button></div>
+            </form>
+          </v-card-text>
+        </v-card>
+      </v-dialog>
 
-<style scoped>
-.painel-financeiro { font-family: 'DM Sans', sans-serif; }
-.barra-gestao { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; padding: 18px 22px; background: #eef3fb; border: 1px solid rgba(13,31,60,.1); border-radius: 16px; margin-top: 20px; }
-.gestao-atual { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.rotulo { font-size: 12px; color: #5a6a85; }
-.gestao-atual strong { color: #0d1f3c; font-size: 16px; }
-.estado { border-radius: 999px; padding: 4px 10px; font-size: 12px; background: #e4e8ef; text-transform: capitalize; }
-.estado.ativa { background: #dcfce7; color: #166534; }
-.btn-gestoes { display: inline-flex; align-items: center; gap: 8px; }
-.gestao-dialog { border-radius: 18px !important; font-family: 'DM Sans', sans-serif; padding: 8px; }
-.dialog-titulo { color: #0d1f3c; font-weight: 700; padding: 18px 20px 4px; }
-.dialog-conteudo { display: flex; flex-direction: column; gap: 10px; padding: 14px 20px; }
-.dialog-conteudo label { color: #5a6a85; font-size: 12px; font-weight: 600; }
-.dialog-conteudo input, .dialog-conteudo select { width: 100%; background: #eef3fb; box-sizing: border-box; }
-.modal-form { display: flex; flex-direction: column; gap: 10px; border-top: 1px solid #e1e7f0; padding-top: 14px; }
-.modal-form h3 { margin: 0; font-size: 16px; }
-.ajuda { color: #5a6a85; font-size: 13px; margin: 0; line-height: 1.6; }
-.btn-secundario { background: #eef3fb; color: #0d1f3c; border: 1px solid #d3deee; }
-.paginacao { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 16px; font-size: 13px; }
-@media (max-width: 600px) { .barra-gestao { align-items: stretch; } .btn-gestoes { justify-content: center; } }
-
-.painel-financeiro { max-width: 1100px; margin: auto; padding: 24px; color: #0b132b; }
-.bloco { padding: 20px; margin: 20px 0; border: 1px solid #dce4f0; border-radius: 16px; }
-.formulario { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
-input,select,textarea { padding: 10px; border: 1px solid #b4c0d3; border-radius: 8px; max-width: 100%; }
-button { background: #16509b; color: white; padding: 10px 16px; border: 0; border-radius: 8px; cursor: pointer; }
-button:disabled { opacity: .5; cursor: not-allowed; }
-.perigo { background: #9c2020; }
-.indicadores { display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: 12px; }
-.indicadores p { background: #f1f5fa; padding: 16px; border-radius: 10px; }
-.indicadores strong { display: block; margin-top: 8px; }
-.tabela-scroll { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; }
-th,td { text-align: left; padding: 10px; border-bottom: 1px solid #dce4f0; }
-.erro { color: #a11; }.aviso { color: #176c39; }
-@media(max-width:480px) { .painel-financeiro { padding: 16px; } }
-</style>
