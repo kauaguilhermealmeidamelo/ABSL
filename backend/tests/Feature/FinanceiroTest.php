@@ -53,4 +53,41 @@ class FinanceiroTest extends TestCase
         $this->assertSame(5000, $totais['receitas_centavos']);
         $this->assertSame(2000, $totais['despesas_centavos']);
     }
+    public function test_relatorio_publicado_bloqueia_nova_movimentacao_no_mes(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'is_admin' => true]);
+        $gestao = GestaoFinanceira::create([
+            'nome' => 'Gestão de teste', 'inicio' => '2026-01-01',
+            'saldo_inicial_centavos' => 10000, 'status' => 'ativa',
+        ]);
+        $this->actingAs($admin)->postJson("/api/admin/financeiro/gestoes/{$gestao->id}/relatorios", [
+            'ano' => 2026, 'mes' => 1,
+        ])->assertCreated();
+        $this->actingAs($admin)->postJson("/api/admin/financeiro/gestoes/{$gestao->id}/movimentacoes", [
+            'data' => '2026-01-10', 'tipo' => 'receita',
+            'categoria' => 'doacoes', 'descricao' => 'Doação de teste', 'valor_centavos' => 1000,
+        ])->assertUnprocessable();
+    }
+
+    public function test_publico_consulta_apenas_relatorios_publicados(): void
+    {
+        $gestao = GestaoFinanceira::create([
+            'nome' => 'Gestão de teste', 'inicio' => '2026-01-01',
+            'saldo_inicial_centavos' => 10000, 'status' => 'ativa',
+        ]);
+        \App\Models\RelatorioFinanceiro::create([
+            'gestao_financeira_id' => $gestao->id, 'ano' => 2026, 'mes' => 1,
+            'status' => 'publicado', 'saldo_inicial_centavos' => 10000,
+            'receitas_centavos' => 0, 'despesas_centavos' => 0,
+            'saldo_final_centavos' => 10000, 'publicado_em' => now(),
+        ]);
+        \App\Models\RelatorioFinanceiro::create([
+            'gestao_financeira_id' => $gestao->id, 'ano' => 2026, 'mes' => 2,
+            'status' => 'rascunho', 'saldo_inicial_centavos' => 10000,
+            'receitas_centavos' => 0, 'despesas_centavos' => 0,
+            'saldo_final_centavos' => 10000,
+        ]);
+        $this->getJson('/api/financeiro/relatorios')->assertOk()->assertJsonCount(1);
+    }
+
 }
