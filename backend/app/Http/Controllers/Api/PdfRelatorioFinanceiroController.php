@@ -9,6 +9,18 @@ use App\Services\PdfFinanceiroSimples;
 
 class PdfRelatorioFinanceiroController extends Controller
 {
+    public function versao(RelatorioFinanceiro $relatorio, int $versao)
+    {
+        abort_unless($relatorio->status === 'publicado', 404);
+        $registro = \Illuminate\Support\Facades\DB::table('versoes_relatorios_financeiros')
+            ->where('relatorio_financeiro_id', $relatorio->id)->where('versao', $versao)->first();
+        abort_unless($registro, 404);
+        return response(base64_decode($registro->pdf_base64), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="prestacao-'.$relatorio->id.'-v'.$versao.'.pdf"',
+        ]);
+    }
+
     public function download(RelatorioFinanceiro $relatorio, PdfFinanceiroSimples $pdf)
     {
         abort_unless($relatorio->status === 'publicado', 404);
