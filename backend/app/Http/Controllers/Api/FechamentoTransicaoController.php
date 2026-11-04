@@ -25,6 +25,9 @@ class FechamentoTransicaoController extends Controller
                 throw ValidationException::withMessages(['transicao' => 'Transição ou data inválida.']);
             }
             $movimentos = DB::table('movimentacoes_transicao_financeira')->where('transicao_financeira_id', $transicao);
+            if ((clone $movimentos)->where('data', '>', $dados['fim_real'])->exists()) {
+                throw ValidationException::withMessages(['fim_real' => 'Existem movimentações posteriores ao encerramento.']);
+            }
             if ((clone $movimentos)->where('status', 'pendente')->exists()) {
                 throw ValidationException::withMessages(['transicao' => 'Resolva todas as pendências.']);
             }
