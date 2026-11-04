@@ -5,6 +5,9 @@ use App\Http\Controllers\Api\FinanceiroController;
 use App\Http\Controllers\Api\CicloGestaoFinanceiraController;
 use App\Http\Controllers\Api\DeclaracaoInatividadeController;
 use App\Http\Controllers\Api\PdfInatividadeController;
+use App\Http\Controllers\Api\TransicaoFinanceiraController;
+use App\Http\Controllers\Api\MovimentacaoTransicaoController;
+use App\Http\Controllers\Api\FechamentoTransicaoController;
 use App\Http\Controllers\Api\CancelamentoFinanceiroController;
 use App\Http\Controllers\Api\ConciliacaoFinanceiraController;
 use App\Http\Controllers\Api\VinculoFinanceiroController;
@@ -68,6 +71,7 @@ Route::get('/diretorias', [DiretoriaController::class, 'index']);
 Route::get('/inicio-media', [InicioMediaController::class, 'index']);
 Route::get('/transparencia', [TransparenciaController::class, 'index']);
 Route::get('/financeiro/relatorios', [RelatorioFinanceiroController::class, 'index']);
+Route::get('/financeiro/transicoes/{transicao}/relatorio', [FechamentoTransicaoController::class, 'relatorio']);
 Route::get('/financeiro/gestoes/{gestao}/inatividade', [DeclaracaoInatividadeController::class, 'consultar']);
 Route::get('/financeiro/gestoes/{gestao}/inatividade/pdf', [PdfInatividadeController::class, 'download']);
 Route::get('/transparencia/{id}', [TransparenciaController::class, 'show']);
@@ -151,6 +155,12 @@ Route::middleware(['auth:sanctum', 'staff'])->group(function () {
 // Gestão financeira: dados completos restritos a administradores.
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin/financeiro')->group(function () {
     Route::get('/gestoes', [FinanceiroController::class, 'gestoes']);
+    Route::get('/transicoes', [TransicaoFinanceiraController::class, 'index']);
+    Route::post('/transicoes', [TransicaoFinanceiraController::class, 'iniciar']);
+    Route::get('/transicoes/{transicao}/movimentacoes', [MovimentacaoTransicaoController::class, 'index']);
+    Route::post('/transicoes/{transicao}/movimentacoes', [MovimentacaoTransicaoController::class, 'criar']);
+    Route::post('/transicoes/{transicao}/movimentacoes/{movimentacao}/resolver', [MovimentacaoTransicaoController::class, 'resolver']);
+    Route::post('/transicoes/{transicao}/encerrar', [FechamentoTransicaoController::class, 'encerrar']);
     Route::get('/gestoes/{gestao}/vinculos', [VinculoFinanceiroController::class, 'index']);
     Route::post('/gestoes/{gestao}/vinculos', [VinculoFinanceiroController::class, 'store']);
     Route::post('/gestoes/{gestao}/vinculos/{vinculo}/encerrar', [VinculoFinanceiroController::class, 'encerrar']);
