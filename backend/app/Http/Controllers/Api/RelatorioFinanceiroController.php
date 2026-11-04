@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\GestaoFinanceira;
 use App\Models\RelatorioFinanceiro;
 use App\Support\Auditoria;
+use App\Services\AutorizacaoFinanceira;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -20,8 +21,9 @@ class RelatorioFinanceiroController extends Controller
                 'receitas_centavos', 'despesas_centavos', 'saldo_final_centavos', 'publicado_em']);
     }
 
-    public function publicar(Request $request, GestaoFinanceira $gestao)
+    public function publicar(Request $request, GestaoFinanceira $gestao, AutorizacaoFinanceira $autorizacao)
     {
+        abort_unless($autorizacao->podeGerenciarFechamento($request->user(), $gestao), 403);
         $dados = $request->validate([
             'ano' => ['required', 'integer', 'between:2000,2100'],
             'mes' => ['required', 'integer', 'between:1,12'],
@@ -31,8 +33,9 @@ class RelatorioFinanceiroController extends Controller
         $inicio = sprintf('%04d-%02d-01', $ano, $mes);
         $fim = date('Y-m-d', strtotime($inicio . ' +1 month'));
 
-        $relatorio = DB::transaction(function () use ($gestao, $request, $ano, $mes, $inicio, $fim) {
+        $relatorio = DB::transaction(function () use ($gestao, $request, $ano, $mes, $inicio, $fim, $autorizacao) {
             $gestao = GestaoFinanceira::whereKey($gestao->id)->lockForUpdate()->firstOrFail();
+            abort_unless($autorizacao->podeGerenciarFechamento($request->user(), $gestao), 403);
             if ($gestao->status !== 'ativa' || $fim > today()->toDateString()
                 || $fim <= $gestao->inicio->toDateString()) {
                 throw ValidationException::withMessages(['periodo' => 'Somente meses concluídos dentro da gestão podem ser publicados.']);
