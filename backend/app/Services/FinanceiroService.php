@@ -38,17 +38,36 @@ class FinanceiroService
                 throw ValidationException::withMessages(['gestao' => 'Confirme ou regularize as movimentações pendentes antes de encerrar.']);
             }
 
-            $periodos = $bloqueada->movimentacoes()->where('status', 'confirmada')
-                ->pluck('data')->map(fn ($data) => substr((string) $data, 0, 7))->unique();
-            foreach ($periodos as $periodo) {
-                [$ano, $mes] = array_map('intval', explode('-', $periodo));
+            if ($bloqueada->saldo_real_final_centavos === null || $bloqueada->conciliado_em === null) {
+                throw ValidationException::withMessages(['gestao' => 'Concilie o saldo real antes do encerramento definitivo.']);
+            }
+
+            $totais = $this->totais($bloqueada);
+            if ((int) $bloqueada->saldo_real_final_centavos - $totais['saldo_final_centavos']
+                !== (int) $bloqueada->diferenca_conciliacao_centavos) {
+                throw ValidationException::withMessages(['gestao' => 'A conciliação está desatualizada.']);
+            }
+
+            $primeiro = $bloqueada->inicio->copy()->startOfMonth();
+            $ultimo = $bloqueada->fim_previsto
+                ? $bloqueada->fim_previsto->copy()->startOfMonth()
+                : today()->startOfMonth();
+            if ($ultimo->greaterThan(today()->startOfMonth())) {
+                throw ValidationException::withMessages(['gestao' => 'O período previsto da gestão ainda não terminou.']);
+            }
+
+            for ($mes = $primeiro; $mes->lessThanOrEqualTo($ultimo); $mes->addMonth()) {
                 $publicado = \App\Models\RelatorioFinanceiro::where('gestao_financeira_id', $bloqueada->id)
-                    ->where('ano', $ano)->where('mes', $mes)->where('status', 'publicado')->exists();
+                    ->where('ano', $mes->year)->where('mes', $mes->month)
+                    ->where('status', 'publicado')->exists();
                 if (! $publicado) {
-                    throw ValidationException::withMessages(['gestao' => "Publique o relatório de {$periodo} antes de encerrar."]);
+                    throw ValidationException::withMessages(['gestao' => 'Publique o relatório de '.$mes->format('Y-m').' antes de encerrar.']);
                 }
             }
-            $totais = $this->totais($bloqueada);
+
+            if (! $bloqueada->movimentacoes()->where('status', 'confirmada')->exists()) {
+                throw ValidationException::withMessages(['gestao' => 'Gestão sem movimentações: publique a declaração de inatividade com dupla aprovação antes de encerrar.']);
+            }
             $bloqueada->update([
                 'status' => 'encerrada',
                 'encerrada_em' => today(),
