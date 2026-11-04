@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Api\FinanceiroController;
 use App\Http\Controllers\Api\CicloGestaoFinanceiraController;
 use App\Http\Controllers\Api\DeclaracaoInatividadeController;
+use App\Http\Controllers\Api\PdfInatividadeController;
 use App\Http\Controllers\Api\CancelamentoFinanceiroController;
 use App\Http\Controllers\Api\ConciliacaoFinanceiraController;
 use App\Http\Controllers\Api\VinculoFinanceiroController;
@@ -68,6 +69,7 @@ Route::get('/inicio-media', [InicioMediaController::class, 'index']);
 Route::get('/transparencia', [TransparenciaController::class, 'index']);
 Route::get('/financeiro/relatorios', [RelatorioFinanceiroController::class, 'index']);
 Route::get('/financeiro/gestoes/{gestao}/inatividade', [DeclaracaoInatividadeController::class, 'consultar']);
+Route::get('/financeiro/gestoes/{gestao}/inatividade/pdf', [PdfInatividadeController::class, 'download']);
 Route::get('/transparencia/{id}', [TransparenciaController::class, 'show']);
 Route::post('/visitas', [VisitaController::class, 'store'])->middleware('throttle:30,1');
 
