@@ -62,6 +62,7 @@ class FechamentoTransicaoController extends Controller
         abort_unless($periodo, 404);
         $movimentos = DB::table('movimentacoes_transicao_financeira')
             ->where('transicao_financeira_id', $transicao)->get();
+        unset($periodo->pdf_base64);
         return response()->json(['transicao' => $periodo, 'movimentacoes' => $movimentos]);
     }
 }
