@@ -147,16 +147,20 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin/financeiro')->group(
     Route::get('/gestoes/{gestao}/vinculos', [VinculoFinanceiroController::class, 'index']);
     Route::post('/gestoes/{gestao}/vinculos', [VinculoFinanceiroController::class, 'store']);
     Route::post('/gestoes/{gestao}/vinculos/{vinculo}/encerrar', [VinculoFinanceiroController::class, 'encerrar']);
-    Route::get('/movimentacoes/{movimentacao}/comprovantes', [ComprovanteFinanceiroController::class, 'index']);
-    Route::post('/movimentacoes/{movimentacao}/comprovantes', [ComprovanteFinanceiroController::class, 'store']);
-    Route::get('/comprovantes/{id}/download', [ComprovanteFinanceiroController::class, 'download']);
-    Route::post('/gestoes/{gestao}/relatorios', [RelatorioFinanceiroController::class, 'publicar']);
     Route::post('/gestoes', [FinanceiroController::class, 'criarGestao']);
+    Route::post('/gestoes/{gestao}/encerrar', [FinanceiroController::class, 'encerrar']);
+});
+
+
+Route::middleware('auth:sanctum')->prefix('admin/financeiro')->group(function () {
     Route::get('/gestoes/{gestao}/resumo', [FinanceiroController::class, 'resumo']);
     Route::get('/gestoes/{gestao}/movimentacoes', [FinanceiroController::class, 'movimentacoes']);
     Route::post('/gestoes/{gestao}/movimentacoes', [FinanceiroController::class, 'criarMovimentacao']);
     Route::post('/movimentacoes/{movimentacao}/confirmar', [FinanceiroController::class, 'confirmarMovimentacao']);
-    Route::post('/gestoes/{gestao}/encerrar', [FinanceiroController::class, 'encerrar']);
+    Route::post('/gestoes/{gestao}/relatorios', [RelatorioFinanceiroController::class, 'publicar']);
+    Route::get('/movimentacoes/{movimentacao}/comprovantes', [ComprovanteFinanceiroController::class, 'index']);
+    Route::post('/movimentacoes/{movimentacao}/comprovantes', [ComprovanteFinanceiroController::class, 'store']);
+    Route::get('/comprovantes/{id}/download', [ComprovanteFinanceiroController::class, 'download']);
 });
 
 // Só administrador de verdade pode gerenciar contas de usuário e ver logs
