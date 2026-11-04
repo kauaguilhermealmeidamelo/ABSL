@@ -13,6 +13,12 @@ class PdfTransicaoFinanceiraController extends Controller
         $periodo = DB::table('transicoes_financeiras')->where('id', $transicao)
             ->where('status', 'encerrada')->whereNotNull('relatorio_publicado_em')->first();
         abort_unless($periodo, 404);
+        if ($periodo->pdf_base64) {
+            return response(base64_decode($periodo->pdf_base64), 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="transicao-'.$transicao.'.pdf"',
+            ]);
+        }
 
         $movimentos = DB::table('movimentacoes_transicao_financeira')
             ->where('transicao_financeira_id', $transicao)->orderBy('data')->get();
