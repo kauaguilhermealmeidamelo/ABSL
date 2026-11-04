@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Api\FinanceiroController;
+use App\Http\Controllers\Api\VinculoFinanceiroController;
 use App\Http\Controllers\Api\RelatorioFinanceiroController;
 use App\Http\Controllers\Api\ComprovanteFinanceiroController;
 use Illuminate\Support\Facades\Route;
@@ -143,6 +144,9 @@ Route::middleware(['auth:sanctum', 'staff'])->group(function () {
 // Gestão financeira: dados completos restritos a administradores.
 Route::middleware(['auth:sanctum', 'admin'])->prefix('admin/financeiro')->group(function () {
     Route::get('/gestoes', [FinanceiroController::class, 'gestoes']);
+    Route::get('/gestoes/{gestao}/vinculos', [VinculoFinanceiroController::class, 'index']);
+    Route::post('/gestoes/{gestao}/vinculos', [VinculoFinanceiroController::class, 'store']);
+    Route::post('/gestoes/{gestao}/vinculos/{vinculo}/encerrar', [VinculoFinanceiroController::class, 'encerrar']);
     Route::get('/movimentacoes/{movimentacao}/comprovantes', [ComprovanteFinanceiroController::class, 'index']);
     Route::post('/movimentacoes/{movimentacao}/comprovantes', [ComprovanteFinanceiroController::class, 'store']);
     Route::get('/comprovantes/{id}/download', [ComprovanteFinanceiroController::class, 'download']);
