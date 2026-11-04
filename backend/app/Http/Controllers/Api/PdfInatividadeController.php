@@ -17,6 +17,8 @@ class PdfInatividadeController extends Controller
         abort_unless($declaracao, 404);
 
         $canceladas = $gestao->movimentacoes()->where('status', 'cancelada')->get();
+        $nomeTesouraria = \App\Models\User::find($declaracao->aprovada_tesouraria_por)?->name ?? 'Não identificado';
+        $nomeAdmin = \App\Models\User::find($declaracao->aprovada_admin_por)?->name ?? 'Não identificado';
         $linhas = [
             'GREMIO ESTUDANTIL ATHOS BULCAO - ABSL',
             'DECLARACAO DE INATIVIDADE FINANCEIRA',
@@ -29,8 +31,8 @@ class PdfInatividadeController extends Controller
             'Justificativa conciliacao: '.$gestao->justificativa_conciliacao,
             'Nao houve receitas ou despesas confirmadas durante esta gestao.',
             'Observacoes: '.$declaracao->observacoes,
-            'Aprovacao tesouraria: '.$declaracao->cargo_aprovador_tesouraria.' - usuario #'.$declaracao->aprovada_tesouraria_por,
-            'Aprovacao administracao: usuario #'.$declaracao->aprovada_admin_por,
+            'Aprovacao tesouraria: '.$declaracao->cargo_aprovador_tesouraria.' - '.$nomeTesouraria,
+            'Aprovacao administracao: '.$nomeAdmin,
             'Publicada em: '.$declaracao->publicada_em,
             'Movimentacoes canceladas: '.$canceladas->count(),
         ];
