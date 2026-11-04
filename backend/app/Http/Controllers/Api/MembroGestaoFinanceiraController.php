@@ -17,6 +17,34 @@ class MembroGestaoFinanceiraController extends Controller
             ->where('gestao_financeira_id', $gestao->id)->get();
     }
 
+    public function desligar(Request $request, GestaoFinanceira $gestao, int $membro)
+    {
+        $dados = $request->validate(['justificativa' => ['required', 'string', 'min:10', 'max:2000']]);
+        DB::transaction(function () use ($request, $gestao, $membro, $dados) {
+            $gestao = GestaoFinanceira::whereKey($gestao->id)->lockForUpdate()->firstOrFail();
+            if (! in_array($gestao->status, ['planejada', 'ativa'], true)) {
+                throw ValidationException::withMessages(['gestao' => 'Gestão encerrada é imutável.']);
+            }
+            $registro = DB::table('membros_gestao_financeira')
+                ->where('gestao_financeira_id', $gestao->id)->where('id', $membro)->lockForUpdate()->first();
+            abort_unless($registro, 404);
+            if ($registro->desligado_em) {
+                throw ValidationException::withMessages(['membro' => 'Membro já desligado.']);
+            }
+            DB::table('membros_gestao_financeira')->where('id', $membro)->update([
+                'desligado_em' => now(), 'updated_at' => now(),
+            ]);
+            DB::table('vinculos_financeiros')->where('gestao_financeira_id', $gestao->id)
+                ->where('user_id', $registro->user_id)->whereNull('fim_em')->update([
+                    'fim_em' => now(), 'encerrado_por' => $request->user()->id,
+                    'justificativa_encerramento' => $dados['justificativa'], 'updated_at' => now(),
+                ]);
+            Auditoria::registrar('desligou_membro_gestao', descricao: $dados['justificativa'],
+                entidade: 'membro_gestao_financeira', entidadeId: $membro);
+        });
+        return response()->noContent();
+    }
+
     public function registrar(Request $request, GestaoFinanceira $gestao)
     {
         $dados = $request->validate([
