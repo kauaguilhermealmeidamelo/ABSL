@@ -13,7 +13,11 @@ class CicloGestaoFinanceiraController extends Controller
 {
     public function ativar(Request $request, GestaoFinanceira $gestao)
     {
-        $resultado = DB::transaction(function () use ($request, $gestao) {
+        $dados = $request->validate([
+            'saldo_inicial_centavos' => ['sometimes', 'integer', 'min:0'],
+            'justificativa_saldo_inicial' => ['nullable', 'string', 'max:3000'],
+        ]);
+        $resultado = DB::transaction(function () use ($request, $gestao, $dados) {
             $gestao = GestaoFinanceira::whereKey($gestao->id)->lockForUpdate()->firstOrFail();
 
             if ($gestao->status !== 'planejada') {
@@ -41,6 +45,15 @@ class CicloGestaoFinanceiraController extends Controller
             $transicaoPosterior = $transicao && (! $anterior || $transicao->inicio > $anterior->inicio->toDateString());
             $saldoInicial = $transicaoPosterior ? (int) $transicao->saldo_real_final_centavos
                 : ($anterior ? (int) $anterior->saldo_real_final_centavos : 0);
+            if (! $anterior && ! $transicaoPosterior) {
+                $saldoInicial = (int) ($dados['saldo_inicial_centavos'] ?? 0);
+                if ($saldoInicial !== 0 && mb_strlen(trim($dados['justificativa_saldo_inicial'] ?? '')) < 10) {
+                    throw ValidationException::withMessages(['justificativa_saldo_inicial' => 'Justifique o saldo inicial excepcional.']);
+                }
+            } elseif (array_key_exists('saldo_inicial_centavos', $dados)) {
+                throw ValidationException::withMessages(['saldo_inicial_centavos' => 'O saldo deve ser herdado do período anterior.']);
+            }
+
             $titulares = DB::table('vinculos_financeiros')
                 ->where('gestao_financeira_id', $gestao->id)
                 ->where('cargo', 'tesoureiro_geral')->where('interino', false)
@@ -51,6 +64,7 @@ class CicloGestaoFinanceiraController extends Controller
             $gestao->update([
                 'status' => 'ativa',
                 'saldo_inicial_centavos' => $saldoInicial,
+                'justificativa_saldo_inicial' => $dados['justificativa_saldo_inicial'] ?? null,
                 'ativada_em' => now(),
                 'ativada_por' => $request->user()->id,
             ]);
