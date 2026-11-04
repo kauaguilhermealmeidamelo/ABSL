@@ -22,6 +22,11 @@ class ComprovanteFinanceiroController extends Controller
         if ($gestao->status !== 'ativa') {
             throw ValidationException::withMessages(['gestao' => 'Não é possível anexar arquivos a uma gestão encerrada.']);
         }
+        if (\App\Models\RelatorioFinanceiro::where('gestao_financeira_id', $gestao->id)
+            ->where('ano', $movimentacao->data->year)->where('mes', $movimentacao->data->month)
+            ->whereIn('status', ['fechado', 'publicado'])->exists()) {
+            throw ValidationException::withMessages(['movimentacao' => 'Mês fechado: comprovantes não podem ser alterados.']);
+        }
         $arquivo = $request->file('arquivo');
         $caminho = $arquivo->store('financeiro/comprovantes', 'local');
         try {
