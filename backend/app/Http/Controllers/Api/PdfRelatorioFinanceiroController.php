@@ -28,6 +28,16 @@ class PdfRelatorioFinanceiroController extends Controller
             'Aprovado e publicado por usuario #'.$relatorio->publicado_por.' em '.$relatorio->publicado_em,
             'Comprovantes privados nao integram este documento.',
         ];
+        $inicio = sprintf('%04d-%02d-01', $relatorio->ano, $relatorio->mes);
+        $fim = date('Y-m-d', strtotime($inicio.' +1 month'));
+        $movimentacoes = $gestao->movimentacoes()->where('data', '>=', $inicio)
+            ->where('data', '<', $fim)->orderBy('data')->orderBy('id')->get();
+        $linhas[] = 'MOVIMENTACOES DO PERIODO';
+        foreach ($movimentacoes as $movimentacao) {
+            $linhas[] = $movimentacao->data->format('d/m/Y').' - '.$movimentacao->tipo
+                .' - '.$movimentacao->status.' - '.$movimentacao->valor_centavos
+                .' centavos - '.$movimentacao->descricao;
+        }
         $conteudo = $pdf->gerar($linhas);
 
         return response($conteudo, 200, [
