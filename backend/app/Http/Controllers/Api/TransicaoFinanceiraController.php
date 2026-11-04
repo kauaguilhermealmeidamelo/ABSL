@@ -28,6 +28,12 @@ class TransicaoFinanceiraController extends Controller
                 || GestaoFinanceira::where('status', 'ativa')->exists()) {
                 throw ValidationException::withMessages(['transicao' => 'Já existe período financeiro ativo.']);
             }
+            if (GestaoFinanceira::where('inicio', '<=', $dados['fim_previsto'])
+                ->where(fn ($q) => $q->whereNull('fim_previsto')->orWhere('fim_previsto', '>=', $dados['inicio']))->exists()
+                || DB::table('transicoes_financeiras')->where('inicio', '<=', $dados['fim_previsto'])
+                    ->where('fim_previsto', '>=', $dados['inicio'])->exists()) {
+                throw ValidationException::withMessages(['transicao' => 'Período sobreposto a outra gestão ou transição.']);
+            }
             $anterior = GestaoFinanceira::where('inicio', '<', $dados['inicio'])->orderByDesc('inicio')->first();
             if ($anterior && ($anterior->status !== 'encerrada' || $anterior->saldo_real_final_centavos === null)) {
                 throw ValidationException::withMessages(['transicao' => 'Encerre e concilie a gestão anterior.']);
