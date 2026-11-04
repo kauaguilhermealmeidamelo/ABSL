@@ -12,6 +12,16 @@ class PdfRelatorioFinanceiroController extends Controller
     public function download(RelatorioFinanceiro $relatorio, PdfFinanceiroSimples $pdf)
     {
         abort_unless($relatorio->status === 'publicado', 404);
+        $versao = \Illuminate\Support\Facades\DB::table('versoes_relatorios_financeiros')
+            ->where('relatorio_financeiro_id', $relatorio->id)
+            ->where('versao', $relatorio->versao)->first();
+        if ($versao) {
+            return response(base64_decode($versao->pdf_base64), 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="prestacao-'.$relatorio->id.'-v'.$versao->versao.'.pdf"',
+                'Cache-Control' => 'public, max-age=3600',
+            ]);
+        }
         $gestao = GestaoFinanceira::findOrFail($relatorio->gestao_financeira_id);
 
         $linhas = [
