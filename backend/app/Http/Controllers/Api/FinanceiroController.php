@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\GestaoFinanceira;
 use App\Models\MovimentacaoFinanceira;
 use App\Services\FinanceiroService;
+use App\Services\AutorizacaoFinanceira;
 use App\Support\Auditoria;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -52,18 +53,21 @@ class FinanceiroController extends Controller
         return response()->json($gestao, 201);
     }
 
-    public function resumo(GestaoFinanceira $gestao, FinanceiroService $financeiro)
+    public function resumo(Request $request, GestaoFinanceira $gestao, FinanceiroService $financeiro, AutorizacaoFinanceira $autorizacao)
     {
+        abort_unless($autorizacao->podeOperar($request->user(), $gestao), 403);
         return response()->json(['gestao' => $gestao->only(['id', 'nome', 'status', 'inicio', 'encerrada_em']), 'totais' => $financeiro->totais($gestao)]);
     }
 
-    public function movimentacoes(GestaoFinanceira $gestao)
+    public function movimentacoes(Request $request, GestaoFinanceira $gestao, AutorizacaoFinanceira $autorizacao)
     {
+        abort_unless($autorizacao->podeOperar($request->user(), $gestao), 403);
         return $gestao->movimentacoes()->orderByDesc('data')->orderByDesc('id')->paginate(25);
     }
 
-    public function criarMovimentacao(Request $request, GestaoFinanceira $gestao)
+    public function criarMovimentacao(Request $request, GestaoFinanceira $gestao, AutorizacaoFinanceira $autorizacao)
     {
+        abort_unless($autorizacao->podeOperar($request->user(), $gestao), 403);
         $data = $request->validate([
             'data' => ['required', 'date', 'after_or_equal:' . $gestao->inicio->toDateString()],
             'tipo' => ['required', Rule::in(['receita', 'despesa'])],
@@ -72,8 +76,9 @@ class FinanceiroController extends Controller
             'valor_centavos' => ['required', 'integer', 'min:1'],
         ]);
 
-        $movimentacao = DB::transaction(function () use ($gestao, $data, $request) {
+        $movimentacao = DB::transaction(function () use ($gestao, $data, $request, $autorizacao) {
             $bloqueada = GestaoFinanceira::whereKey($gestao->id)->lockForUpdate()->firstOrFail();
+            abort_unless($autorizacao->podeOperar($request->user(), $bloqueada), 403);
             if ($bloqueada->status !== 'ativa') {
                 throw ValidationException::withMessages(['gestao' => 'Gestão encerrada.']);
             }
@@ -91,10 +96,11 @@ class FinanceiroController extends Controller
         return response()->json($movimentacao, 201);
     }
 
-    public function confirmarMovimentacao(MovimentacaoFinanceira $movimentacao)
+    public function confirmarMovimentacao(Request $request, MovimentacaoFinanceira $movimentacao, AutorizacaoFinanceira $autorizacao)
     {
-        DB::transaction(function () use ($movimentacao) {
+        DB::transaction(function () use ($movimentacao, $request, $autorizacao) {
             $gestao = GestaoFinanceira::whereKey($movimentacao->gestao_financeira_id)->lockForUpdate()->firstOrFail();
+            abort_unless($autorizacao->podeOperar($request->user(), $gestao), 403);
             $registro = MovimentacaoFinanceira::whereKey($movimentacao->id)->lockForUpdate()->firstOrFail();
             if ($gestao->status !== 'ativa' || $registro->status !== 'pendente'
                 || \App\Models\RelatorioFinanceiro::where('gestao_financeira_id', $gestao->id)
