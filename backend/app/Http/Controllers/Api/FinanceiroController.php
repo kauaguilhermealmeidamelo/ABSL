@@ -1,0 +1,98 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Models\GestaoFinanceira;
+use App\Models\MovimentacaoFinanceira;
+use App\Services\FinanceiroService;
+use App\Support\Auditoria;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
+
+class FinanceiroController extends Controller
+{
+    public function gestoes()
+    {
+        return GestaoFinanceira::query()->orderByDesc('inicio')->get(['id', 'nome', 'inicio', 'fim_previsto', 'status', 'encerrada_em']);
+    }
+
+    public function criarGestao(Request $request)
+    {
+        $data = $request->validate([
+            'nome' => ['required', 'string', 'max:255'],
+            'inicio' => ['required', 'date'],
+            'fim_previsto' => ['nullable', 'date', 'after_or_equal:inicio'],
+            'saldo_inicial_centavos' => ['required', 'integer', 'min:0'],
+        ]);
+
+        $gestao = DB::transaction(function () use ($data, $request) {
+            if (GestaoFinanceira::query()->where('status', 'ativa')->lockForUpdate()->exists()) {
+                throw ValidationException::withMessages(['gestao' => 'Encerre a gestão ativa antes de criar outra.']);
+            }
+            $gestao = GestaoFinanceira::create([...$data, 'status' => 'ativa', 'criada_por' => $request->user()->id]);
+            Auditoria::registrar('criou_gestao_financeira', entidade: 'gestao_financeira', entidadeId: $gestao->id);
+            return $gestao;
+        });
+
+        return response()->json($gestao, 201);
+    }
+
+    public function resumo(GestaoFinanceira $gestao, FinanceiroService $financeiro)
+    {
+        return response()->json(['gestao' => $gestao->only(['id', 'nome', 'status', 'inicio', 'encerrada_em']), 'totais' => $financeiro->totais($gestao)]);
+    }
+
+    public function movimentacoes(GestaoFinanceira $gestao)
+    {
+        return $gestao->movimentacoes()->orderByDesc('data')->orderByDesc('id')->paginate(25);
+    }
+
+    public function criarMovimentacao(Request $request, GestaoFinanceira $gestao)
+    {
+        $data = $request->validate([
+            'data' => ['required', 'date', 'after_or_equal:' . $gestao->inicio->toDateString()],
+            'tipo' => ['required', Rule::in(['receita', 'despesa'])],
+            'categoria' => ['required', 'string', 'max:100'],
+            'descricao' => ['required', 'string', 'max:255'],
+            'valor_centavos' => ['required', 'integer', 'min:1'],
+        ]);
+
+        $movimentacao = DB::transaction(function () use ($gestao, $data, $request) {
+            $bloqueada = GestaoFinanceira::whereKey($gestao->id)->lockForUpdate()->firstOrFail();
+            if ($bloqueada->status !== 'ativa') {
+                throw ValidationException::withMessages(['gestao' => 'Gestão encerrada.']);
+            }
+            $movimentacao = $bloqueada->movimentacoes()->create([...$data, 'status' => 'pendente', 'criada_por' => $request->user()->id]);
+            Auditoria::registrar('criou_movimentacao_financeira', entidade: 'movimentacao_financeira', entidadeId: $movimentacao->id);
+            return $movimentacao;
+        });
+
+        return response()->json($movimentacao, 201);
+    }
+
+    public function confirmarMovimentacao(MovimentacaoFinanceira $movimentacao)
+    {
+        DB::transaction(function () use ($movimentacao) {
+            $gestao = GestaoFinanceira::whereKey($movimentacao->gestao_financeira_id)->lockForUpdate()->firstOrFail();
+            $registro = MovimentacaoFinanceira::whereKey($movimentacao->id)->lockForUpdate()->firstOrFail();
+            if ($gestao->status !== 'ativa' || $registro->status !== 'pendente') {
+                throw ValidationException::withMessages(['movimentacao' => 'Movimentação não pode ser confirmada.']);
+            }
+            $registro->update(['status' => 'confirmada']);
+            Auditoria::registrar('confirmou_movimentacao_financeira', entidade: 'movimentacao_financeira', entidadeId: $registro->id);
+        });
+
+        return response()->noContent();
+    }
+
+    public function encerrar(Request $request, GestaoFinanceira $gestao, FinanceiroService $financeiro)
+    {
+        $data = $request->validate(['observacao' => ['required', 'string', 'min:10', 'max:2000']]);
+        $totais = $financeiro->encerrar($gestao, $request->user()->id, $data['observacao']);
+        Auditoria::registrar('encerrou_gestao_financeira', descricao: $data['observacao'], entidade: 'gestao_financeira', entidadeId: $gestao->id);
+        return response()->json(['totais' => $totais, 'status' => 'encerrada']);
+    }
+}
