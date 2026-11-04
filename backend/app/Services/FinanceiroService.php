@@ -90,6 +90,8 @@ class FinanceiroService
                     'justificativa_encerramento' => 'Encerramento definitivo da gestão financeira.',
                     'updated_at' => now(),
                 ]);
+            \App\Support\Auditoria::registrar('encerrou_gestao_financeira',
+                descricao: $observacao, entidade: 'gestao_financeira', entidadeId: $bloqueada->id);
             return $totais;
         });
     }
