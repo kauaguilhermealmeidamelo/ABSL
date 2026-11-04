@@ -16,7 +16,7 @@ class FinanceiroController extends Controller
 {
     public function gestoes()
     {
-        return GestaoFinanceira::query()->orderByDesc('inicio')->get(['id', 'nome', 'inicio', 'fim_previsto', 'status', 'encerrada_em']);
+        return GestaoFinanceira::query()->orderByDesc('inicio')->get(['id', 'nome', 'inicio', 'fim_previsto', 'status', 'encerrada_em', 'saldo_inicial_centavos']);
     }
 
     public function criarGestao(Request $request)
@@ -25,7 +25,7 @@ class FinanceiroController extends Controller
             'nome' => ['required', 'string', 'max:255'],
             'inicio' => ['required', 'date'],
             'fim_previsto' => ['nullable', 'date', 'after_or_equal:inicio'],
-            'saldo_inicial_centavos' => ['required', 'integer', 'min:0'],
+            'saldo_inicial_centavos' => ['sometimes', 'integer', 'min:0'],
         ]);
 
         $gestao = DB::transaction(function () use ($data, $request) {
@@ -33,16 +33,18 @@ class FinanceiroController extends Controller
                 throw ValidationException::withMessages(['gestao' => 'Encerre a gestão ativa antes de criar outra.']);
             }
             $anterior = GestaoFinanceira::query()->orderByDesc('inicio')->lockForUpdate()->first();
+            $saldoInicial = 0;
             if ($anterior) {
                 $saldoAnterior = app(FinanceiroService::class)->totais($anterior)['saldo_final_centavos'];
-                if ($anterior->status !== 'encerrada' || (int) $data['saldo_inicial_centavos'] !== $saldoAnterior) {
-                    throw ValidationException::withMessages(['saldo_inicial_centavos' => 'O saldo inicial deve corresponder ao saldo final da gestão anterior encerrada.']);
+                if ($anterior->status !== 'encerrada') {
+                    throw ValidationException::withMessages(['gestao' => 'Encerre a gestão anterior antes de iniciar outra.']);
                 }
+                $saldoInicial = $saldoAnterior;
                 if ($data['inicio'] < $anterior->encerrada_em->toDateString()) {
                     throw ValidationException::withMessages(['inicio' => 'A nova gestão não pode começar antes do encerramento anterior.']);
                 }
             }
-            $gestao = GestaoFinanceira::create([...$data, 'status' => 'ativa', 'criada_por' => $request->user()->id]);
+            $gestao = GestaoFinanceira::create([...$data, 'saldo_inicial_centavos' => $saldoInicial, 'status' => 'ativa', 'criada_por' => $request->user()->id]);
             Auditoria::registrar('criou_gestao_financeira', entidade: 'gestao_financeira', entidadeId: $gestao->id);
             return $gestao;
         });
