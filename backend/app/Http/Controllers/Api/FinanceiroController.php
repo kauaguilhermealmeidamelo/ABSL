@@ -33,7 +33,7 @@ class FinanceiroController extends Controller
                 throw ValidationException::withMessages(['gestao' => 'Encerre a gestão ativa antes de criar outra.']);
             }
             $anterior = GestaoFinanceira::query()->orderByDesc('inicio')->lockForUpdate()->first();
-            $saldoInicial = 0;
+            $saldoInicial = (int) ($data['saldo_inicial_centavos'] ?? 0);
             if ($anterior) {
                 $saldoAnterior = app(FinanceiroService::class)->totais($anterior)['saldo_final_centavos'];
                 if ($anterior->status !== 'encerrada') {
