@@ -14,6 +14,7 @@ const novaGestao = ref({ nome: '', inicio: '', saldo: '0,00' })
 const nova = ref({ data: '', tipo: 'receita', categoria: '', descricao: '', valor: '' })
 const fechamento = ref({ ano: new Date().getFullYear(), mes: new Date().getMonth() + 1 })
 const observacao = ref('')
+const comprovantes = ref({})
 const moeda = (centavos) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(centavos || 0) / 100)
 function centavos(valor) {
   const texto = String(valor).trim().replace(/\./g, '').replace(',', '.')
@@ -61,6 +62,33 @@ function adicionar() {
 }
 function confirmar(id) {
   executar(() => api.post(`/admin/financeiro/movimentacoes/${id}/confirmar`), 'Movimentação confirmada.')
+}
+async function anexarComprovante(id, event) {
+  const arquivo = event.target.files?.[0]
+  if (!arquivo) return
+  await executar(async () => {
+    const dados = new FormData()
+    dados.append('arquivo', arquivo)
+    await api.post(`/admin/financeiro/movimentacoes/${id}/comprovantes`, dados)
+  }, 'Comprovante privado anexado.')
+  event.target.value = ''
+}
+async function listarComprovantes(id) {
+  try {
+    const { data } = await api.get(`/admin/financeiro/movimentacoes/${id}/comprovantes`)
+    comprovantes.value = { ...comprovantes.value, [id]: data }
+  } catch { erro.value = 'Não foi possível consultar os comprovantes.' }
+}
+function baixarComprovante(id, nome) {
+  api.get(`/admin/financeiro/comprovantes/${id}/download`, { responseType: 'blob' })
+    .then(({ data }) => {
+      const url = URL.createObjectURL(data)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = nome
+      link.click()
+      URL.revokeObjectURL(url)
+    }).catch(() => { erro.value = 'Não foi possível baixar o comprovante.' })
 }
 function publicar() {
   executar(() => api.post(`/admin/financeiro/gestoes/${atual.value}/relatorios`, fechamento.value), 'Relatório mensal publicado.')
@@ -118,14 +146,25 @@ onMounted(() => { carregar().catch(() => { erro.value = 'Falha ao carregar os da
         <h2>Movimentações recentes</h2>
         <div class="tabela-scroll">
           <table>
-            <thead><tr><th>Data</th><th>Descrição</th><th>Tipo</th><th>Valor</th><th>Situação</th><th>Ação</th></tr></thead>
+            <thead><tr><th>Data</th><th>Descrição</th><th>Tipo</th><th>Valor</th><th>Situação</th><th>Ação</th><th>Comprovantes</th></tr></thead>
             <tbody>
               <tr v-for="m in movimentacoes" :key="m.id">
                 <td>{{ m.data }}</td><td>{{ m.descricao }}</td><td>{{ m.tipo }}</td>
                 <td>{{ moeda(m.valor_centavos) }}</td><td>{{ m.status }}</td>
                 <td><button v-if="m.status === 'pendente' && gestaoSelecionada?.status === 'ativa'" :disabled="ocupado" @click="confirmar(m.id)">Confirmar</button></td>
+                <td>
+                  <label v-if="gestaoSelecionada?.status === 'ativa'">Anexar
+                    <input type="file" accept=".pdf,.jpg,.jpeg,.png" @change="anexarComprovante(m.id, $event)" />
+                  </label>
+                  <button type="button" @click="listarComprovantes(m.id)">Ver arquivos</button>
+                  <ul v-if="comprovantes[m.id]">
+                    <li v-for="c in comprovantes[m.id]" :key="c.id">
+                      <button type="button" @click="baixarComprovante(c.id, c.nome_original)">{{ c.nome_original }}</button>
+                    </li>
+                  </ul>
+                </td>
               </tr>
-              <tr v-if="!movimentacoes.length"><td colspan="6">Nenhuma movimentação cadastrada.</td></tr>
+              <tr v-if="!movimentacoes.length"><td colspan="7">Nenhuma movimentação cadastrada.</td></tr>
             </tbody>
           </table>
         </div>
