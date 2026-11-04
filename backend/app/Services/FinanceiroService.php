@@ -57,8 +57,8 @@ class FinanceiroService
             $ultimo = $bloqueada->fim_previsto
                 ? $bloqueada->fim_previsto->copy()->startOfMonth()
                 : today()->startOfMonth();
-            if ($ultimo->greaterThan(today()->startOfMonth())) {
-                throw ValidationException::withMessages(['gestao' => 'O período previsto da gestão ainda não terminou.']);
+            if ($bloqueada->fim_previsto && $bloqueada->fim_previsto->isFuture()) {
+                throw ValidationException::withMessages(['gestao' => 'Ajuste a data final da gestão antes do encerramento antecipado.']);
             }
 
             for ($mes = $primeiro; $mes->lessThanOrEqualTo($ultimo); $mes->addMonth()) {
