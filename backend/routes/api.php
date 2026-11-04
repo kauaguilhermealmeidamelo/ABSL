@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\PdfRelatorioFinanceiroController;
 use App\Http\Controllers\Api\TransicaoFinanceiraController;
 use App\Http\Controllers\Api\MovimentacaoTransicaoController;
 use App\Http\Controllers\Api\FechamentoTransicaoController;
+use App\Http\Controllers\Api\PdfTransicaoFinanceiraController;
 use App\Http\Controllers\Api\CancelamentoFinanceiroController;
 use App\Http\Controllers\Api\RetificacaoFinanceiraController;
 use App\Http\Controllers\Api\EsclarecimentoFinanceiroController;
@@ -78,6 +79,7 @@ Route::get('/financeiro/gestoes/{gestao}/esclarecimentos', [EsclarecimentoFinanc
 Route::get('/financeiro/relatorios/{relatorio}/pdf', [PdfRelatorioFinanceiroController::class, 'download']);
 Route::get('/financeiro/relatorios/{relatorio}/versoes/{versao}/pdf', [PdfRelatorioFinanceiroController::class, 'versao']);
 Route::get('/financeiro/transicoes/{transicao}/relatorio', [FechamentoTransicaoController::class, 'relatorio']);
+Route::get('/financeiro/transicoes/{transicao}/pdf', [PdfTransicaoFinanceiraController::class, 'download']);
 Route::get('/financeiro/gestoes/{gestao}/inatividade', [DeclaracaoInatividadeController::class, 'consultar']);
 Route::get('/financeiro/gestoes/{gestao}/inatividade/pdf', [PdfInatividadeController::class, 'download']);
 Route::get('/transparencia/{id}', [TransparenciaController::class, 'show']);
