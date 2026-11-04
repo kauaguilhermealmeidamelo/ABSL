@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Api\FinanceiroController;
+use App\Http\Controllers\Api\ConciliacaoFinanceiraController;
 use App\Http\Controllers\Api\VinculoFinanceiroController;
 use App\Http\Controllers\Api\RelatorioFinanceiroController;
 use App\Http\Controllers\Api\ComprovanteFinanceiroController;
@@ -154,6 +155,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin/financeiro')->group(
 
 Route::middleware('auth:sanctum')->prefix('admin/financeiro')->group(function () {
     Route::get('/gestoes/{gestao}/resumo', [FinanceiroController::class, 'resumo']);
+    Route::post('/gestoes/{gestao}/conciliacao', [ConciliacaoFinanceiraController::class, 'registrar']);
     Route::get('/gestoes/{gestao}/movimentacoes', [FinanceiroController::class, 'movimentacoes']);
     Route::post('/gestoes/{gestao}/movimentacoes', [FinanceiroController::class, 'criarMovimentacao']);
     Route::post('/movimentacoes/{movimentacao}/confirmar', [FinanceiroController::class, 'confirmarMovimentacao']);
