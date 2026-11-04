@@ -73,6 +73,7 @@ Route::get('/inicio-media', [InicioMediaController::class, 'index']);
 Route::get('/transparencia', [TransparenciaController::class, 'index']);
 Route::get('/financeiro/relatorios', [RelatorioFinanceiroController::class, 'index']);
 Route::get('/financeiro/relatorios/{relatorio}/pdf', [PdfRelatorioFinanceiroController::class, 'download']);
+Route::get('/financeiro/relatorios/{relatorio}/versoes/{versao}/pdf', [PdfRelatorioFinanceiroController::class, 'versao']);
 Route::get('/financeiro/transicoes/{transicao}/relatorio', [FechamentoTransicaoController::class, 'relatorio']);
 Route::get('/financeiro/gestoes/{gestao}/inatividade', [DeclaracaoInatividadeController::class, 'consultar']);
 Route::get('/financeiro/gestoes/{gestao}/inatividade/pdf', [PdfInatividadeController::class, 'download']);
