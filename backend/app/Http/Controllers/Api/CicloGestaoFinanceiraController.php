@@ -52,6 +52,38 @@ class CicloGestaoFinanceiraController extends Controller
         return response()->json($resultado);
     }
 
+    public function ajustarDatas(Request $request, GestaoFinanceira $gestao)
+    {
+        $dados = $request->validate([
+            'inicio' => ['required', 'date'],
+            'fim_previsto' => ['required', 'date', 'after_or_equal:inicio'],
+            'justificativa' => ['required', 'string', 'min:10', 'max:3000'],
+        ]);
+        $resultado = DB::transaction(function () use ($request, $gestao, $dados) {
+            $gestao = GestaoFinanceira::whereKey($gestao->id)->lockForUpdate()->firstOrFail();
+            if (! in_array($gestao->status, ['planejada', 'ativa'], true)) {
+                throw ValidationException::withMessages(['gestao' => 'Gestão encerrada não pode ser alterada.']);
+            }
+            if (GestaoFinanceira::whereKeyNot($gestao->id)
+                ->where('inicio', '<=', $dados['fim_previsto'])
+                ->where(fn ($q) => $q->whereNull('fim_previsto')->orWhere('fim_previsto', '>=', $dados['inicio']))
+                ->exists()) {
+                throw ValidationException::withMessages(['inicio' => 'Datas sobrepostas a outra gestão.']);
+            }
+            if ($gestao->movimentacoes()->where(fn ($q) => $q->where('data', '<', $dados['inicio'])
+                ->orWhere('data', '>', $dados['fim_previsto']))->exists()) {
+                throw ValidationException::withMessages(['inicio' => 'Existem movimentações fora do período proposto.']);
+            }
+            $antigo = $gestao->inicio->toDateString().' - '.$gestao->fim_previsto?->toDateString();
+            $gestao->update(['inicio' => $dados['inicio'], 'fim_previsto' => $dados['fim_previsto']]);
+            Auditoria::registrar('ajustou_datas_gestao_financeira',
+                descricao: 'Período anterior: '.$antigo.'; novo: '.$dados['inicio'].' - '.$dados['fim_previsto'].'; '.$dados['justificativa'],
+                entidade: 'gestao_financeira', entidadeId: $gestao->id);
+            return $gestao;
+        });
+        return response()->json($resultado);
+    }
+
     public function planejar(Request $request)
     {
         $dados = $request->validate([
