@@ -18,7 +18,7 @@ class AutorizacaoFinanceira
             return true;
         }
 
-        return $this->possuiCargo($usuario, $gestao, ['tesoureiro', 'tesoureiro_geral']);
+        return $this->possuiCargo($usuario, $gestao, ['tesoureiro', 'tesoureiro_geral'], false);
     }
 
     public function podeGerenciarFechamento(User $usuario, GestaoFinanceira $gestao): bool
@@ -28,7 +28,7 @@ class AutorizacaoFinanceira
         }
 
         return $usuario->isAdmin()
-            || $this->possuiCargo($usuario, $gestao, ['tesoureiro_geral']);
+            || $this->possuiCargo($usuario, $gestao, ['tesoureiro_geral'], true);
     }
 
     public function podeEncerrarDefinitivamente(User $usuario, GestaoFinanceira $gestao): bool
@@ -36,7 +36,7 @@ class AutorizacaoFinanceira
         return $usuario->isAdmin() && $gestao->status === 'ativa';
     }
 
-    private function possuiCargo(User $usuario, GestaoFinanceira $gestao, array $cargos): bool
+    private function possuiCargo(User $usuario, GestaoFinanceira $gestao, array $cargos, bool $exigirPoderesGerais): bool
     {
         $agora = now();
 
@@ -60,7 +60,7 @@ class AutorizacaoFinanceira
             ->where('user_id', $usuario->id)
             ->whereIn('cargo', $cargos)
             ->when(
-                $interinoAtivo && in_array('tesoureiro_geral', $cargos, true),
+                $interinoAtivo && $exigirPoderesGerais,
                 fn ($query) => $query->where(function ($q) {
                     $q->where('cargo', 'tesoureiro')
                         ->orWhere('interino', true);
