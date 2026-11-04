@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use App\Http\Controllers\Api\FinanceiroController;
 use App\Http\Controllers\Api\CicloGestaoFinanceiraController;
+use App\Http\Controllers\Api\DeclaracaoInatividadeController;
 use App\Http\Controllers\Api\ConciliacaoFinanceiraController;
 use App\Http\Controllers\Api\VinculoFinanceiroController;
 use App\Http\Controllers\Api\RelatorioFinanceiroController;
@@ -65,6 +66,7 @@ Route::get('/diretorias', [DiretoriaController::class, 'index']);
 Route::get('/inicio-media', [InicioMediaController::class, 'index']);
 Route::get('/transparencia', [TransparenciaController::class, 'index']);
 Route::get('/financeiro/relatorios', [RelatorioFinanceiroController::class, 'index']);
+Route::get('/financeiro/gestoes/{gestao}/inatividade', [DeclaracaoInatividadeController::class, 'consultar']);
 Route::get('/transparencia/{id}', [TransparenciaController::class, 'show']);
 Route::post('/visitas', [VisitaController::class, 'store'])->middleware('throttle:30,1');
 
@@ -151,6 +153,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin/financeiro')->group(
     Route::post('/gestoes/{gestao}/vinculos/{vinculo}/encerrar', [VinculoFinanceiroController::class, 'encerrar']);
     Route::post('/gestoes', [CicloGestaoFinanceiraController::class, 'planejar']);
     Route::post('/gestoes/{gestao}/ativar', [CicloGestaoFinanceiraController::class, 'ativar']);
+    Route::post('/gestoes/{gestao}/inatividade/publicar', [DeclaracaoInatividadeController::class, 'publicar']);
     Route::post('/gestoes/{gestao}/encerrar', [FinanceiroController::class, 'encerrar']);
 });
 
@@ -158,6 +161,8 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin/financeiro')->group(
 Route::middleware('auth:sanctum')->prefix('admin/financeiro')->group(function () {
     Route::get('/gestoes/{gestao}/resumo', [FinanceiroController::class, 'resumo']);
     Route::post('/gestoes/{gestao}/conciliacao', [ConciliacaoFinanceiraController::class, 'registrar']);
+    Route::post('/gestoes/{gestao}/inatividade', [DeclaracaoInatividadeController::class, 'salvar']);
+    Route::post('/gestoes/{gestao}/inatividade/aprovar', [DeclaracaoInatividadeController::class, 'aprovar']);
     Route::get('/gestoes/{gestao}/movimentacoes', [FinanceiroController::class, 'movimentacoes']);
     Route::post('/gestoes/{gestao}/movimentacoes', [FinanceiroController::class, 'criarMovimentacao']);
     Route::post('/movimentacoes/{movimentacao}/confirmar', [FinanceiroController::class, 'confirmarMovimentacao']);
