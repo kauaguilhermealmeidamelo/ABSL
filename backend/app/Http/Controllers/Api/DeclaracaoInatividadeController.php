@@ -149,6 +149,7 @@ class DeclaracaoInatividadeController extends Controller
         $registro = DB::table('declaracoes_inatividade_financeira')
             ->where('gestao_financeira_id', $gestao->id)->where('status', 'publicada')->first();
         abort_unless($registro, 404);
+        unset($registro->pdf_base64);
         return response()->json([
             'gestao' => $gestao->only('id', 'nome', 'inicio', 'fim_previsto', 'saldo_inicial_centavos', 'saldo_real_final_centavos', 'diferenca_conciliacao_centavos'),
             'declaracao' => $registro,
