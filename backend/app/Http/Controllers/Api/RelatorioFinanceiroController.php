@@ -103,6 +103,7 @@ class RelatorioFinanceiroController extends Controller
                 'publicado_em' => now(),
                 'publicado_por' => $request->user()->id,
             ]);
+            app(\App\Services\VersaoRelatorioFinanceiroService::class)->registrar($relatorio, $request->user()->id);
             Auditoria::registrar('publicou_relatorio_financeiro', entidade: 'relatorio_financeiro', entidadeId: $relatorio->id);
             return $relatorio;
         });
