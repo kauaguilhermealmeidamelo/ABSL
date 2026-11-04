@@ -72,7 +72,7 @@ const routes = [
         path: 'admin/financeiro',
         name: 'admin-financeiro',
         component: () => import('@/views/FinanceiroAdmin.vue'),
-        meta: { title: 'Controle Financeiro | ABSL', description: 'Gestão financeira administrativa do Grêmio.' }
+        meta: { adminOnly: true, title: 'Controle Financeiro | ABSL', description: 'Gestão financeira administrativa do Grêmio.' }
       },
       {
         path: 'cardapio',
@@ -130,6 +130,7 @@ const router = createRouter({ history: createWebHistory(), routes })
 
 router.beforeEach((to: RouteLocationNormalized) => {
   if (!to.meta.public && !user.value) return '/'
+  if (to.meta.adminOnly && !(user.value?.role === 'admin' || user.value?.is_admin === true)) return '/'
   return true
 })
 
