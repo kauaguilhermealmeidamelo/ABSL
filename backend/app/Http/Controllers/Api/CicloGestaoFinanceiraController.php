@@ -94,6 +94,10 @@ class CicloGestaoFinanceiraController extends Controller
                 ->exists()) {
                 throw ValidationException::withMessages(['inicio' => 'Datas sobrepostas a outra gestão.']);
             }
+            if (DB::table('transicoes_financeiras')->where('inicio', '<=', $dados['fim_previsto'])
+                ->where('fim_previsto', '>=', $dados['inicio'])->exists()) {
+                throw ValidationException::withMessages(['inicio' => 'Período sobreposto a uma transição administrativa.']);
+            }
             if ($gestao->movimentacoes()->where(fn ($q) => $q->where('data', '<', $dados['inicio'])
                 ->orWhere('data', '>', $dados['fim_previsto']))->exists()) {
                 throw ValidationException::withMessages(['inicio' => 'Existem movimentações fora do período proposto.']);
