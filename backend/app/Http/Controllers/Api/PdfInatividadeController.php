@@ -15,6 +15,12 @@ class PdfInatividadeController extends Controller
             ->where('gestao_financeira_id', $gestao->id)
             ->where('status', 'publicada')->first();
         abort_unless($declaracao, 404);
+        if ($declaracao->pdf_base64) {
+            return response(base64_decode($declaracao->pdf_base64), 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="declaracao-inatividade-'.$gestao->id.'.pdf"',
+            ]);
+        }
 
         $canceladas = $gestao->movimentacoes()->where('status', 'cancelada')->get();
         $nomeTesouraria = \App\Models\User::find($declaracao->aprovada_tesouraria_por)?->name ?? 'Não identificado';
