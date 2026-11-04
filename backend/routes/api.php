@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\TransicaoFinanceiraController;
 use App\Http\Controllers\Api\MovimentacaoTransicaoController;
 use App\Http\Controllers\Api\FechamentoTransicaoController;
 use App\Http\Controllers\Api\CancelamentoFinanceiroController;
+use App\Http\Controllers\Api\RetificacaoFinanceiraController;
 use App\Http\Controllers\Api\ConciliacaoFinanceiraController;
 use App\Http\Controllers\Api\VinculoFinanceiroController;
 use App\Http\Controllers\Api\RelatorioFinanceiroController;
@@ -183,6 +184,7 @@ Route::middleware('auth:sanctum')->prefix('admin/financeiro')->group(function ()
     Route::post('/gestoes/{gestao}/movimentacoes', [FinanceiroController::class, 'criarMovimentacao']);
     Route::post('/movimentacoes/{movimentacao}/confirmar', [FinanceiroController::class, 'confirmarMovimentacao']);
     Route::post('/movimentacoes/{movimentacao}/cancelar', [CancelamentoFinanceiroController::class, 'cancelar']);
+    Route::post('/movimentacoes/{movimentacao}/retificar', [RetificacaoFinanceiraController::class, 'retificar']);
     Route::post('/gestoes/{gestao}/relatorios/fechar', [RelatorioFinanceiroController::class, 'fechar']);
     Route::post('/gestoes/{gestao}/relatorios', [RelatorioFinanceiroController::class, 'publicar']);
     Route::get('/movimentacoes/{movimentacao}/comprovantes', [ComprovanteFinanceiroController::class, 'index']);
