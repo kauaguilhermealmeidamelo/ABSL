@@ -85,7 +85,7 @@ class FinanceiroController extends Controller
             if (\App\Models\RelatorioFinanceiro::where('gestao_financeira_id', $bloqueada->id)
                 ->where('ano', (int) substr($data['data'], 0, 4))
                 ->where('mes', (int) substr($data['data'], 5, 2))
-                ->where('status', 'publicado')->exists()) {
+                ->whereIn('status', ['fechado', 'publicado'])->exists()) {
                 throw ValidationException::withMessages(['data' => 'Este mês já possui relatório publicado.']);
             }
             $movimentacao = $bloqueada->movimentacoes()->create([...$data, 'status' => 'pendente', 'criada_por' => $request->user()->id]);
