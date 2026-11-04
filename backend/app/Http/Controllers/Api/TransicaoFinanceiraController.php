@@ -16,6 +16,39 @@ class TransicaoFinanceiraController extends Controller
         return DB::table('transicoes_financeiras')->orderByDesc('inicio')->get();
     }
 
+    public function ajustar(Request $request, int $transicao)
+    {
+        $dados = $request->validate([
+            'fim_previsto' => ['required', 'date'],
+            'justificativa' => ['required', 'string', 'min:10', 'max:3000'],
+        ]);
+        $registro = DB::transaction(function () use ($request, $transicao, $dados) {
+            $periodo = DB::table('transicoes_financeiras')->where('id', $transicao)->lockForUpdate()->first();
+            abort_unless($periodo, 404);
+            if ($periodo->status !== 'ativa' || $dados['fim_previsto'] < $periodo->inicio) {
+                throw ValidationException::withMessages(['fim_previsto' => 'Data inválida para transição ativa.']);
+            }
+            if (DB::table('movimentacoes_transicao_financeira')
+                ->where('transicao_financeira_id', $transicao)
+                ->where('data', '>', $dados['fim_previsto'])->exists()) {
+                throw ValidationException::withMessages(['fim_previsto' => 'Existem movimentações posteriores ao novo término.']);
+            }
+            if (GestaoFinanceira::where('inicio', '<=', $dados['fim_previsto'])
+                ->where(fn ($q) => $q->whereNull('fim_previsto')->orWhere('fim_previsto', '>=', $periodo->inicio))
+                ->exists()) {
+                throw ValidationException::withMessages(['fim_previsto' => 'Período sobreposto a uma gestão.']);
+            }
+            DB::table('transicoes_financeiras')->where('id', $transicao)->update([
+                'fim_previsto' => $dados['fim_previsto'], 'updated_at' => now(),
+            ]);
+            Auditoria::registrar('ajustou_transicao_financeira',
+                descricao: 'Fim anterior: '.$periodo->fim_previsto.'; novo: '.$dados['fim_previsto'].'; '.$dados['justificativa'],
+                entidade: 'transicao_financeira', entidadeId: $transicao);
+            return DB::table('transicoes_financeiras')->find($transicao);
+        });
+        return response()->json($registro);
+    }
+
     public function iniciar(Request $request)
     {
         $dados = $request->validate([
