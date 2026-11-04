@@ -35,7 +35,8 @@ class CicloGestaoFinanceiraController extends Controller
             if ($transicao && $transicao->status !== 'encerrada') {
                 throw ValidationException::withMessages(['gestao' => 'Encerre a transição antes de ativar a gestão.']);
             }
-            $saldoInicial = $transicao ? (int) $transicao->saldo_real_final_centavos
+            $transicaoPosterior = $transicao && (! $anterior || $transicao->inicio > $anterior->inicio->toDateString());
+            $saldoInicial = $transicaoPosterior ? (int) $transicao->saldo_real_final_centavos
                 : ($anterior ? (int) $anterior->saldo_real_final_centavos : 0);
             $gestao->update([
                 'status' => 'ativa',
