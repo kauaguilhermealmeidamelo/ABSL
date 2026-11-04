@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Http\Request;
+use App\Http\Controllers\Api\FinanceiroController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\{
     NoticiaController,
@@ -134,6 +135,17 @@ Route::middleware(['auth:sanctum', 'staff'])->group(function () {
     Route::delete('/ouvintes/{id}', [OuvinteController::class, 'destroy']);
 
     Route::get('/visitas/estatisticas', [VisitaController::class, 'estatisticas']);
+});
+
+// Gestão financeira: dados completos restritos a administradores.
+Route::middleware(['auth:sanctum', 'admin'])->prefix('admin/financeiro')->group(function () {
+    Route::get('/gestoes', [FinanceiroController::class, 'gestoes']);
+    Route::post('/gestoes', [FinanceiroController::class, 'criarGestao']);
+    Route::get('/gestoes/{gestao}/resumo', [FinanceiroController::class, 'resumo']);
+    Route::get('/gestoes/{gestao}/movimentacoes', [FinanceiroController::class, 'movimentacoes']);
+    Route::post('/gestoes/{gestao}/movimentacoes', [FinanceiroController::class, 'criarMovimentacao']);
+    Route::post('/movimentacoes/{movimentacao}/confirmar', [FinanceiroController::class, 'confirmarMovimentacao']);
+    Route::post('/gestoes/{gestao}/encerrar', [FinanceiroController::class, 'encerrar']);
 });
 
 // Só administrador de verdade pode gerenciar contas de usuário e ver logs
