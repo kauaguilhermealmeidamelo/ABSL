@@ -82,6 +82,9 @@ class FinanceiroController extends Controller
             if ($bloqueada->status !== 'ativa') {
                 throw ValidationException::withMessages(['gestao' => 'Gestão encerrada.']);
             }
+            if ($bloqueada->fim_previsto && $data['data'] > $bloqueada->fim_previsto->toDateString()) {
+                throw ValidationException::withMessages(['data' => 'Data posterior ao término da gestão.']);
+            }
             if (\App\Models\RelatorioFinanceiro::where('gestao_financeira_id', $bloqueada->id)
                 ->where('ano', (int) substr($data['data'], 0, 4))
                 ->where('mes', (int) substr($data['data'], 5, 2))
