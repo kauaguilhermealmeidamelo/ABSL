@@ -19,6 +19,9 @@ class CicloGestaoFinanceiraController extends Controller
             if ($gestao->status !== 'planejada') {
                 throw ValidationException::withMessages(['gestao' => 'Somente gestões planejadas podem ser ativadas.']);
             }
+            if ($gestao->inicio->isFuture() || $gestao->fim_previsto->isPast()) {
+                throw ValidationException::withMessages(['gestao' => 'Ative a gestão apenas dentro do período previsto.']);
+            }
             if (GestaoFinanceira::where('status', 'ativa')->whereKeyNot($gestao->id)->exists()) {
                 throw ValidationException::withMessages(['gestao' => 'Já existe uma gestão ativa.']);
             }
