@@ -33,9 +33,9 @@ class RelatorioFinanceiroController extends Controller
 
         $relatorio = DB::transaction(function () use ($gestao, $request, $ano, $mes, $inicio, $fim) {
             $gestao = GestaoFinanceira::whereKey($gestao->id)->lockForUpdate()->firstOrFail();
-            if ($gestao->status !== 'ativa' || $inicio > today()->toDateString()
+            if ($gestao->status !== 'ativa' || $fim > today()->toDateString()
                 || $fim <= $gestao->inicio->toDateString()) {
-                throw ValidationException::withMessages(['periodo' => 'Período inválido para a gestão.']);
+                throw ValidationException::withMessages(['periodo' => 'Somente meses concluídos dentro da gestão podem ser publicados.']);
             }
             if ($gestao->movimentacoes()->where('status', 'pendente')
                 ->where('data', '>=', $inicio)->where('data', '<', $fim)->exists()) {
