@@ -35,7 +35,9 @@ function toApi({ arquivo, data_documento, ...rest }, categoria) {
 
 export const transparenciaService = {
   async list() {
-    return (await base.list()).map(fromApi)
+    const resposta = await base.list()
+    const documentos = Array.isArray(resposta) ? resposta : resposta.data || []
+    return documentos.map(fromApi)
   },
   async create(dados, categoria) {
     const payload = toApi(dados, categoria)
