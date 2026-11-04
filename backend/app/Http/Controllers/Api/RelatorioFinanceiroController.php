@@ -39,7 +39,9 @@ class RelatorioFinanceiroController extends Controller
             $inicioGestao = $gestao->inicio->toDateString();
             $fimGestao = $gestao->fim_previsto?->toDateString();
 
-            if ($fim > today()->toDateString() || $fim <= $inicioGestao
+            $fimAntecipado = $fimGestao && $fimGestao >= $inicio
+                && $fimGestao < $fim && $fimGestao <= today()->toDateString();
+            if (($fim > today()->toDateString() && ! $fimAntecipado) || $fim <= $inicioGestao
                 || ($fimGestao && $inicio > $fimGestao)) {
                 throw ValidationException::withMessages(['periodo' => 'O mês precisa estar concluído e pertencer à gestão.']);
             }
