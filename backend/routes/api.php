@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\RetificacaoFinanceiraController;
 use App\Http\Controllers\Api\EsclarecimentoFinanceiroController;
 use App\Http\Controllers\Api\ConciliacaoFinanceiraController;
 use App\Http\Controllers\Api\VinculoFinanceiroController;
+use App\Http\Controllers\Api\MembroGestaoFinanceiraController;
 use App\Http\Controllers\Api\RelatorioFinanceiroController;
 use App\Http\Controllers\Api\ComprovanteFinanceiroController;
 use Illuminate\Support\Facades\Route;
@@ -171,6 +172,8 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin/financeiro')->group(
     Route::post('/transicoes/{transicao}/movimentacoes', [MovimentacaoTransicaoController::class, 'criar']);
     Route::post('/transicoes/{transicao}/movimentacoes/{movimentacao}/resolver', [MovimentacaoTransicaoController::class, 'resolver']);
     Route::post('/transicoes/{transicao}/encerrar', [FechamentoTransicaoController::class, 'encerrar']);
+    Route::get('/gestoes/{gestao}/membros', [MembroGestaoFinanceiraController::class, 'index']);
+    Route::post('/gestoes/{gestao}/membros', [MembroGestaoFinanceiraController::class, 'registrar']);
     Route::get('/gestoes/{gestao}/vinculos', [VinculoFinanceiroController::class, 'index']);
     Route::post('/gestoes/{gestao}/vinculos', [VinculoFinanceiroController::class, 'store']);
     Route::post('/gestoes/{gestao}/vinculos/{vinculo}/encerrar', [VinculoFinanceiroController::class, 'encerrar']);
