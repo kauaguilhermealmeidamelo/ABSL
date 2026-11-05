@@ -17,7 +17,12 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->enum('role', ['admin', 'user'])->default('user');
+            if (Schema::getConnection()->getDriverName() === 'sqlite') {
+                // SQLite nao suporta alterar o CHECK gerado pelo enum quando surgem novos cargos.
+                $table->string('role')->default('user');
+            } else {
+                $table->enum('role', ['admin', 'user'])->default('user');
+            }
             $table->boolean('is_admin')->default(false);
             $table->string('turma')->nullable();
             $table->rememberToken();
