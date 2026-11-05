@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import PageHeader from '@/components/common/PageHeader.vue'
+import BackButton from '@/components/common/BackButton.vue'
 import { transparenciaService } from '@/services/transparencia'
 
 const props = defineProps({ tipo: { type: String, required: true } })
@@ -22,7 +23,7 @@ onMounted(async () => {
 <template>
   <main class="documentos">
     <PageHeader label="Transparência" :title="titulo" subtitle="Documentos institucionais do Grêmio Athos Bulcão." />
-    <router-link to="/transparencia">← Voltar à transparência</router-link>
+    <BackButton to="/transparencia" label="Voltar à transparência" />
     <p v-if="carregando" role="status">Carregando documentos...</p>
     <p v-else-if="erro" role="alert">{{ erro }}</p>
     <p v-else-if="!filtrados.length">Nenhum documento publicado nesta categoria.</p>
