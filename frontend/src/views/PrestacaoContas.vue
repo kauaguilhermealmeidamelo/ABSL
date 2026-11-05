@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import api from '@/services/api'
 import PageHeader from '@/components/common/PageHeader.vue'
+import BackButton from '@/components/common/BackButton.vue'
 
 const gestoes = ref([])
 const gestaoId = ref('')
@@ -89,7 +90,7 @@ onMounted(async () => {
 <template>
   <main class="financeiro-publico">
     <PageHeader label="ABSL" title="Prestação de Contas" subtitle="Consulte as informações financeiras publicadas pelo Grêmio Athos Bulcão." />
-    <router-link to="/transparencia" class="voltar">← Voltar à transparência</router-link>
+    <BackButton to="/transparencia" label="Voltar à transparência" />
 
     <p v-if="carregando" role="status">Carregando gestões financeiras...</p>
     <p v-else-if="erro" role="alert" class="erro">{{ erro }}</p>
