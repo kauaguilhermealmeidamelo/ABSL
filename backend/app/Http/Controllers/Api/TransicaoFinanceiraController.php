@@ -73,6 +73,16 @@ class TransicaoFinanceiraController extends Controller
             if ($anterior && ($anterior->status !== 'encerrada' || $anterior->saldo_real_final_centavos === null)) {
                 throw ValidationException::withMessages(['transicao' => 'Encerre e concilie a gestão anterior.']);
             }
+            $transicaoAnterior = DB::table('transicoes_financeiras')
+                ->where('inicio', '<', $dados['inicio'])->orderByDesc('inicio')->first();
+            if ($transicaoAnterior && ($transicaoAnterior->status !== 'encerrada'
+                || $transicaoAnterior->saldo_real_final_centavos === null)) {
+                throw ValidationException::withMessages(['transicao' => 'Concilie e encerre a transição anterior.']);
+            }
+            $saldoAnterior = $transicaoAnterior
+                && (! $anterior || $transicaoAnterior->inicio > $anterior->inicio->toDateString())
+                ? (int) $transicaoAnterior->saldo_real_final_centavos
+                : ($anterior ? (int) $anterior->saldo_real_final_centavos : 0);
             $responsaveis = $dados['responsaveis_admin_ids'] ?? [$request->user()->id];
             foreach ($responsaveis as $usuarioId) {
                 if (! \App\Models\User::findOrFail($usuarioId)->isAdmin()) {
@@ -82,7 +92,7 @@ class TransicaoFinanceiraController extends Controller
             $id = DB::table('transicoes_financeiras')->insertGetId([
                 'inicio' => $dados['inicio'], 'fim_previsto' => $dados['fim_previsto'],
                 'motivo' => $dados['motivo'], 'status' => 'ativa',
-                'saldo_inicial_centavos' => $anterior ? $anterior->saldo_real_final_centavos : 0,
+                'saldo_inicial_centavos' => $saldoAnterior,
                 'responsavel_admin_id' => $request->user()->id,
                 'created_at' => now(), 'updated_at' => now(),
             ]);
