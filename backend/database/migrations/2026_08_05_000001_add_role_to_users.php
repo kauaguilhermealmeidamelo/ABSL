@@ -14,7 +14,13 @@ return new class extends Migration
         Schema::table('users', function (Blueprint $table) {
             // Adicionar colunas se nao existirem
             if (!Schema::hasColumn('users', 'role')) {
-                $table->enum('role', ['admin', 'user'])->default('user')->after('password');
+                // SQLite usa CHECK fixo para ENUM; os cargos evoluem em migrations posteriores.
+                // Em testes SQLite, string permite os mesmos cargos definidos no MySQL.
+                if (Schema::getConnection()->getDriverName() === 'sqlite') {
+                    $table->string('role')->default('user')->after('password');
+                } else {
+                    $table->enum('role', ['admin', 'user'])->default('user')->after('password');
+                }
             }
             if (!Schema::hasColumn('users', 'is_admin')) {
                 $table->boolean('is_admin')->default(false)->after('role');
