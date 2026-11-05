@@ -26,13 +26,13 @@ const filtroTipo = ref('todas')
 const filtradas = computed(() => movimentacoes.value.filter(m => filtroTipo.value === 'todas' || m.tipo === filtroTipo.value))
 const pagina = ref(1)
 const ultimaPagina = ref(1)
-const inicialManual = computed(() => gestoes.value.length === 0)
+const inicialManual = computed(() => gestoes.value.length === 0 || (gestoes.value.length === 1 && gestoes.value[0]?.id === atual.value))
 const formatadorBRL = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
 const moeda = (centavos) => formatadorBRL.format(Number(centavos || 0) / 100)
 function formatarReais(event, campo) {
   const digitos = event.target.value.replace(/\D/g, '').slice(0, 13)
   const valor = formatadorBRL.format(Number(digitos || 0) / 100)
-  if (campo === 'gestao') novaGestao.value.saldo = valor
+  if (campo === 'gestao') ativacao.value.saldo = valor
   else nova.value.valor = valor
 }
 function centavos(valor) {
@@ -191,11 +191,7 @@ onMounted(() => { carregar().catch(() => { erro.value = 'Falha ao carregar os da
             <input id="inicio-gestao" v-model="novaGestao.inicio" required type="date" />
             <label for="fim-gestao">Data prevista de término</label>
             <input id="fim-gestao" v-model="novaGestao.fim_previsto" required type="date" :min="novaGestao.inicio" />
-            <template v-if="false">
-              <label for="saldo-abertura">Saldo inicial da primeira gestão</label>
-              <input id="saldo-abertura" :value="novaGestao.saldo" inputmode="numeric" @input="formatarReais($event, 'gestao')" required />
-            </template>
-            <p v-else class="ajuda">O saldo inicial será transferido automaticamente da gestão anterior encerrada.</p>
+            <p class="ajuda">O saldo inicial é definido na ativação e herdado automaticamente quando existir gestão ou transição anterior.</p>
             <button :disabled="ocupado" type="submit">Criar gestão</button>
           </form>
           <p v-else class="ajuda">Encerre a gestão ativa antes de cadastrar outra.</p>
