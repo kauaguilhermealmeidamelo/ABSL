@@ -194,6 +194,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin/financeiro')->group(
 Route::middleware('auth:sanctum')->prefix('admin/financeiro')->group(function () {
     Route::get('/gestoes/{gestao}/resumo', [FinanceiroController::class, 'resumo']);
     Route::post('/gestoes/{gestao}/conciliacao', [ConciliacaoFinanceiraController::class, 'registrar']);
+    Route::get('/gestoes/{gestao}/inatividade', [DeclaracaoInatividadeController::class, 'rascunho']);
     Route::post('/gestoes/{gestao}/inatividade', [DeclaracaoInatividadeController::class, 'salvar']);
     Route::post('/gestoes/{gestao}/inatividade/aprovar', [DeclaracaoInatividadeController::class, 'aprovar']);
     Route::get('/gestoes/{gestao}/movimentacoes', [FinanceiroController::class, 'movimentacoes']);
