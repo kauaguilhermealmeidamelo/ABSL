@@ -173,6 +173,17 @@ class DeclaracaoInatividadeController extends Controller
         return response()->json($declaracao);
     }
 
+    public function rascunho(Request $request, GestaoFinanceira $gestao, AutorizacaoFinanceira $autorizacao)
+    {
+        abort_unless($autorizacao->podeGerenciarFechamento($request->user(), $gestao), 403);
+        $registro = DB::table('declaracoes_inatividade_financeira')
+            ->where('gestao_financeira_id', $gestao->id)->first();
+        if ($registro) {
+            unset($registro->pdf_base64);
+        }
+        return response()->json($registro);
+    }
+
     public function consultar(GestaoFinanceira $gestao)
     {
         $registro = DB::table('declaracoes_inatividade_financeira')
