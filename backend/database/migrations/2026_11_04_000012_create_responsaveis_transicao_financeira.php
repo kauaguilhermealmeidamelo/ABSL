@@ -9,11 +9,11 @@ return new class extends Migration {
     {
         Schema::create('responsaveis_transicao_financeira', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('transicao_financeira_id')->constrained('transicoes_financeiras')->restrictOnDelete();
+            $table->foreignId('transicao_financeira_id')->constrained(table: 'transicoes_financeiras', indexName: 'fk_responsavel_transicao')->restrictOnDelete();
             $table->foreignId('user_id')->constrained('users')->restrictOnDelete();
             $table->foreignId('indicado_por')->constrained('users');
             $table->timestamp('indicado_em');
-            $table->unique(['transicao_financeira_id', 'user_id']);
+            $table->unique(['transicao_financeira_id', 'user_id'], 'uq_responsavel_transicao');
         });
     }
 
