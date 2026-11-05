@@ -26,6 +26,10 @@ class RetificacaoFinanceiraController extends Controller
         $resultado = DB::transaction(function () use ($request, $movimentacao, $autorizacao, $versoes, $dados) {
             $gestao = GestaoFinanceira::whereKey($movimentacao->gestao_financeira_id)->lockForUpdate()->firstOrFail();
             abort_unless($autorizacao->podeGerenciarFechamento($request->user(), $gestao), 403);
+            if (DB::table('declaracoes_inatividade_financeira')->where('gestao_financeira_id', $gestao->id)
+                ->where('status', 'publicada')->exists()) {
+                throw ValidationException::withMessages(['gestao' => 'Declaração de inatividade publicada: retificações bloqueadas.']);
+            }
             $registro = MovimentacaoFinanceira::whereKey($movimentacao->id)->lockForUpdate()->firstOrFail();
 
             if ($registro->status !== 'confirmada') {
