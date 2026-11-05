@@ -60,9 +60,12 @@ class FinanceiroTest extends TestCase
             'nome' => 'Gestão de teste', 'inicio' => '2026-01-01',
             'saldo_inicial_centavos' => 10000, 'status' => 'ativa',
         ]);
-        $this->actingAs($admin)->postJson("/api/admin/financeiro/gestoes/{$gestao->id}/relatorios", [
+        $this->actingAs($admin)->postJson("/api/admin/financeiro/gestoes/{$gestao->id}/relatorios/fechar", [
             'ano' => 2026, 'mes' => 1,
         ])->assertCreated();
+        $this->actingAs($admin)->postJson("/api/admin/financeiro/gestoes/{$gestao->id}/relatorios", [
+            'ano' => 2026, 'mes' => 1,
+        ])->assertOk();
         $this->actingAs($admin)->postJson("/api/admin/financeiro/gestoes/{$gestao->id}/movimentacoes", [
             'data' => '2026-01-10', 'tipo' => 'receita',
             'categoria' => 'doacoes', 'descricao' => 'Doação de teste', 'valor_centavos' => 1000,
