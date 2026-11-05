@@ -27,7 +27,7 @@ return new class extends Migration {
 
         Schema::create('movimentacoes_transicao_financeira', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('transicao_financeira_id')->constrained('transicoes_financeiras')->restrictOnDelete();
+            $table->foreignId('transicao_financeira_id')->constrained(table: 'transicoes_financeiras', indexName: 'fk_mov_transicao')->restrictOnDelete();
             $table->date('data');
             $table->string('tipo', 12);
             $table->string('categoria', 100);
