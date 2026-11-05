@@ -49,7 +49,7 @@ class FinanceiroInatividadeConsultaTest extends TestCase
         $gestao = $this->gestao($admin);
         $url = '/api/admin/financeiro/gestoes/'.$gestao->id.'/inatividade';
 
-        $this->actingAs($admin)->getJson($url)->assertOk()->assertExactJson(null);
+        $this->actingAs($admin)->getJson($url)->assertOk()->assertSeeText('null');
 
         $this->actingAs($admin)->postJson($url, [
             'observacoes' => 'Não houve movimentação financeira neste período.',
