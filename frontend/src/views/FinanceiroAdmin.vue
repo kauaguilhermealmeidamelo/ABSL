@@ -19,6 +19,8 @@ const novoVinculo = ref({ user_id: '', cargo: 'tesoureiro_geral', interino: fals
 const ativacao = ref({ saldo: '0,00', justificativa: '' })
 const conciliacao = ref({ saldo: '0,00', justificativa: '' })
 const comprovantes = ref({})
+const modalRetificacao = ref(false)
+const retificacao = ref({ id: null, descricao: '', valor: '', justificativa: '' })
 const modalGestao = ref(false)
 const modalMovimentacao = ref(false)
 const aba = ref('movimentacoes')
@@ -88,6 +90,27 @@ function adicionar() {
 function abrirMovimentacao(tipo) {
   nova.value = { data: new Date().toISOString().slice(0, 10), tipo, categoria: '', descricao: '', valor: '' }
   modalMovimentacao.value = true
+}
+function cancelarMovimentacao(m) {
+  const justificativa = window.prompt(`Justifique o cancelamento da movimentação #${m.id} (mínimo 10 caracteres):`)
+  if (justificativa === null) return
+  if (justificativa.trim().length < 10) { erro.value = 'A justificativa deve ter pelo menos 10 caracteres.'; return }
+  if (!window.confirm(`Cancelar a movimentação #${m.id}? Esta ação ficará registrada.`)) return
+  executar(() => api.post(`/admin/financeiro/movimentacoes/${m.id}/cancelar`, { justificativa: justificativa.trim() }), 'Movimentação pendente cancelada.')
+}
+function abrirRetificacao(m) {
+  retificacao.value = { id: m.id, descricao: m.descricao, valor: (Number(m.valor_centavos) / 100).toFixed(2).replace('.', ','), justificativa: '' }
+  modalRetificacao.value = true
+}
+function salvarRetificacao() {
+  executar(async () => {
+    await api.post(`/admin/financeiro/movimentacoes/${retificacao.value.id}/retificar`, {
+      descricao: retificacao.value.descricao,
+      valor_centavos: centavos(retificacao.value.valor),
+      justificativa: retificacao.value.justificativa,
+    })
+    modalRetificacao.value = false
+  }, 'Retificação registrada. As versões dos relatórios afetados foram atualizadas.')
 }
 function confirmar(id) {
   executar(() => api.post(`/admin/financeiro/movimentacoes/${id}/confirmar`), 'Movimentação confirmada.')
@@ -219,7 +242,13 @@ onMounted(() => { carregar().catch(() => { erro.value = 'Falha ao carregar os da
               <tr v-for="m in filtradas" :key="m.id">
                 <td>{{ m.data }}</td><td>{{ m.descricao }}</td><td>{{ m.tipo }}</td>
                 <td>{{ moeda(m.valor_centavos) }}</td><td>{{ m.status }}</td>
-                <td><button v-if="m.status === 'pendente' && gestaoSelecionada?.status === 'ativa'" :disabled="ocupado" @click="confirmar(m.id)">Confirmar</button></td>
+                <td class="acoes-linha">
+                  <template v-if="m.status === 'pendente' && gestaoSelecionada?.status === 'ativa'">
+                    <button type="button" :disabled="ocupado" @click="confirmar(m.id)">Confirmar</button>
+                    <button type="button" class="btn-perigo" :disabled="ocupado" @click="cancelarMovimentacao(m)">Cancelar</button>
+                  </template>
+                  <button v-if="m.status === 'confirmada'" type="button" :disabled="ocupado" @click="abrirRetificacao(m)">Retificar</button>
+                </td>
                 <td>
                   <label v-if="gestaoSelecionada?.status === 'ativa'">Anexar
                     <input type="file" accept=".pdf,.jpg,.jpeg,.png" @change="anexarComprovante(m.id, $event)" />
@@ -265,6 +294,26 @@ onMounted(() => { carregar().catch(() => { erro.value = 'Falha ao carregar os da
         </v-card>
       </v-dialog>
 
+      <v-dialog v-model="modalRetificacao" max-width="540">
+        <v-card class="gestao-dialog">
+          <v-card-title class="dialog-titulo">Retificar movimentação #{{ retificacao.id }}</v-card-title>
+          <v-card-text class="dialog-conteudo">
+            <p class="ajuda">Disponível somente para movimentações confirmadas de meses publicados. A retificação preserva as versões anteriores dos relatórios e atualiza os meses afetados.</p>
+            <form class="modal-form" @submit.prevent="salvarRetificacao">
+              <label for="retificacao-descricao">Descrição corrigida</label>
+              <input id="retificacao-descricao" v-model.trim="retificacao.descricao" required maxlength="255" />
+              <label for="retificacao-valor">Valor corrigido (R$)</label>
+              <input id="retificacao-valor" v-model="retificacao.valor" required inputmode="decimal" placeholder="10,50" />
+              <label for="retificacao-justificativa">Justificativa da retificação</label>
+              <textarea id="retificacao-justificativa" v-model.trim="retificacao.justificativa" required minlength="10" maxlength="3000" rows="4" />
+              <div class="acoes-modal">
+                <button type="button" class="btn-secundario" @click="modalRetificacao = false">Voltar</button>
+                <button type="submit" :disabled="ocupado">Salvar retificação</button>
+              </div>
+            </form>
+          </v-card-text>
+        </v-card>
+      </v-dialog>
       <section v-if="aba === 'dashboard'" class="bloco">
         <h2>Responsáveis e ativação</h2>
         <p v-if="gestaoSelecionada?.status === 'planejada'">Esta gestão está planejada. Nomeie exatamente um Tesoureiro-Geral titular antes de ativá-la.</p>
@@ -326,6 +375,10 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .indicadores p { background: #f4f7fc; padding: 16px; border-radius: 12px; }
 .indicadores strong { display: block; font-size: 20px; margin-top: 8px; }
 .tabela-scroll { overflow-x: auto; }
+.acoes-linha { white-space: nowrap; }
+.acoes-linha button + button { margin-left: 6px; }
+.btn-perigo { color: #9f1239; border-color: #fecdd3; }
+.acoes-modal { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; }
 table { width: 100%; border-collapse: collapse; min-width: 720px; }
 td, th { padding: 10px; border-bottom: 1px solid #dbe3ef; text-align: left; }
 .mensagem { padding: 12px; border-radius: 8px; }
