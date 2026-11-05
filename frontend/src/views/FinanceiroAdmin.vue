@@ -26,6 +26,9 @@ const novaTransicao = ref({ inicio: '', fim_previsto: '', motivo: '' })
 const novaMovTransicao = ref({ data: '', tipo: 'despesa', categoria: '', descricao: '', justificativa_essencialidade: '', valor: '' })
 const encerramentoTransicao = ref({ fim_real: '', saldo: '0,00', justificativa_conciliacao: '' })
 const nota = ref({ texto: '', relatorio_financeiro_id: '' })
+const inatividade = ref({ observacoes: '' })
+const declaracaoRascunho = ref(null)
+const papelAprovacao = ref('tesouraria')
 const modalRetificacao = ref(false)
 const retificacao = ref({ id: null, descricao: '', valor: '', justificativa: '' })
 const modalGestao = ref(false)
@@ -48,6 +51,28 @@ function centavos(valor) {
   const texto = String(valor).trim().replace(/R\$\s?/g, '').replace(/\./g, '').replace(',', '.')
   if (!/^\d+(\.\d{1,2})?$/.test(texto)) throw new Error('Informe um valor válido, como 10,50.')
   return Math.round(Number(texto) * 100)
+}
+async function salvarInatividade() {
+  executar(async () => {
+    const { data } = await api.post(`/admin/financeiro/gestoes/${atual.value}/inatividade`, {
+      observacoes: inatividade.value.observacoes,
+    })
+    declaracaoRascunho.value = data
+  }, 'Rascunho da declaração de inatividade salvo. As aprovações anteriores, se existiam, foram reiniciadas.')
+}
+function aprovarInatividade() {
+  if (!window.confirm(`Confirmar aprovação como ${papelAprovacao.value === 'tesouraria' ? 'Tesouraria' : 'Administração'}? As aprovações devem ser de pessoas diferentes.`)) return
+  executar(async () => {
+    const { data } = await api.post(`/admin/financeiro/gestoes/${atual.value}/inatividade/aprovar`, { papel: papelAprovacao.value })
+    declaracaoRascunho.value = data
+  }, 'Aprovação registrada.')
+}
+function publicarInatividade() {
+  if (!window.confirm('Publicar a declaração definitiva de inatividade? Esta ação é irreversível.')) return
+  executar(async () => {
+    const { data } = await api.post(`/admin/financeiro/gestoes/${atual.value}/inatividade/publicar`)
+    declaracaoRascunho.value = data
+  }, 'Declaração definitiva de inatividade publicada.')
 }
 async function carregarTransicoes() {
   const { data } = await api.get('/admin/financeiro/transicoes')
@@ -124,6 +149,8 @@ async function selecionar(id, numeroPagina = 1) {
     api.get(`/admin/financeiro/gestoes/${id}/vinculos`),
   ])
   vinculos.value = Array.isArray(responsaveis.data) ? responsaveis.data : []
+  declaracaoRascunho.value = null
+  inatividade.value = { observacoes: '' }
   totais.value = resumo.data.totais
   movimentacoes.value = lista.data.data || []
   ultimaPagina.value = lista.data.last_page || 1
@@ -250,7 +277,7 @@ onMounted(() => { carregar().catch(() => { erro.value = 'Falha ao carregar os da
     <p v-if="erro" class="mensagem erro" role="alert">{{ erro }}</p>
     <p v-if="aviso" class="mensagem aviso" role="status">{{ aviso }}</p>
     <nav class="abas" aria-label="Seções financeiras">
-      <button v-for="item in [{ id: 'dashboard', nome: 'Dashboard', icone: 'mdi-chart-bar' }, { id: 'movimentacoes', nome: 'Movimentações', icone: 'mdi-wallet-outline' }, { id: 'relatorios', nome: 'Gerar PDF', icone: 'mdi-printer-outline' }, { id: 'historico', nome: 'Histórico', icone: 'mdi-history' }, { id: 'transicoes', nome: 'Transições', icone: 'mdi-swap-horizontal' }]" :key="item.id" type="button" :class="{ selecionada: aba === item.id }" @click="aba = item.id">
+      <button v-for="item in [{ id: 'dashboard', nome: 'Dashboard', icone: 'mdi-chart-bar' }, { id: 'movimentacoes', nome: 'Movimentações', icone: 'mdi-wallet-outline' }, { id: 'relatorios', nome: 'Gerar PDF', icone: 'mdi-printer-outline' }, { id: 'historico', nome: 'Histórico', icone: 'mdi-history' }, { id: 'transicoes', nome: 'Transições', icone: 'mdi-swap-horizontal' }, { id: 'inatividade', nome: 'Inatividade', icone: 'mdi-file-document-check-outline' }]" :key="item.id" type="button" :class="{ selecionada: aba === item.id }" @click="aba = item.id">
         <v-icon size="16">{{ item.icone }}</v-icon> {{ item.nome }}
       </button>
     </nav>
@@ -462,6 +489,28 @@ onMounted(() => { carregar().catch(() => { erro.value = 'Falha ao carregar os da
       <section v-if="aba === 'dashboard' && gestaoSelecionada?.status === 'ativa'" class="bloco">
         <h2>Conciliação do saldo real</h2>
         <form class="formulario" @submit.prevent="conciliar"><label for="saldo-real">Saldo real em reais</label><input id="saldo-real" v-model="conciliacao.saldo" required /><label for="justificativa-conciliacao">Justificativa para eventual diferença</label><textarea id="justificativa-conciliacao" v-model="conciliacao.justificativa" maxlength="2000" /><button type="submit" :disabled="ocupado">Registrar conciliação</button></form>
+      </section>
+      <section v-if="aba === 'inatividade'" class="bloco">
+        <h2>Declaração de inatividade financeira</h2>
+        <p class="ajuda">Exclusiva de gestões ativas sem movimentações confirmadas ou pendentes. A publicação definitiva exige conciliação, todos os relatórios mensais publicados, término do período e aprovações de duas pessoas distintas.</p>
+        <p v-if="declaracaoRascunho" class="ajuda">Rascunho atual: versão {{ declaracaoRascunho.versao }} — {{ declaracaoRascunho.status }}. Tesouraria: {{ declaracaoRascunho.aprovada_tesouraria_por ? 'aprovada' : 'pendente' }}. Administração: {{ declaracaoRascunho.aprovada_admin_por ? 'aprovada' : 'pendente' }}.</p>
+        <form v-if="gestaoSelecionada?.status === 'ativa' && declaracaoRascunho?.status !== 'publicada'" class="formulario" @submit.prevent="salvarInatividade">
+          <h3>Preparar rascunho</h3>
+          <label for="inatividade-observacoes">Observações (opcional)</label>
+          <textarea id="inatividade-observacoes" v-model.trim="inatividade.observacoes" maxlength="5000" rows="4" />
+          <button type="submit" :disabled="ocupado">Salvar rascunho</button>
+        </form>
+        <div v-if="declaracaoRascunho?.status === 'rascunho'" class="formulario">
+          <h3>Aprovar declaração</h3>
+          <p class="ajuda">O Tesoureiro-Geral titular ou interino deve aprovar como Tesouraria. Um administrador diferente deve aprovar como Administração.</p>
+          <label for="inatividade-papel">Papel da aprovação</label>
+          <select id="inatividade-papel" v-model="papelAprovacao"><option value="tesouraria">Tesouraria</option><option value="administracao">Administração</option></select>
+          <button type="button" :disabled="ocupado" @click="aprovarInatividade">Registrar aprovação</button>
+          <button type="button" :disabled="ocupado || !declaracaoRascunho.aprovada_tesouraria_por || !declaracaoRascunho.aprovada_admin_por" @click="publicarInatividade">Publicar declaração definitiva</button>
+        </div>
+        <p v-if="declaracaoRascunho?.status === 'publicada'">Declaração publicada com sucesso.</p>
+        <a v-if="declaracaoRascunho?.status === 'publicada'" :href="`/api/financeiro/gestoes/${atual}/inatividade/pdf`" target="_blank" rel="noopener noreferrer">Consultar PDF da declaração</a>
+        <p class="ajuda">Após recarregar a página, o rascunho não é recuperado automaticamente: o backend ainda não disponibiliza uma rota autenticada para consultá-lo. Não salve novamente apenas para consultar o estado, pois isso reinicia as aprovações.</p>
       </section>
       <section v-if="aba === 'relatorios'" class="bloco">
         <h2>Relatórios mensais</h2>
