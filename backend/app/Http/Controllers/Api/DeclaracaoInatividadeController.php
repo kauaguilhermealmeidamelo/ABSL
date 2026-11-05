@@ -150,6 +150,10 @@ class DeclaracaoInatividadeController extends Controller
                 || $registro->aprovada_admin_por === $registro->aprovada_tesouraria_por) {
                 throw ValidationException::withMessages(['declaracao' => 'Exige aprovação de tesouraria e administração por pessoas distintas.']);
             }
+            $ultimaAlteracao = $gestao->movimentacoes()->max('updated_at');
+            if ($ultimaAlteracao && $gestao->conciliado_em->lt($ultimaAlteracao)) {
+                throw ValidationException::withMessages(['gestao' => 'Refaça a conciliação após a última alteração financeira.']);
+            }
             if ($gestao->conciliado_em->greaterThan(\Illuminate\Support\Carbon::parse($registro->aprovada_admin_em))
                 || $gestao->conciliado_em->greaterThan(\Illuminate\Support\Carbon::parse($registro->aprovada_tesouraria_em))) {
                 throw ValidationException::withMessages(['declaracao' => 'A conciliação mudou após uma aprovação. Atualize o rascunho e obtenha duas novas aprovações.']);
