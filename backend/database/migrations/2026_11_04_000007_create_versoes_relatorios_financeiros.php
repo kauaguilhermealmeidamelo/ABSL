@@ -9,7 +9,7 @@ return new class extends Migration {
     {
         Schema::create('versoes_relatorios_financeiros', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('relatorio_financeiro_id')->constrained('relatorios_financeiros')->restrictOnDelete();
+            $table->foreignId('relatorio_financeiro_id')->constrained(table: 'relatorios_financeiros', indexName: 'fk_versao_relatorio')->restrictOnDelete();
             $table->unsignedInteger('versao');
             $table->bigInteger('saldo_inicial_centavos');
             $table->bigInteger('receitas_centavos');
@@ -20,7 +20,7 @@ return new class extends Migration {
             $table->foreignId('publicado_por')->constrained('users')->restrictOnDelete();
             $table->timestamp('publicado_em');
             $table->timestamps();
-            $table->unique(['relatorio_financeiro_id', 'versao']);
+            $table->unique(['relatorio_financeiro_id', 'versao'], 'uq_versao_relatorio');
         });
     }
 
