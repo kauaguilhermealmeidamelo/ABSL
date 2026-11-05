@@ -149,8 +149,9 @@ async function selecionar(id, numeroPagina = 1) {
     api.get(`/admin/financeiro/gestoes/${id}/vinculos`),
   ])
   vinculos.value = Array.isArray(responsaveis.data) ? responsaveis.data : []
-  declaracaoRascunho.value = null
-  inatividade.value = { observacoes: '' }
+  const { data: declaracao } = await api.get(`/admin/financeiro/gestoes/${id}/inatividade`)
+  declaracaoRascunho.value = declaracao
+  inatividade.value = { observacoes: declaracao?.observacoes || '' }
   totais.value = resumo.data.totais
   movimentacoes.value = lista.data.data || []
   ultimaPagina.value = lista.data.last_page || 1
@@ -510,7 +511,7 @@ onMounted(() => { carregar().catch(() => { erro.value = 'Falha ao carregar os da
         </div>
         <p v-if="declaracaoRascunho?.status === 'publicada'">Declaração publicada com sucesso.</p>
         <a v-if="declaracaoRascunho?.status === 'publicada'" :href="`/api/financeiro/gestoes/${atual}/inatividade/pdf`" target="_blank" rel="noopener noreferrer">Consultar PDF da declaração</a>
-        <p class="ajuda">Após recarregar a página, o rascunho não é recuperado automaticamente: o backend ainda não disponibiliza uma rota autenticada para consultá-lo. Não salve novamente apenas para consultar o estado, pois isso reinicia as aprovações.</p>
+        <p class="ajuda">O rascunho e as aprovações são recuperados ao selecionar a gestão. Salvar novamente o rascunho reinicia as aprovações.</p>
       </section>
       <section v-if="aba === 'relatorios'" class="bloco">
         <h2>Relatórios mensais</h2>
