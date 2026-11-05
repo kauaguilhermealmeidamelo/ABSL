@@ -14,7 +14,7 @@ return new class extends Migration {
             $table->text('observacoes')->nullable();
             $table->unsignedInteger('versao')->default(1);
             $table->foreignId('criada_por')->constrained('users')->restrictOnDelete();
-            $table->foreignId('aprovada_tesouraria_por')->nullable()->constrained('users')->restrictOnDelete();
+            $table->foreignId('aprovada_tesouraria_por')->nullable()->constrained('users', 'fk_inatividade_tesouraria')->restrictOnDelete();
             $table->string('cargo_aprovador_tesouraria', 60)->nullable();
             $table->timestamp('aprovada_tesouraria_em')->nullable();
             $table->foreignId('aprovada_admin_por')->nullable()->constrained('users')->restrictOnDelete();
