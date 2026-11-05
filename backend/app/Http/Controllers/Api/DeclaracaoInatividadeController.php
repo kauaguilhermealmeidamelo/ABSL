@@ -131,6 +131,18 @@ class DeclaracaoInatividadeController extends Controller
                 !== (int) $gestao->diferenca_conciliacao_centavos) {
                 throw ValidationException::withMessages(['gestao' => 'A conciliação não corresponde ao saldo contábil.']);
             }
+            if (! $gestao->fim_previsto || $gestao->fim_previsto->isFuture()) {
+                throw ValidationException::withMessages(['gestao' => 'Aguarde o término da gestão antes de publicar a declaração definitiva.']);
+            }
+            for ($mes = $gestao->inicio->copy()->startOfMonth();
+                $mes->lessThanOrEqualTo($gestao->fim_previsto->copy()->startOfMonth());
+                $mes->addMonth()) {
+                if (! \App\Models\RelatorioFinanceiro::where('gestao_financeira_id', $gestao->id)
+                    ->where('ano', $mes->year)->where('mes', $mes->month)
+                    ->where('status', 'publicado')->exists()) {
+                    throw ValidationException::withMessages(['gestao' => 'Publique todos os relatórios mensais antes da declaração definitiva.']);
+                }
+            }
             $registro = DB::table('declaracoes_inatividade_financeira')
                 ->where('gestao_financeira_id', $gestao->id)->lockForUpdate()->first();
             if (! $registro || $registro->status !== 'rascunho'
