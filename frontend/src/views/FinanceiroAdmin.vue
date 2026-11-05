@@ -235,3 +235,51 @@ onMounted(() => { carregar().catch(() => { erro.value = 'Falha ao carregar os da
         </v-card>
       </v-dialog>
 
+      <section v-if="aba === 'relatorios'" class="bloco">
+        <h2>Relatórios mensais</h2>
+        <p class="ajuda">O mês deve ser fechado antes da publicação do relatório.</p>
+        <form class="formulario" @submit.prevent="publicar">
+          <label for="relatorio-ano">Ano</label>
+          <input id="relatorio-ano" v-model.number="fechamento.ano" type="number" min="2000" max="2100" required />
+          <label for="relatorio-mes">Mês</label>
+          <input id="relatorio-mes" v-model.number="fechamento.mes" type="number" min="1" max="12" required />
+          <button type="submit" :disabled="ocupado">Publicar relatório fechado</button>
+        </form>
+      </section>
+      <section v-if="aba === 'historico'" class="bloco">
+        <h2>Histórico da gestão</h2>
+        <p>Consulte o histórico e os documentos publicados no portal de transparência.</p>
+        <router-link to="/transparencia/prestacao-de-contas">Consultar prestação de contas</router-link>
+        <template v-if="gestaoSelecionada?.status === 'ativa'">
+          <label for="observacao-encerramento">Observação do encerramento</label>
+          <textarea id="observacao-encerramento" v-model="observacao" rows="3" />
+          <button type="button" :disabled="ocupado" @click="encerrar">Solicitar encerramento</button>
+        </template>
+      </section>
+    </template>
+  </main>
+</template>
+
+<style scoped>
+.painel-financeiro { max-width: 1200px; margin: auto; padding: 24px; color: #0b132b; }
+.abas, .barra-gestao, .barra-acoes, .botoes-lancamento { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 16px 0; }
+.abas button, button, .btn-gestoes { cursor: pointer; border: 1px solid #cbd5e1; border-radius: 10px; padding: 9px 14px; background: white; color: #0b132b; }
+.abas .selecionada { background: #16509b; color: white; }
+button:disabled { opacity: .55; cursor: not-allowed; }
+.bloco { background: white; border: 1px solid #dbe3ef; border-radius: 16px; padding: 20px; margin: 16px 0; }
+.indicadores { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+.indicadores p { background: #f4f7fc; padding: 16px; border-radius: 12px; }
+.indicadores strong { display: block; font-size: 20px; margin-top: 8px; }
+.tabela-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; min-width: 720px; }
+td, th { padding: 10px; border-bottom: 1px solid #dbe3ef; text-align: left; }
+.mensagem { padding: 12px; border-radius: 8px; }
+.erro { color: #a52020; background: #fff0f0; }
+.aviso { color: #166534; background: #f0fdf4; }
+.modal-form, .formulario { display: grid; gap: 10px; }
+input, select, textarea { border: 1px solid #cbd5e1; border-radius: 8px; padding: 9px; max-width: 100%; }
+.dialog-conteudo { display: grid; gap: 12px; }
+.ajuda, .rotulo { color: #53647c; }
+.paginacao { display: flex; align-items: center; gap: 12px; margin: 14px 0; }
+@media (max-width: 600px) { .painel-financeiro { padding: 16px; } }
+</style>
