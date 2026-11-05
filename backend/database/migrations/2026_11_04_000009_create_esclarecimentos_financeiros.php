@@ -10,7 +10,7 @@ return new class extends Migration {
         Schema::create('esclarecimentos_financeiros', function (Blueprint $table) {
             $table->id();
             $table->foreignId('gestao_financeira_id')->constrained('gestoes_financeiras')->restrictOnDelete();
-            $table->foreignId('relatorio_financeiro_id')->nullable()->constrained('relatorios_financeiros')->restrictOnDelete();
+            $table->foreignId('relatorio_financeiro_id')->nullable()->constrained(table: 'relatorios_financeiros', indexName: 'fk_esclarecimento_relatorio')->restrictOnDelete();
             $table->text('texto');
             $table->foreignId('publicado_por')->constrained('users');
             $table->timestamp('publicado_em');
