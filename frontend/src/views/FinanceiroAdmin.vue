@@ -10,10 +10,14 @@ const totais = ref(null)
 const erro = ref('')
 const aviso = ref('')
 const ocupado = ref(false)
-const novaGestao = ref({ nome: '', inicio: '', saldo: '0,00' })
+const novaGestao = ref({ nome: '', inicio: '', fim_previsto: '', saldo: '0,00' })
 const nova = ref({ data: '', tipo: 'receita', categoria: '', descricao: '', valor: '' })
 const fechamento = ref({ ano: new Date().getFullYear(), mes: new Date().getMonth() + 1 })
 const observacao = ref('')
+const vinculos = ref([])
+const novoVinculo = ref({ user_id: '', cargo: 'tesoureiro_geral', interino: false, fim_previsto_em: '', justificativa: '' })
+const ativacao = ref({ saldo: '0,00', justificativa: '' })
+const conciliacao = ref({ saldo: '0,00', justificativa: '' })
 const comprovantes = ref({})
 const modalGestao = ref(false)
 const modalMovimentacao = ref(false)
@@ -40,15 +44,18 @@ async function carregar() {
   const { data } = await api.get('/admin/financeiro/gestoes')
   gestoes.value = data
   if (!atual.value && data.length) atual.value = data[0].id
+  if (atual.value && !data.some(g => g.id === atual.value)) atual.value = data[0]?.id || null
   if (atual.value) await selecionar(atual.value, pagina.value)
 }
 async function selecionar(id, numeroPagina = 1) {
   pagina.value = numeroPagina
   atual.value = Number(id)
-  const [resumo, lista] = await Promise.all([
+  const [resumo, lista, responsaveis] = await Promise.all([
     api.get(`/admin/financeiro/gestoes/${id}/resumo`),
     api.get(`/admin/financeiro/gestoes/${id}/movimentacoes`, { params: { page: numeroPagina } }),
+    api.get(`/admin/financeiro/gestoes/${id}/vinculos`),
   ])
+  vinculos.value = Array.isArray(responsaveis.data) ? responsaveis.data : []
   totais.value = resumo.data.totais
   movimentacoes.value = lista.data.data || []
   ultimaPagina.value = lista.data.last_page || 1
@@ -63,8 +70,7 @@ async function executar(acao, sucesso) {
 function criarGestao() {
   executar(async () => {
     await api.post('/admin/financeiro/gestoes', {
-      nome: novaGestao.value.nome, inicio: novaGestao.value.inicio,
-      ...(inicialManual.value ? { saldo_inicial_centavos: centavos(novaGestao.value.saldo) } : {}),
+      nome: novaGestao.value.nome, inicio: novaGestao.value.inicio, fim_previsto: novaGestao.value.fim_previsto,
     })
     atual.value = null
     modalGestao.value = false
@@ -113,6 +119,32 @@ function baixarComprovante(id, nome) {
       URL.revokeObjectURL(url)
     }).catch(() => { erro.value = 'Não foi possível baixar o comprovante.' })
 }
+function ativarGestao() {
+  executar(() => api.post(`/admin/financeiro/gestoes/${atual.value}/ativar`, {
+    ...(inicialManual.value ? { saldo_inicial_centavos: centavos(ativacao.value.saldo), justificativa_saldo_inicial: ativacao.value.justificativa } : {}),
+  }), 'Gestão ativada.')
+}
+function nomearResponsavel() {
+  executar(() => api.post(`/admin/financeiro/gestoes/${atual.value}/vinculos`, {
+    user_id: Number(novoVinculo.value.user_id), cargo: novoVinculo.value.cargo,
+    interino: novoVinculo.value.interino,
+    ...(novoVinculo.value.interino ? { fim_previsto_em: novoVinculo.value.fim_previsto_em } : {}),
+    justificativa: novoVinculo.value.justificativa,
+  }), 'Responsável financeiro nomeado.')
+}
+function encerrarVinculo(id) {
+  const justificativa = window.prompt('Justificativa do encerramento do vínculo (mínimo 10 caracteres):')
+  if (!justificativa) return
+  executar(() => api.post(`/admin/financeiro/gestoes/${atual.value}/vinculos/${id}/encerrar`, { justificativa }), 'Vínculo encerrado.')
+}
+function conciliar() {
+  executar(() => api.post(`/admin/financeiro/gestoes/${atual.value}/conciliacao`, {
+    saldo_real_final_centavos: centavos(conciliacao.value.saldo), justificativa: conciliacao.value.justificativa,
+  }), 'Saldo real conciliado.')
+}
+function fecharMes() {
+  executar(() => api.post(`/admin/financeiro/gestoes/${atual.value}/relatorios/fechar`, fechamento.value), 'Mês fechado. Agora você pode publicar o relatório.')
+}
 function publicar() {
   executar(() => api.post(`/admin/financeiro/gestoes/${atual.value}/relatorios`, fechamento.value), 'Relatório mensal publicado.')
 }
@@ -157,14 +189,16 @@ onMounted(() => { carregar().catch(() => { erro.value = 'Falha ao carregar os da
             <input id="nome-gestao" v-model="novaGestao.nome" required maxlength="255" placeholder="Ex.: Gestão 2026" />
             <label for="inicio-gestao">Data de início</label>
             <input id="inicio-gestao" v-model="novaGestao.inicio" required type="date" />
-            <template v-if="inicialManual">
+            <label for="fim-gestao">Data prevista de término</label>
+            <input id="fim-gestao" v-model="novaGestao.fim_previsto" required type="date" :min="novaGestao.inicio" />
+            <template v-if="false">
               <label for="saldo-abertura">Saldo inicial da primeira gestão</label>
               <input id="saldo-abertura" :value="novaGestao.saldo" inputmode="numeric" @input="formatarReais($event, 'gestao')" required />
             </template>
             <p v-else class="ajuda">O saldo inicial será transferido automaticamente da gestão anterior encerrada.</p>
             <button :disabled="ocupado" type="submit">Criar gestão</button>
           </form>
-          <p v-else class="ajuda">Para criar outra gestão, primeiro encerre a gestão ativa.</p>
+          <p v-else class="ajuda">Encerre a gestão ativa antes de cadastrar outra.</p>
         </v-card-text>
         <v-card-actions><v-spacer /><button type="button" class="btn-secundario" @click="modalGestao = false">Fechar</button></v-card-actions>
       </v-card>
@@ -235,6 +269,31 @@ onMounted(() => { carregar().catch(() => { erro.value = 'Falha ao carregar os da
         </v-card>
       </v-dialog>
 
+      <section v-if="aba === 'dashboard'" class="bloco">
+        <h2>Responsáveis e ativação</h2>
+        <p v-if="gestaoSelecionada?.status === 'planejada'">Esta gestão está planejada. Nomeie exatamente um Tesoureiro-Geral titular antes de ativá-la.</p>
+        <div v-if="gestaoSelecionada?.status !== 'encerrada'" class="formulario">
+          <h3>Nomear responsável financeiro</h3>
+          <form class="formulario" @submit.prevent="nomearResponsavel">
+            <label for="vinculo-usuario">ID do usuário cadastrado</label><input id="vinculo-usuario" v-model="novoVinculo.user_id" type="number" min="1" required />
+            <label for="vinculo-cargo">Cargo</label><select id="vinculo-cargo" v-model="novoVinculo.cargo"><option value="tesoureiro_geral">Tesoureiro-Geral</option><option value="tesoureiro">Tesoureiro</option></select>
+            <label><input v-model="novoVinculo.interino" type="checkbox" :disabled="novoVinculo.cargo !== 'tesoureiro_geral'" /> Nomeação interina</label>
+            <template v-if="novoVinculo.interino"><label for="vinculo-prazo">Fim da interinidade</label><input id="vinculo-prazo" v-model="novoVinculo.fim_previsto_em" type="datetime-local" required /></template>
+            <label for="vinculo-justificativa">Justificativa</label><textarea id="vinculo-justificativa" v-model="novoVinculo.justificativa" minlength="10" maxlength="2000" required />
+            <button type="submit" :disabled="ocupado">Nomear</button>
+          </form>
+        </div>
+        <ul><li v-for="v in vinculos" :key="v.id">Usuário #{{ v.user_id }} — {{ v.cargo }}{{ v.interino ? ' (interino)' : '' }} — {{ v.fim_em ? 'encerrado' : 'vigente' }} <button v-if="!v.fim_em && gestaoSelecionada?.status !== 'encerrada'" :disabled="ocupado" type="button" @click="encerrarVinculo(v.id)">Encerrar vínculo</button></li></ul>
+        <form v-if="gestaoSelecionada?.status === 'planejada'" class="formulario" @submit.prevent="ativarGestao">
+          <h3>Ativar gestão</h3>
+          <template v-if="inicialManual"><label for="saldo-ativacao">Saldo inicial excepcional</label><input id="saldo-ativacao" v-model="ativacao.saldo" required /><label for="justificativa-ativacao">Justificativa, se houver saldo inicial</label><textarea id="justificativa-ativacao" v-model="ativacao.justificativa" /></template>
+          <button type="submit" :disabled="ocupado">Ativar gestão</button>
+        </form>
+      </section>
+      <section v-if="aba === 'dashboard' && gestaoSelecionada?.status === 'ativa'" class="bloco">
+        <h2>Conciliação do saldo real</h2>
+        <form class="formulario" @submit.prevent="conciliar"><label for="saldo-real">Saldo real em reais</label><input id="saldo-real" v-model="conciliacao.saldo" required /><label for="justificativa-conciliacao">Justificativa para eventual diferença</label><textarea id="justificativa-conciliacao" v-model="conciliacao.justificativa" maxlength="2000" /><button type="submit" :disabled="ocupado">Registrar conciliação</button></form>
+      </section>
       <section v-if="aba === 'relatorios'" class="bloco">
         <h2>Relatórios mensais</h2>
         <p class="ajuda">O mês deve ser fechado antes da publicação do relatório.</p>
@@ -243,7 +302,7 @@ onMounted(() => { carregar().catch(() => { erro.value = 'Falha ao carregar os da
           <input id="relatorio-ano" v-model.number="fechamento.ano" type="number" min="2000" max="2100" required />
           <label for="relatorio-mes">Mês</label>
           <input id="relatorio-mes" v-model.number="fechamento.mes" type="number" min="1" max="12" required />
-          <button type="submit" :disabled="ocupado">Publicar relatório fechado</button>
+          <div class="barra-acoes"><button type="button" :disabled="ocupado" @click="fecharMes">1. Fechar mês</button><button type="submit" :disabled="ocupado">2. Publicar relatório fechado</button></div>
         </form>
       </section>
       <section v-if="aba === 'historico'" class="bloco">
