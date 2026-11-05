@@ -19,6 +19,13 @@ const novoVinculo = ref({ user_id: '', cargo: 'tesoureiro_geral', interino: fals
 const ativacao = ref({ saldo: '0,00', justificativa: '' })
 const conciliacao = ref({ saldo: '0,00', justificativa: '' })
 const comprovantes = ref({})
+const transicoes = ref([])
+const transicaoAtual = ref(null)
+const movimentosTransicao = ref([])
+const novaTransicao = ref({ inicio: '', fim_previsto: '', motivo: '' })
+const novaMovTransicao = ref({ data: '', tipo: 'despesa', categoria: '', descricao: '', justificativa_essencialidade: '', valor: '' })
+const encerramentoTransicao = ref({ fim_real: '', saldo: '0,00', justificativa_conciliacao: '' })
+const nota = ref({ texto: '', relatorio_financeiro_id: '' })
 const modalRetificacao = ref(false)
 const retificacao = ref({ id: null, descricao: '', valor: '', justificativa: '' })
 const modalGestao = ref(false)
@@ -42,12 +49,71 @@ function centavos(valor) {
   if (!/^\d+(\.\d{1,2})?$/.test(texto)) throw new Error('Informe um valor válido, como 10,50.')
   return Math.round(Number(texto) * 100)
 }
+async function carregarTransicoes() {
+  const { data } = await api.get('/admin/financeiro/transicoes')
+  transicoes.value = data
+  if (!transicaoAtual.value && data.length) transicaoAtual.value = data[0].id
+  if (transicaoAtual.value && !data.some(t => t.id === transicaoAtual.value)) transicaoAtual.value = data[0]?.id || null
+  if (transicaoAtual.value) {
+    const resposta = await api.get(`/admin/financeiro/transicoes/${transicaoAtual.value}/movimentacoes`)
+    movimentosTransicao.value = resposta.data.data || []
+  } else movimentosTransicao.value = []
+}
+const transicaoSelecionada = computed(() => transicoes.value.find(t => t.id === transicaoAtual.value))
+function iniciarTransicao() {
+  executar(async () => {
+    const { data } = await api.post('/admin/financeiro/transicoes', novaTransicao.value)
+    transicaoAtual.value = data.id
+    novaTransicao.value = { inicio: '', fim_previsto: '', motivo: '' }
+    await carregarTransicoes()
+  }, 'Transição financeira iniciada.')
+}
+function criarMovimentoTransicao() {
+  executar(async () => {
+    await api.post(`/admin/financeiro/transicoes/${transicaoAtual.value}/movimentacoes`, {
+      ...novaMovTransicao.value, valor_centavos: centavos(novaMovTransicao.value.valor),
+    })
+    novaMovTransicao.value = { data: '', tipo: 'despesa', categoria: '', descricao: '', justificativa_essencialidade: '', valor: '' }
+    await carregarTransicoes()
+  }, 'Movimentação da transição registrada como pendente.')
+}
+function resolverMovimentoTransicao(m, acao) {
+  let justificativa = ''
+  if (acao === 'cancelar') {
+    const resposta = window.prompt('Justificativa do cancelamento (mínimo 10 caracteres):')
+    if (resposta === null) return
+    justificativa = resposta.trim()
+    if (justificativa.length < 10) { erro.value = 'Informe ao menos 10 caracteres.'; return }
+  }
+  executar(async () => {
+    await api.post(`/admin/financeiro/transicoes/${transicaoAtual.value}/movimentacoes/${m.id}/resolver`, { acao, ...(justificativa ? { justificativa } : {}) })
+    await carregarTransicoes()
+  }, acao === 'confirmar' ? 'Movimentação confirmada.' : 'Movimentação cancelada.')
+}
+function encerrarTransicao() {
+  if (!window.confirm('Encerrar a transição e publicar o relatório definitivo?')) return
+  executar(async () => {
+    await api.post(`/admin/financeiro/transicoes/${transicaoAtual.value}/encerrar`, {
+      fim_real: encerramentoTransicao.value.fim_real,
+      saldo_real_final_centavos: centavos(encerramentoTransicao.value.saldo),
+      justificativa_conciliacao: encerramentoTransicao.value.justificativa_conciliacao,
+    })
+    await carregarTransicoes()
+  }, 'Transição encerrada e relatório publicado.')
+}
+function publicarNota() {
+  executar(() => api.post(`/admin/financeiro/gestoes/${atual.value}/esclarecimentos`, {
+    texto: nota.value.texto,
+    ...(nota.value.relatorio_financeiro_id ? { relatorio_financeiro_id: Number(nota.value.relatorio_financeiro_id) } : {}),
+  }).then(() => { nota.value = { texto: '', relatorio_financeiro_id: '' } }), 'Nota de esclarecimento publicada.')
+}
 async function carregar() {
   const { data } = await api.get('/admin/financeiro/gestoes')
   gestoes.value = data
   if (!atual.value && data.length) atual.value = data[0].id
   if (atual.value && !data.some(g => g.id === atual.value)) atual.value = data[0]?.id || null
   if (atual.value) await selecionar(atual.value, pagina.value)
+  await carregarTransicoes()
 }
 async function selecionar(id, numeroPagina = 1) {
   pagina.value = numeroPagina
@@ -184,7 +250,7 @@ onMounted(() => { carregar().catch(() => { erro.value = 'Falha ao carregar os da
     <p v-if="erro" class="mensagem erro" role="alert">{{ erro }}</p>
     <p v-if="aviso" class="mensagem aviso" role="status">{{ aviso }}</p>
     <nav class="abas" aria-label="Seções financeiras">
-      <button v-for="item in [{ id: 'dashboard', nome: 'Dashboard', icone: 'mdi-chart-bar' }, { id: 'movimentacoes', nome: 'Movimentações', icone: 'mdi-wallet-outline' }, { id: 'relatorios', nome: 'Gerar PDF', icone: 'mdi-printer-outline' }, { id: 'historico', nome: 'Histórico', icone: 'mdi-history' }]" :key="item.id" type="button" :class="{ selecionada: aba === item.id }" @click="aba = item.id">
+      <button v-for="item in [{ id: 'dashboard', nome: 'Dashboard', icone: 'mdi-chart-bar' }, { id: 'movimentacoes', nome: 'Movimentações', icone: 'mdi-wallet-outline' }, { id: 'relatorios', nome: 'Gerar PDF', icone: 'mdi-printer-outline' }, { id: 'historico', nome: 'Histórico', icone: 'mdi-history' }, { id: 'transicoes', nome: 'Transições', icone: 'mdi-swap-horizontal' }]" :key="item.id" type="button" :class="{ selecionada: aba === item.id }" @click="aba = item.id">
         <v-icon size="16">{{ item.icone }}</v-icon> {{ item.nome }}
       </button>
     </nav>
@@ -222,6 +288,64 @@ onMounted(() => { carregar().catch(() => { erro.value = 'Falha ao carregar os da
         <v-card-actions><v-spacer /><button type="button" class="btn-secundario" @click="modalGestao = false">Fechar</button></v-card-actions>
       </v-card>
     </v-dialog>
+    <section v-if="aba === 'transicoes'" class="bloco">
+      <h2>Transições financeiras entre gestões</h2>
+      <p class="ajuda">Uma transição só pode começar quando não existir gestão ativa ou outra transição ativa. O saldo inicial é herdado automaticamente.</p>
+      <form v-if="!transicoes.some(t => t.status === 'ativa') && !gestoes.some(g => g.status === 'ativa')" class="formulario" @submit.prevent="iniciarTransicao">
+        <h3>Iniciar transição</h3>
+        <label for="transicao-inicio">Início</label><input id="transicao-inicio" v-model="novaTransicao.inicio" type="date" required />
+        <label for="transicao-fim">Fim previsto</label><input id="transicao-fim" v-model="novaTransicao.fim_previsto" type="date" :min="novaTransicao.inicio" required />
+        <label for="transicao-motivo">Motivo</label><textarea id="transicao-motivo" v-model.trim="novaTransicao.motivo" required minlength="10" maxlength="3000" />
+        <button type="submit" :disabled="ocupado">Iniciar transição</button>
+      </form>
+      <template v-if="transicoes.length">
+        <label for="transicao-selecao">Consultar transição</label>
+        <select id="transicao-selecao" v-model.number="transicaoAtual" @change="carregarTransicoes">
+          <option v-for="t in transicoes" :key="t.id" :value="t.id">#{{ t.id }} — {{ t.inicio }} a {{ t.fim_previsto }} ({{ t.status }})</option>
+        </select>
+        <div v-if="transicaoSelecionada" class="indicadores">
+          <p>Saldo inicial <strong>{{ moeda(transicaoSelecionada.saldo_inicial_centavos) }}</strong></p>
+          <p>Status <strong>{{ transicaoSelecionada.status }}</strong></p>
+        </div>
+        <div class="tabela-scroll">
+          <table>
+            <thead><tr><th>Data</th><th>Descrição</th><th>Tipo</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead>
+            <tbody>
+              <tr v-for="m in movimentosTransicao" :key="m.id">
+                <td>{{ m.data }}</td><td>{{ m.descricao }}</td><td>{{ m.tipo }}</td><td>{{ moeda(m.valor_centavos) }}</td><td>{{ m.status }}</td>
+                <td class="acoes-linha">
+                  <template v-if="m.status === 'pendente' && transicaoSelecionada?.status === 'ativa'">
+                    <button type="button" :disabled="ocupado" @click="resolverMovimentoTransicao(m, 'confirmar')">Confirmar</button>
+                    <button type="button" class="btn-perigo" :disabled="ocupado" @click="resolverMovimentoTransicao(m, 'cancelar')">Cancelar</button>
+                  </template>
+                </td>
+              </tr>
+              <tr v-if="!movimentosTransicao.length"><td colspan="6">Nenhuma movimentação nesta transição.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="ajuda">A tabela exibe as 25 movimentações mais recentes.</p>
+        <form v-if="transicaoSelecionada?.status === 'ativa'" class="formulario" @submit.prevent="criarMovimentoTransicao">
+          <h3>Movimentação essencial da transição</h3>
+          <label for="tm-data">Data</label><input id="tm-data" v-model="novaMovTransicao.data" type="date" :min="transicaoSelecionada.inicio" :max="transicaoSelecionada.fim_previsto" required />
+          <label for="tm-tipo">Tipo</label><select id="tm-tipo" v-model="novaMovTransicao.tipo"><option value="receita">Receita</option><option value="despesa">Despesa</option></select>
+          <label for="tm-categoria">Categoria</label><input id="tm-categoria" v-model.trim="novaMovTransicao.categoria" maxlength="100" required />
+          <label for="tm-descricao">Descrição</label><input id="tm-descricao" v-model.trim="novaMovTransicao.descricao" maxlength="255" required />
+          <label for="tm-essencial">Justificativa da essencialidade</label><textarea id="tm-essencial" v-model.trim="novaMovTransicao.justificativa_essencialidade" minlength="10" maxlength="3000" required />
+          <label for="tm-valor">Valor em reais</label><input id="tm-valor" v-model="novaMovTransicao.valor" inputmode="decimal" placeholder="10,50" required />
+          <button type="submit" :disabled="ocupado">Registrar movimentação</button>
+        </form>
+        <form v-if="transicaoSelecionada?.status === 'ativa'" class="formulario" @submit.prevent="encerrarTransicao">
+          <h3>Encerrar transição e publicar relatório</h3>
+          <p class="ajuda">Resolva todas as movimentações pendentes antes do encerramento.</p>
+          <label for="tm-fim-real">Data de encerramento</label><input id="tm-fim-real" v-model="encerramentoTransicao.fim_real" type="date" :min="transicaoSelecionada.inicio" :max="transicaoSelecionada.fim_previsto" required />
+          <label for="tm-saldo">Saldo real final (R$)</label><input id="tm-saldo" v-model="encerramentoTransicao.saldo" required />
+          <label for="tm-conciliacao">Justificativa de eventual diferença</label><textarea id="tm-conciliacao" v-model.trim="encerramentoTransicao.justificativa_conciliacao" maxlength="3000" />
+          <button type="submit" :disabled="ocupado">Encerrar e publicar relatório</button>
+        </form>
+        <a v-if="transicaoSelecionada?.status === 'encerrada'" :href="`/transparencia/prestacao-de-contas`">Consultar relatório no portal público</a>
+      </template>
+    </section>
     <template v-if="atual && totais">
       <section v-if="aba === 'dashboard'" class="bloco painel-resumo">
         <h2>Visão geral</h2>
@@ -354,6 +478,15 @@ onMounted(() => { carregar().catch(() => { erro.value = 'Falha ao carregar os da
         <h2>Histórico da gestão</h2>
         <p>Consulte o histórico e os documentos publicados no portal de transparência.</p>
         <router-link to="/transparencia/prestacao-de-contas">Consultar prestação de contas</router-link>
+        <form v-if="gestaoSelecionada?.status === 'encerrada'" class="formulario" @submit.prevent="publicarNota">
+          <h3>Publicar nota de esclarecimento</h3>
+          <p class="ajuda">Notas são públicas e exclusivas de gestões encerradas.</p>
+          <label for="nota-relatorio">ID do relatório relacionado (opcional)</label>
+          <input id="nota-relatorio" v-model="nota.relatorio_financeiro_id" type="number" min="1" />
+          <label for="nota-texto">Esclarecimento</label>
+          <textarea id="nota-texto" v-model.trim="nota.texto" required minlength="10" maxlength="10000" rows="5" />
+          <button type="submit" :disabled="ocupado">Publicar esclarecimento</button>
+        </form>
         <template v-if="gestaoSelecionada?.status === 'ativa'">
           <label for="observacao-encerramento">Observação do encerramento</label>
           <textarea id="observacao-encerramento" v-model="observacao" rows="3" />
