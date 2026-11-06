@@ -62,6 +62,7 @@ class RetificacaoFinanceiraController extends Controller
             }
 
             DB::table('retificacoes_financeiras')->insert([
+                'gestao_financeira_id' => $gestao->id,
                 'movimentacao_financeira_id' => $registro->id,
                 'valor_anterior_centavos' => $registro->valor_centavos,
                 'valor_novo_centavos' => $dados['valor_centavos'],
